@@ -52,6 +52,7 @@ sklearn-integration = [
 sktime-integration = [
   "skpro",
   'sktime; python_version < "3.14"',
+  "skforecast",
 ]
 skforecast-integration = [
   "skforecast",
