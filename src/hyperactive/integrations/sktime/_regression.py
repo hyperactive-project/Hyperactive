@@ -123,7 +123,8 @@ class TSROptCV(_DelegatedRegressor):
     """
 
     _tags = {
-        "authors": ["fkiraly", "SimonBlanke"],
+        "authors": ["Omswastik-11"],
+        "maintainers": ["fkiraly", "SimonBlanke", "Omswastik-11"],
         "python_dependencies": "sktime",
     }
 
