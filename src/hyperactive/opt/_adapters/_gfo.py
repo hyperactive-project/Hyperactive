@@ -23,10 +23,13 @@ class _BaseGFOadapter(BaseOptimizer):
     _tags = {
         "authors": "SimonBlanke",
         "python_dependencies": ["gradient-free-optimizers>=1.5.0"],
+        "capability:categorical": "encoded",
     }
 
     def __init__(self):
         super().__init__()
+
+        self._categorical_mappings = {}
 
         if self.initialize is None:
             self._initialize = {"grid": 4, "random": 2, "vertices": 4}
@@ -87,8 +90,14 @@ class _BaseGFOadapter(BaseOptimizer):
     def _to_dict_np(self, search_space):
         """Coerce the search space to a format suitable for gfo optimizers.
 
-        gfo expects dicts of numpy arrays, not lists.
-        This method coerces lists or tuples in the search space to numpy arrays.
+        gfo expects dicts of numpy arrays, not lists. This method coerces
+        lists or tuples in the search space to numpy arrays.
+
+        In addition, this handles categorical dimensions by encoding them to
+        consecutive integers, while keeping track of the original levels in
+        ``self._categorical_mappings`` for decoding during evaluation and when
+        returning ``best_params_``. A dimension is treated as categorical if
+        its dtype is non-numeric (string, object, or boolean).
 
         Parameters
         ----------
@@ -108,8 +117,49 @@ class _BaseGFOadapter(BaseOptimizer):
                 return np.array(arr)
             return arr
 
-        coerced_search_space = {k: coerce_to_numpy(v) for k, v in search_space.items()}
+        self._categorical_mappings = {}
+        coerced_search_space = {}
+
+        for key, value in search_space.items():
+            arr = coerce_to_numpy(value)
+
+            if arr.dtype.kind in ("O", "U", "S", "b"):
+                unique_vals, inverse = np.unique(arr, return_inverse=True)
+                self._categorical_mappings[key] = list(unique_vals)
+                coerced_search_space[key] = inverse.astype(int)
+            else:
+                coerced_search_space[key] = arr
+
         return coerced_search_space
+
+    def _decode_categoricals(self, params):
+        """Decode integer-encoded categoricals back to original levels.
+
+        Parameters
+        ----------
+        params : dict
+            Parameter dict as used inside the optimizer/backend.
+
+        Returns
+        -------
+        dict
+            Parameter dict with any encoded categoricals mapped back to their
+            original values, if mappings are present.
+        """
+        if not self._categorical_mappings:
+            return params
+
+        decoded = dict(params)
+        for key, categories in self._categorical_mappings.items():
+            if key not in decoded:
+                continue
+            try:
+                idx = int(decoded[key])
+            except (TypeError, ValueError):
+                continue
+            if 0 <= idx < len(categories):
+                decoded[key] = categories[idx]
+        return decoded
 
     def _solve(self, experiment, **search_config):
         """Run the optimization search process.
@@ -133,13 +183,19 @@ class _BaseGFOadapter(BaseOptimizer):
         gfo_cls = self._get_gfo_class()
         gfopt = gfo_cls(**search_config)
 
+        def _objective(params):
+            decoded_params = self._decode_categoricals(params)
+            return experiment.score(decoded_params)
+
         with StdoutMute(active=not self.verbose):
             gfopt.search(
-                objective_function=experiment.score,
+                objective_function=_objective,
                 n_iter=n_iter,
                 max_time=max_time,
             )
+
         best_params = gfopt.best_para
+        best_params = self._decode_categoricals(best_params)
         return best_params
 
     @classmethod

@@ -50,6 +50,8 @@ class PackageConfig:
         "info:local_vs_global",  # "local", "mixed", "global"
         "info:explore_vs_exploit",  # "explore", "exploit", "mixed"
         "info:compute",  # "low", "middle", "high"
+        # capabilities
+        "capability:categorical",
     ]
 
 
@@ -348,6 +350,39 @@ class TestAllOptimizers(OptimizerFixtureGenerator, _QuickTester):
         assert isinstance(best_params, dict), "Best parameters should be a dictionary"
         assert "C" in best_params, "Best parameters should contain 'C'"
         assert "gamma" in best_params, "Best parameters should contain 'gamma'"
+
+    def test_gfo_categorical_encoding(self, object_instance):
+        """GFO optimizers should handle categoricals via internal encoding."""
+        from hyperactive.opt._adapters._gfo import _BaseGFOadapter
+
+        if not isinstance(object_instance, _BaseGFOadapter):
+            return None
+
+        import numpy as np
+        from sklearn.datasets import load_iris
+        from sklearn.svm import SVC
+
+        from hyperactive.experiment.integrations import SklearnCvExperiment
+
+        X, y = load_iris(return_X_y=True)
+        sklearn_exp = SklearnCvExperiment(estimator=SVC(), X=X, y=y)
+
+        search_space = {
+            "C": np.array([0.1, 1.0]),
+            "kernel": np.array(["linear", "rbf"]),
+        }
+        _config = {
+            "search_space": search_space,
+            "n_iter": 5,
+            "experiment": sklearn_exp,
+        }
+        optimizer = object_instance.clone().set_params(**_config)
+        optimizer.solve()
+        best_params = optimizer.best_params_
+
+        assert isinstance(best_params, dict)
+        assert "kernel" in best_params
+        assert best_params["kernel"] in {"linear", "rbf"}
 
     def test_selection_direction_backend(self, object_instance):
         """Backends return argmax over standardized scores on controlled setup.
