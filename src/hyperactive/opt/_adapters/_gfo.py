@@ -99,6 +99,10 @@ class _BaseGFOadapter(BaseOptimizer):
         returning ``best_params_``. A dimension is treated as categorical if
         its dtype is non-numeric (string, object, or boolean).
 
+        Note: ``np.unique`` sorts values, so the encoding is not order-preserving.
+        For example, ``["rbf", "linear"]`` becomes ``["linear", "rbf"]`` with
+        indices ``[1, 0]}``.
+
         Parameters
         ----------
         search_space : dict with str keys and iterable values
@@ -185,7 +189,8 @@ class _BaseGFOadapter(BaseOptimizer):
 
         def _objective(params):
             decoded_params = self._decode_categoricals(params)
-            return experiment.score(decoded_params)
+            score, _ = experiment.score(decoded_params)
+            return score
 
         with StdoutMute(active=not self.verbose):
             gfopt.search(
