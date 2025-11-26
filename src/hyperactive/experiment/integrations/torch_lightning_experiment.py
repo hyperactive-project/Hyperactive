@@ -177,7 +177,10 @@ class TorchExperiment(BaseExperiment):
             trainer.fit(model, self.datamodule)
 
             val_result = trainer.callback_metrics.get(self.objective_metric)
-            metadata = {}
+            metadata = {= {
+            "num_epochs_trained": trainer.current_epoch,
+            "all_metrics": trainer.callback_metrics,
+        }
 
             if val_result is None:
                 available_metrics = list(trainer.callback_metrics.keys())
