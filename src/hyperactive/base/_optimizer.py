@@ -20,6 +20,11 @@ class BaseOptimizer(BaseObject):
         # https://simonblanke.github.io/gradient-free-optimizers-documentation/1.5/optimizers/  # noqa: E501
     }
 
+    _config = {
+        "callbacks_pre_solve": None,
+        "callbacks_post_solve": None,
+    }
+
     def __init__(self):
         super().__init__()
         assert hasattr(self, "experiment"), "Optimizer must have an experiment."
@@ -76,12 +81,30 @@ class BaseOptimizer(BaseObject):
             The dict ``best_params`` can be used in ``experiment.score`` or
             ``experiment.evaluate`` directly.
         """
+        self._run_callbacks_pre_solve()
+
         experiment = self.get_experiment()
         search_config = self.get_search_config()
 
         best_params = self._solve(experiment, **search_config)
         self.best_params_ = best_params
+        self._run_callbacks_post_solve(best_params)
+
         return best_params
+
+    def _run_callbacks_pre_solve(self):
+        """Run pre-solve callbacks."""
+        callbacks = self.get_config().get("callbacks_pre_solve")
+        if callbacks:
+            for callback in callbacks:
+                callback(self)
+
+    def _run_callbacks_post_solve(self, best_params):
+        """Run post-solve callbacks."""
+        callbacks = self.get_config().get("callbacks_post_solve")
+        if callbacks:
+            for callback in callbacks:
+                callback(self, best_params)
 
     def _solve(self, experiment, *args, **kwargs):
         """Run the optimization search process.

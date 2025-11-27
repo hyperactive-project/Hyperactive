@@ -19,6 +19,11 @@ class BaseExperiment(BaseObject):
         # whether higher or lower scores are better
     }
 
+    _config = {
+        "callbacks_pre": None,
+        "callbacks_post": None,
+    }
+
     def __init__(self):
         super().__init__()
 
@@ -77,9 +82,27 @@ class BaseExperiment(BaseObject):
                 f"Parameters passed to {type(self)}.evaluate do not match: "
                 f"expected {paramnames}, got {list(params.keys())}."
             )
+
+        self._run_callbacks_pre(params)
         res, metadata = self._evaluate(params)
         res = np.float64(res)
+        self._run_callbacks_post(params, res, metadata)
+
         return res, metadata
+
+    def _run_callbacks_pre(self, params):
+        """Run pre-evaluation callbacks."""
+        callbacks = self.get_config().get("callbacks_pre")
+        if callbacks:
+            for callback in callbacks:
+                callback(self, params)
+
+    def _run_callbacks_post(self, params, result, metadata):
+        """Run post-evaluation callbacks."""
+        callbacks = self.get_config().get("callbacks_post")
+        if callbacks:
+            for callback in callbacks:
+                callback(self, params, result, metadata)
 
     def _evaluate(self, params):
         """Evaluate the parameters.
