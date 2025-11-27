@@ -18,8 +18,8 @@ def test_experiment_callbacks_post():
             }
         )
 
-    exp = Sphere(d=2)
-    exp.set_config(callbacks_post=[track_callback])
+    exp = Sphere(n_dim=2)
+    exp.add_callback(track_callback)
 
     exp.evaluate({"x0": 0.0, "x1": 0.0})
     exp.evaluate({"x0": 1.0, "x1": 1.0})
@@ -39,8 +39,8 @@ def test_experiment_callbacks_pre():
     def pre_callback(exp, params):
         pre_calls.append(params.copy())
 
-    exp = Sphere(d=2)
-    exp.set_config(callbacks_pre=[pre_callback])
+    exp = Sphere(n_dim=2)
+    exp.add_callback(pre_callback, pre=True)
 
     exp.evaluate({"x0": 1.0, "x1": 2.0})
 
@@ -61,7 +61,7 @@ def test_optimizer_callbacks():
     def post_solve_cb(optimizer, best_params):
         post_solve_called.append(best_params)
 
-    exp = Sphere(d=2)
+    exp = Sphere(n_dim=2)
     optimizer = HillClimbing(
         search_space={
             "x0": np.linspace(-5, 5, 11),
@@ -70,10 +70,8 @@ def test_optimizer_callbacks():
         n_iter=10,
         experiment=exp,
     )
-    optimizer.set_config(
-        callbacks_pre_solve=[pre_solve_cb],
-        callbacks_post_solve=[post_solve_cb],
-    )
+    optimizer.add_callback(pre_solve_cb, pre=True)
+    optimizer.add_callback(post_solve_cb)
 
     best_params = optimizer.solve()
 
@@ -88,9 +86,8 @@ def test_history_callback():
     from hyperactive.utils.callbacks import HistoryCallback
 
     history_cb = HistoryCallback()
-
-    exp = Sphere(d=2)
-    exp.set_config(callbacks_post=[history_cb])
+    exp = Sphere(n_dim=2)
+    exp.add_callback(history_cb)
 
     optimizer = HillClimbing(
         search_space={
@@ -118,10 +115,8 @@ def test_logging_callback(capsys):
     from hyperactive.experiment.bench import Sphere
     from hyperactive.utils.callbacks import LoggingCallback
 
-    log_cb = LoggingCallback()
-
-    exp = Sphere(d=2)
-    exp.set_config(callbacks_post=[log_cb])
+    exp = Sphere(n_dim=2)
+    exp.add_callback(LoggingCallback())
 
     exp.evaluate({"x0": 0.0, "x1": 0.0})
     exp.evaluate({"x0": 1.0, "x1": 1.0})
@@ -137,10 +132,8 @@ def test_sleep_callback():
     from hyperactive.experiment.bench import Sphere
     from hyperactive.utils.callbacks import SleepCallback
 
-    sleep_cb = SleepCallback(seconds=0.1)
-
-    exp = Sphere(d=2)
-    exp.set_config(callbacks_post=[sleep_cb])
+    exp = Sphere(n_dim=2)
+    exp.add_callback(SleepCallback(seconds=0.1))
 
     start = time.time()
     exp.evaluate({"x0": 0.0, "x1": 0.0})
@@ -155,9 +148,8 @@ def test_target_reached_callback():
     from hyperactive.utils.callbacks import TargetReachedCallback
 
     target_cb = TargetReachedCallback(target_score=0.5, higher_is_better=False)
-
-    exp = Sphere(d=2)
-    exp.set_config(callbacks_post=[target_cb])
+    exp = Sphere(n_dim=2)
+    exp.add_callback(target_cb)
 
     exp.evaluate({"x0": 5.0, "x1": 5.0})
     assert not target_cb.reached
@@ -172,9 +164,9 @@ def test_multiple_callbacks():
 
     history_cb = HistoryCallback()
     log_cb = LoggingCallback()
-
-    exp = Sphere(d=2)
-    exp.set_config(callbacks_post=[history_cb, log_cb])
+    exp = Sphere(n_dim=2)
+    exp.add_callback(history_cb)
+    exp.add_callback(log_cb)
 
     exp.evaluate({"x0": 1.0, "x1": 1.0})
     exp.evaluate({"x0": 2.0, "x1": 2.0})

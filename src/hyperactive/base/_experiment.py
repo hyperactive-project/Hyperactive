@@ -19,13 +19,26 @@ class BaseExperiment(BaseObject):
         # whether higher or lower scores are better
     }
 
-    _config = {
-        "callbacks_pre": None,
-        "callbacks_post": None,
-    }
-
     def __init__(self):
         super().__init__()
+        self._callbacks_pre = []
+        self._callbacks_post = []
+
+    def add_callback(self, callback, pre=False):
+        """Register a callback.
+
+        Parameters
+        ----------
+        callback : callable
+            For post callbacks: callback(experiment, params, result, metadata).
+            For pre callbacks: callback(experiment, params).
+        pre : bool, default=False
+            If True, callback runs before evaluation. If False, after.
+        """
+        if pre:
+            self._callbacks_pre.append(callback)
+        else:
+            self._callbacks_post.append(callback)
 
     def __call__(self, params):
         """Score parameters. Same as score call, returns only a first element."""
@@ -92,17 +105,13 @@ class BaseExperiment(BaseObject):
 
     def _run_callbacks_pre(self, params):
         """Run pre-evaluation callbacks."""
-        callbacks = self.get_config().get("callbacks_pre")
-        if callbacks:
-            for callback in callbacks:
-                callback(self, params)
+        for callback in self._callbacks_pre:
+            callback(self, params)
 
     def _run_callbacks_post(self, params, result, metadata):
         """Run post-evaluation callbacks."""
-        callbacks = self.get_config().get("callbacks_post")
-        if callbacks:
-            for callback in callbacks:
-                callback(self, params, result, metadata)
+        for callback in self._callbacks_post:
+            callback(self, params, result, metadata)
 
     def _evaluate(self, params):
         """Evaluate the parameters.
