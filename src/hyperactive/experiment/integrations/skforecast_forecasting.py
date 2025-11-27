@@ -102,9 +102,8 @@ class SkforecastExperiment(BaseExperiment):
 
         super().__init__()
 
-        # Infer higher_or_lower_is_better from metric
         # All standard skforecast/sklearn regression metrics are "lower is better"
-        # (MSE, MAE, MAPE, etc.). Custom callables are assumed lower is better.
+        # (MSE, MAE, MAPE, RMSE, etc.). Custom callables are assumed lower is better.
         self.set_tags(**{"property:higher_or_lower_is_better": "lower"})
 
     @classmethod
