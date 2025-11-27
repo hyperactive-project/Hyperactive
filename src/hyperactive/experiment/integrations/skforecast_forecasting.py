@@ -63,7 +63,7 @@ class SkforecastExperiment(BaseExperiment):
     """
 
     _tags = {
-        "authors": "Omswastik-11",
+        "authors": ["Omswastik-11", "JoaquinAmatRodrigo"],
         "maintainers": ["Omswastik-11", "fkiraly", "JoaquinAmatRodrigo", "SimonBlanke"],
         "python_dependencies": "skforecast",
     }
@@ -102,6 +102,11 @@ class SkforecastExperiment(BaseExperiment):
 
         super().__init__()
 
+        # Infer higher_or_lower_is_better from metric
+        # All standard skforecast/sklearn regression metrics are "lower is better"
+        # (MSE, MAE, MAPE, etc.). Custom callables are assumed lower is better.
+        self.set_tags(**{"property:higher_or_lower_is_better": "lower"})
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -120,6 +125,11 @@ class SkforecastExperiment(BaseExperiment):
             instance.
             create_test_instance uses the first (or only) dictionary in `params`
         """
+        from skbase.utils.dependencies import _check_soft_dependencies
+
+        if not _check_soft_dependencies("skforecast", severity="none"):
+            return []
+
         import numpy as np
         import pandas as pd
         from skforecast.recursive import ForecasterRecursive

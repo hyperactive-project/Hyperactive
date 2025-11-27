@@ -63,7 +63,7 @@ class SkforecastOptCV(BaseEstimator):
     """
 
     _tags = {
-        "authors": "Omswastik-11",
+        "authors": ["Omswastik-11", "JoaquinAmatRodrigo"],
         "maintainers": ["Omswastik-11", "fkiraly", "JoaquinAmatRodrigo", "SimonBlanke"],
         "python_dependencies": "skforecast",
     }
@@ -118,6 +118,11 @@ class SkforecastOptCV(BaseEstimator):
             instance.
             create_test_instance uses the first (or only) dictionary in `params`
         """
+        from skbase.utils.dependencies import _check_soft_dependencies
+
+        if not _check_soft_dependencies("skforecast", severity="none"):
+            return []
+
         from skforecast.recursive import ForecasterRecursive
         from sklearn.ensemble import RandomForestRegressor
 
