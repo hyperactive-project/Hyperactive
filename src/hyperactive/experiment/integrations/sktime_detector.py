@@ -1,3 +1,9 @@
+"""Integration adapter for sktime detector experiments.
+
+Provides `SktimeDetectorExperiment` which adapts sktime detector-style
+objects to the Hyperactive experiment interface.
+"""
+
 import numpy as np
 from skbase.utils.dependencies import _check_soft_dependencies
 
@@ -118,16 +124,16 @@ class SktimeDetectorExperiment(BaseExperiment):
             return res_float, {"results": results}
 
         # Fallback: perform a manual cross-validation loop if `evaluate` is not present.
-        from sklearn.base import clone as skl_clone
 
         # Determine underlying metric function or sklearn-style scorer
         metric_func = getattr(self._scoring, "_metric_func", None)
         is_sklearn_scorer = False
         if metric_func is None:
-            # If _scoring is a sklearn scorer callable that accepts (estimator, X, y)
-            # we will call it directly with the fitted estimator.
+            # If _scoring is a sklearn scorer callable that accepts
+            # (estimator, X, y) we will call it directly with the fitted estimator.
             if callable(self._scoring):
-                # heuristics: sklearn scorers produced by make_scorer take (estimator, X, y)
+                # Heuristic: sklearn scorers produced by `make_scorer` take
+                # arguments `(estimator, X, y)`.
                 is_sklearn_scorer = True
         else:
             metric = metric_func
@@ -138,7 +144,7 @@ class SktimeDetectorExperiment(BaseExperiment):
             for train_idx, test_idx in self._cv.split(self.y):
                 X_train = None
                 X_test = None
-                if isinstance(self.y, (list, tuple)):
+                if isinstance(self.y, list | tuple):
                     y_train = [self.y[i] for i in train_idx]
                     y_test = [self.y[i] for i in test_idx]
                 else:
@@ -200,10 +206,10 @@ class SktimeDetectorExperiment(BaseExperiment):
         return float(res_float), {"results": {"cv_scores": scores}}
 
     def _safe_index(self, obj, idx):
-        """
-        Safely index into `obj` using integer indices.
+        """Safely index into `obj` using integer indices.
 
-        Supports pandas objects with .iloc, numpy arrays/lists, and other indexable types.
+        Supports pandas objects with ``.iloc``, numpy arrays/lists, and other
+        indexable types.
         """
         try:
             return obj.iloc[idx]
@@ -218,7 +224,11 @@ class SktimeDetectorExperiment(BaseExperiment):
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        # Return testing parameter settings for the skbase object.
+        """Return testing parameter settings for the skbase object.
+
+        This returns a list or dict appropriate to construct test instances
+        for this class. See the skbase test helpers for expected formats.
+        """
         if _check_soft_dependencies("sktime", severity="none"):
             try:
                 from sktime.annotation.dummy import DummyDetector

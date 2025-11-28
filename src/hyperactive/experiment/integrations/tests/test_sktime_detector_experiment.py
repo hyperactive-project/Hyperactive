@@ -1,4 +1,8 @@
+"""Smoke tests for the sktime detector experiment integration."""
+
+
 def test_sktime_detector_experiment_with_dummy():
+    """Run a minimal smoke test using sktime's DummyDetector (if available)."""
     try:
         from sktime.annotation.dummy import DummyDetector
         from sktime.datasets import load_unit_test

@@ -107,10 +107,12 @@ class TSDetectorOptCv(_DelegatedDetector):
             "optimizer": GridSearchSk(param_grid={}),
         }
 
-        
+
         params_more = {
             "detector": DummyDetector() if DummyDetector is not None else None,
-            "optimizer": GridSearchSk(param_grid={"strategy": ["most_frequent", "stratified"]}),
+            "optimizer": GridSearchSk(
+                param_grid={"strategy": ["most_frequent", "stratified"]}
+            ),
             "cv": 2,
             "scoring": None,
             "refit": False,
