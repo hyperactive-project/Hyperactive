@@ -86,12 +86,6 @@ all_extras = [
   "optuna<5",
   "lightning",
 ]
-test_examples = [
-  "pytest == 9.0.1",
-  "hyperactive[integrations]",
-  "optuna<5",
-]
-
 
 [project.urls]
 "Homepage" = "https://github.com/SimonBlanke/Hyperactive"
