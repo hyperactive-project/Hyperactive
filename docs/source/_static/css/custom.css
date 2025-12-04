@@ -1,3 +1,421 @@
 /* Custom CSS for Hyperactive documentation */
+/* Landing page styling for a mature, professional appearance */
 
-/* Add any custom styling here */
+/* ============================================
+   CSS Variables for consistent theming
+   ============================================ */
+:root {
+    --hyperactive-primary: #0eac92;
+    --hyperactive-secondary: #2077b4;
+    --hyperactive-accent: #4c9aff;
+    --hyperactive-dark: #1a1a2e;
+    --hyperactive-light: #f8f9fa;
+    --hyperactive-gradient: linear-gradient(135deg, #0eac92 0%, #2077b4 100%);
+    --hyperactive-gradient-dark: linear-gradient(135deg, #0a8c76 0%, #1a5a8a 100%);
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --card-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* ============================================
+   Hero Section
+   ============================================ */
+.hero-section {
+    background: var(--hyperactive-gradient);
+    padding: 3rem 2rem;
+    margin: -1rem -1rem 2rem -1rem;
+    border-radius: 0 0 20px 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+        radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1;
+}
+
+.hero-logo {
+    max-width: 200px;
+    height: auto;
+    margin-bottom: 1.5rem;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+.hero-tagline {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0 0 0.5rem 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.hero-subtitle {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0 0 1.5rem 0;
+}
+
+.hero-badges {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.hero-badges img {
+    transition: transform 0.2s ease;
+}
+
+.hero-badges img:hover {
+    transform: translateY(-2px);
+}
+
+/* ============================================
+   Maturity Banner
+   ============================================ */
+.maturity-banner {
+    background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 50%, #f8f9fa 100%);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    margin: 1.5rem 0;
+    border: 1px solid #dee2e6;
+}
+
+html[data-theme="dark"] .maturity-banner {
+    background: linear-gradient(90deg, #2d2d3a 0%, #252530 50%, #2d2d3a 100%);
+    border-color: #3d3d4d;
+}
+
+.maturity-items {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.maturity-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #495057;
+}
+
+html[data-theme="dark"] .maturity-item {
+    color: #adb5bd;
+}
+
+.maturity-icon {
+    font-size: 1.25rem;
+}
+
+.maturity-text {
+    font-size: 0.95rem;
+}
+
+/* ============================================
+   Feature Cards
+   ============================================ */
+.feature-card {
+    border: none !important;
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s ease;
+    border-radius: 12px !important;
+    overflow: hidden;
+}
+
+.feature-card:hover {
+    box-shadow: var(--card-shadow-hover);
+    transform: translateY(-4px);
+}
+
+.feature-card .sd-card-body {
+    padding: 1.5rem;
+}
+
+.feature-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+/* ============================================
+   Algorithm Cards
+   ============================================ */
+.algo-card {
+    border-left: 4px solid var(--hyperactive-primary) !important;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    transition: all 0.2s ease;
+}
+
+html[data-theme="dark"] .algo-card {
+    background: linear-gradient(135deg, #2d2d3a 0%, #252530 100%);
+}
+
+.algo-card:hover {
+    border-left-color: var(--hyperactive-secondary) !important;
+    transform: translateX(4px);
+}
+
+.algo-card ul {
+    margin: 0;
+    padding-left: 1.2rem;
+}
+
+.algo-card li {
+    margin-bottom: 0.3rem;
+    font-size: 0.9rem;
+}
+
+.optuna-card {
+    border-left-color: #7c4dff !important;
+}
+
+.optuna-card:hover {
+    border-left-color: #651fff !important;
+}
+
+/* ============================================
+   Integration Cards
+   ============================================ */
+.integration-card {
+    background: var(--hyperactive-gradient);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    color: white;
+    transition: all 0.3s ease;
+    box-shadow: var(--card-shadow);
+}
+
+.integration-card:hover {
+    transform: scale(1.05);
+    box-shadow: var(--card-shadow-hover);
+}
+
+.integration-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.integration-desc {
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+/* ============================================
+   Navigation Cards
+   ============================================ */
+.nav-card {
+    border-radius: 12px !important;
+    transition: all 0.3s ease;
+}
+
+.nav-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--card-shadow-hover);
+}
+
+.nav-card .sd-card-title {
+    font-size: 1.1rem;
+}
+
+/* ============================================
+   Visualization Section
+   ============================================ */
+.visualization-section {
+    text-align: center;
+    padding: 2rem 0;
+}
+
+.visualization-section h2 {
+    color: var(--hyperactive-primary);
+    margin-bottom: 0.5rem;
+}
+
+.visualization-section p {
+    color: #6c757d;
+    margin-bottom: 1.5rem;
+}
+
+.optimization-gif {
+    max-width: 100%;
+    max-height: 400px;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow-hover);
+    border: 3px solid var(--hyperactive-primary);
+}
+
+/* ============================================
+   Sponsor Section
+   ============================================ */
+.sponsor-section {
+    text-align: center;
+    padding: 1.5rem 0;
+}
+
+.sponsor-section img {
+    transition: transform 0.2s ease;
+}
+
+.sponsor-section img:hover {
+    transform: scale(1.05);
+}
+
+/* ============================================
+   Code Blocks Enhancement
+   ============================================ */
+.highlight {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.highlight pre {
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+/* ============================================
+   Tab Set Styling
+   ============================================ */
+.sd-tab-set {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+}
+
+.sd-tab-label {
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.sd-tab-label:hover {
+    background-color: rgba(14, 172, 146, 0.1);
+}
+
+input[name^="sd-tab-set"]:checked + label {
+    border-bottom-color: var(--hyperactive-primary) !important;
+    color: var(--hyperactive-primary);
+}
+
+/* ============================================
+   Section Dividers
+   ============================================ */
+hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #dee2e6, transparent);
+    margin: 2.5rem 0;
+}
+
+html[data-theme="dark"] hr {
+    background: linear-gradient(90deg, transparent, #3d3d4d, transparent);
+}
+
+/* ============================================
+   Section Headers
+   ============================================ */
+h2 {
+    position: relative;
+    padding-bottom: 0.5rem;
+}
+
+h2::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 60px;
+    height: 3px;
+    background: var(--hyperactive-gradient);
+    border-radius: 2px;
+}
+
+/* ============================================
+   Button Enhancements
+   ============================================ */
+.sd-btn-primary {
+    background: var(--hyperactive-gradient) !important;
+    border: none !important;
+    transition: all 0.3s ease !important;
+}
+
+.sd-btn-primary:hover {
+    background: var(--hyperactive-gradient-dark) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(14, 172, 146, 0.4);
+}
+
+/* ============================================
+   Responsive Adjustments
+   ============================================ */
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 2rem 1rem;
+        margin: -1rem -0.5rem 1.5rem -0.5rem;
+    }
+
+    .hero-tagline {
+        font-size: 1.4rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+
+    .hero-logo {
+        max-width: 150px;
+    }
+
+    .maturity-items {
+        gap: 1rem;
+    }
+
+    .maturity-item {
+        font-size: 0.85rem;
+    }
+
+    .feature-icon {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-badges {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .maturity-items {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+@media print {
+    .hero-section {
+        background: #f8f9fa !important;
+        color: #000 !important;
+    }
+
+    .hero-tagline,
+    .hero-subtitle {
+        color: #000 !important;
+    }
+}
