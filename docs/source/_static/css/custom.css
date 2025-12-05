@@ -2,6 +2,11 @@
 /* Purple/Violet theme matching the Hyperactive logo */
 
 /* ============================================
+   Google Font Import for Hero Title
+   ============================================ */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&display=swap');
+
+/* ============================================
    CSS Variables for consistent theming
    ============================================ */
 :root {
@@ -11,8 +16,8 @@
     --hyperactive-accent: #8080B0;
     --hyperactive-dark: #4A4A65;
     --hyperactive-light: #f8f9fa;
-    --hyperactive-gradient: linear-gradient(135deg, #5D5D7A 0%, #8080B0 100%);
-    --hyperactive-gradient-dark: linear-gradient(135deg, #4A4A65 0%, #6B6B8E 100%);
+    --hyperactive-gradient: linear-gradient(135deg, #3D3D55 0%, #5858A0 100%);
+    --hyperactive-gradient-dark: linear-gradient(135deg, #2D2D45 0%, #484890 100%);
     --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     --card-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     /* Neutral separator color */
@@ -54,11 +59,14 @@ html[data-theme="dark"] {
     z-index: 1;
 }
 
-.hero-logo {
-    max-width: 200px;
-    height: auto;
-    margin-bottom: 1.5rem;
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+.hero-title {
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 1rem 0;
+    letter-spacing: -0.02em;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 .hero-tagline {
@@ -72,22 +80,7 @@ html[data-theme="dark"] {
 .hero-subtitle {
     font-size: 1.1rem;
     color: rgba(255, 255, 255, 0.9);
-    margin: 0 0 1.5rem 0;
-}
-
-.hero-badges {
-    display: flex;
-    justify-content: center;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-}
-
-.hero-badges img {
-    transition: transform 0.2s ease;
-}
-
-.hero-badges img:hover {
-    transform: translateY(-2px);
+    margin: 0;
 }
 
 /* ============================================
@@ -366,16 +359,16 @@ h2::after {
         margin: -1rem -0.5rem 1.5rem -0.5rem;
     }
 
+    .hero-title {
+        font-size: 2.5rem;
+    }
+
     .hero-tagline {
         font-size: 1.4rem;
     }
 
     .hero-subtitle {
         font-size: 1rem;
-    }
-
-    .hero-logo {
-        max-width: 150px;
     }
 
     .maturity-items {
@@ -392,9 +385,8 @@ h2::after {
 }
 
 @media (max-width: 480px) {
-    .hero-badges {
-        flex-direction: column;
-        align-items: center;
+    .hero-title {
+        font-size: 2rem;
     }
 
     .maturity-items {
@@ -412,6 +404,7 @@ h2::after {
         color: #000 !important;
     }
 
+    .hero-title,
     .hero-tagline,
     .hero-subtitle {
         color: #000 !important;

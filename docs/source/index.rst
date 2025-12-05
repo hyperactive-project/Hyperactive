@@ -4,20 +4,11 @@
 
    <div class="hero-section">
       <div class="hero-content">
-         <img src="_static/images/logo.png" alt="Hyperactive Logo" class="hero-logo" />
+         <h1 class="hero-title">Hyperactive</h1>
          <p class="hero-tagline">A unified interface for optimization algorithms and problems</p>
          <p class="hero-subtitle">Production-ready hyperparameter optimization for machine learning</p>
-         <div class="hero-badges">
-            <a href="https://pypi.org/project/hyperactive/"><img src="https://img.shields.io/pypi/v/hyperactive?style=for-the-badge&color=4c9aff" alt="PyPI Version" /></a>
-            <a href="https://github.com/SimonBlanke/Hyperactive"><img src="https://img.shields.io/github/stars/SimonBlanke/Hyperactive?style=for-the-badge&color=ffd700" alt="GitHub Stars" /></a>
-            <a href="https://github.com/SimonBlanke/Hyperactive/actions"><img src="https://img.shields.io/github/actions/workflow/status/SimonBlanke/hyperactive/test.yml?style=for-the-badge&logo=github" alt="Build Status" /></a>
-         </div>
       </div>
    </div>
-
-==========
-Hyperactive
-==========
 
 .. raw:: html
 
@@ -33,7 +24,7 @@ Hyperactive
          </div>
          <div class="maturity-item">
             <span class="maturity-icon">🐍</span>
-            <span class="maturity-text"><strong>Python 3.10 - 3.14</strong></span>
+            <span class="maturity-text"><strong>Python <span id="python-version-range"></span></strong></span>
          </div>
          <div class="maturity-item">
             <span class="maturity-icon">📜</span>
@@ -41,6 +32,10 @@ Hyperactive
          </div>
       </div>
    </div>
+   <script>
+      document.getElementById('python-version-range').textContent =
+         document.querySelector('meta[name="python-version-range"]').content;
+   </script>
 
 
 Hyperactive provides a collection of optimization algorithms, accessible through a unified

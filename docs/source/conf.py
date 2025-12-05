@@ -69,6 +69,13 @@ def extract_pyproject_metadata():
 # Extract metadata once at configuration time
 PYPROJECT_METADATA = extract_pyproject_metadata()
 
+# Build Python version range string from metadata
+_py_versions = PYPROJECT_METADATA["python_versions"]
+if _py_versions:
+    _py_version_range = f"{_py_versions[0]} - {_py_versions[-1]}"
+else:
+    _py_version_range = "3.10+"
+
 # -- Project information -----------------------------------------------------
 current_year = datetime.datetime.now().year
 project = "hyperactive"
@@ -238,6 +245,11 @@ html_theme_options = {
             "url": "https://github.com/SimonBlanke/Hyperactive",
             "icon": "fab fa-github",
         },
+        {
+            "name": "Star on GitHub",
+            "url": "https://github.com/SimonBlanke/Hyperactive/stargazers",
+            "icon": "fa-regular fa-star",
+        },
     ],
     "show_prev_next": False,
     "use_edit_page_button": False,
@@ -254,12 +266,14 @@ html_context = {
     "github_repo": "Hyperactive",
     "github_version": "master",
     "doc_path": "auto-doc/source/",
+    "python_version_range": _py_version_range,
 }
 
 html_sidebars = {
     "**": ["sidebar-nav-bs.html"],
     "index": [],
     "get_started": [],
+    "installation": [],
     "search": [],
 }
 
@@ -366,16 +380,11 @@ copybutton_line_continuation_character = "\\"
 # -- RST Epilog: Make metadata available as substitutions in RST files -------
 # These can be used as |variable_name| in RST files
 
-# Build Python versions list dynamically
-_py_versions = PYPROJECT_METADATA["python_versions"]
+# Build additional Python versions formatting for RST
 if _py_versions:
-    _py_versions_list = "\n".join(f"- Python {v}" for v in _py_versions)
     _py_versions_inline = ", ".join(_py_versions)
-    _py_version_range = f"{_py_versions[0]} through {_py_versions[-1]}"
 else:
-    _py_versions_list = "- Python 3.10+"
     _py_versions_inline = "3.10+"
-    _py_version_range = "3.10+"
 
 rst_epilog = f"""
 .. |version| replace:: {PYPROJECT_METADATA["version"]}
