@@ -21,6 +21,24 @@ class BaseExperiment(BaseObject):
 
     def __init__(self):
         super().__init__()
+        self._callbacks_pre = []
+        self._callbacks_post = []
+
+    def add_callback(self, callback, pre=False):
+        """Register a callback.
+
+        Parameters
+        ----------
+        callback : callable
+            For post callbacks: callback(experiment, params, result, metadata).
+            For pre callbacks: callback(experiment, params).
+        pre : bool, default=False
+            If True, callback runs before evaluation. If False, after.
+        """
+        if pre:
+            self._callbacks_pre.append(callback)
+        else:
+            self._callbacks_post.append(callback)
 
     def __call__(self, params):
         """Score parameters. Same as score call, returns only a first element."""
@@ -77,9 +95,23 @@ class BaseExperiment(BaseObject):
                 f"Parameters passed to {type(self)}.evaluate do not match: "
                 f"expected {paramnames}, got {list(params.keys())}."
             )
+
+        self._run_callbacks_pre(params)
         res, metadata = self._evaluate(params)
         res = np.float64(res)
+        self._run_callbacks_post(params, res, metadata)
+
         return res, metadata
+
+    def _run_callbacks_pre(self, params):
+        """Run pre-evaluation callbacks."""
+        for callback in self._callbacks_pre:
+            callback(self, params)
+
+    def _run_callbacks_post(self, params, result, metadata):
+        """Run post-evaluation callbacks."""
+        for callback in self._callbacks_post:
+            callback(self, params, result, metadata)
 
     def _evaluate(self, params):
         """Evaluate the parameters.
