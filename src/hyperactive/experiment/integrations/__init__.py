@@ -14,11 +14,15 @@ from hyperactive.experiment.integrations.sktime_forecasting import (
 from hyperactive.experiment.integrations.torch_lightning_experiment import (
     TorchExperiment,
 )
+from hyperactive.experiment.integrations.sktime_detector import (
+    SktimeDetectorExperiment,
+)
 
 __all__ = [
     "SklearnCvExperiment",
     "SkproProbaRegExperiment",
     "SktimeClassificationExperiment",
     "SktimeForecastingExperiment",
+    "SktimeDetectorExperiment",
     "TorchExperiment",
 ]

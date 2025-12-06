@@ -158,6 +158,7 @@ This design allows you to:
 **Built-in experiments include:**
 - `SklearnCvExperiment` - Cross-validation for sklearn estimators
 - `SktimeForecastingExperiment` - Time series forecasting optimization
+- `SktimeDetectorExperiment` - Time series detector/anomaly-detection optimization
 - Custom function experiments (pass any callable as experiment)
 
 <img src="./docs/images/bayes_convex.gif" align="right" width="500">
