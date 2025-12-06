@@ -31,6 +31,14 @@
     --optuna-light: #3b82c4;
     --sklearn-orange: #F7931E;
     --sklearn-blue: #29ABE2;
+
+    /* Integration brand colors */
+    --sktime-blue: #0075b7;
+    --sktime-teal: #00a890;
+    --skpro-blue: #0076b7;
+    --skpro-teal: #01ab90;
+    --pytorch-orange: #ee4c2c;
+    --pytorch-yellow: #eaa700;
 }
 
 html[data-theme="dark"] {
@@ -389,32 +397,115 @@ html[data-theme="dark"] .algo-card {
 }
 
 /* ============================================
-   Integration Cards
+   Integration Cards (horizontal, two-part)
    ============================================ */
+.integration-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+    margin: 1.5rem 0;
+}
+
+@media (max-width: 768px) {
+    .integration-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .integration-card {
-    background: var(--hyperactive-gradient);
-    border-radius: 12px;
-    padding: 1.5rem;
-    text-align: center;
-    color: white;
-    transition: all 0.3s ease;
+    background: var(--pst-color-surface);
+    border-radius: 8px;
+    display: flex;
     box-shadow: var(--card-shadow);
+    position: relative;
+    overflow: hidden;
 }
 
-.integration-card:hover {
-    transform: scale(1.05);
-    box-shadow: var(--card-shadow-hover);
+.integration-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
 }
 
-.integration-name {
-    font-size: 1.25rem;
+.integration-left {
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    min-width: 140px;
+}
+
+.integration-left a {
+    font-size: 1.1rem;
     font-weight: 600;
-    margin-bottom: 0.5rem;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+}
+
+.integration-left a:hover {
+    text-decoration: underline;
+}
+
+.integration-right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    border-left: 1px solid var(--pst-color-border);
+    position: relative;
+    transition: background 0.2s ease;
+}
+
+.integration-right a {
+    display: flex;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    width: 100%;
+    height: 100%;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
+}
+
+.integration-right a::after {
+    content: "→";
+    margin-left: auto;
+    padding-left: 1rem;
+    opacity: 0;
+    transform: translateX(-8px);
+    transition: all 0.2s ease;
+}
+
+.integration-right:hover {
+    background: var(--pst-color-background);
+}
+
+.integration-right:hover a::after {
+    opacity: 0.6;
+    transform: translateX(0);
 }
 
 .integration-desc {
-    font-size: 0.85rem;
-    opacity: 0.9;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+/* Integration card colors */
+.integration-card.sklearn::before {
+    background: linear-gradient(to bottom, var(--sklearn-orange) 50%, var(--sklearn-blue) 50%);
+}
+
+.integration-card.sktime::before {
+    background: linear-gradient(to bottom, var(--sktime-blue) 0%, var(--sktime-teal) 100%);
+}
+
+.integration-card.skpro::before {
+    background: linear-gradient(to bottom, var(--skpro-blue) 0%, var(--skpro-teal) 100%);
+}
+
+.integration-card.pytorch::before {
+    background: linear-gradient(to bottom, var(--pytorch-orange) 50%, var(--pytorch-yellow) 50%);
 }
 
 /* ============================================

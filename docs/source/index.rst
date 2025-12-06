@@ -215,48 +215,50 @@ Choose the one that best fits your needs, or switch between them effortlessly.
 Integrations
 ============
 
-.. grid:: 1 2 4 4
-   :gutter: 4
+.. raw:: html
 
-   .. grid-item::
-      :class: integration-item
-
-      .. raw:: html
-
-         <div class="integration-card">
-            <div class="integration-name">scikit-learn</div>
-            <div class="integration-desc">Cross-validation experiments</div>
+   <div class="integration-grid">
+      <div class="integration-card sklearn">
+         <div class="integration-left">
+            <a href="https://github.com/scikit-learn/scikit-learn" target="_blank">scikit-learn</a>
          </div>
-
-   .. grid-item::
-      :class: integration-item
-
-      .. raw:: html
-
-         <div class="integration-card">
-            <div class="integration-name">sktime</div>
-            <div class="integration-desc">Time series forecasting</div>
+         <div class="integration-right">
+            <a href="user_guide/integrations.html#scikit-learn-integration">
+               <span class="integration-desc">Tune estimators with OptCV cross-validation</span>
+            </a>
          </div>
-
-   .. grid-item::
-      :class: integration-item
-
-      .. raw:: html
-
-         <div class="integration-card">
-            <div class="integration-name">skpro</div>
-            <div class="integration-desc">Probabilistic regression</div>
+      </div>
+      <div class="integration-card sktime">
+         <div class="integration-left">
+            <a href="https://github.com/sktime/sktime" target="_blank">sktime</a>
          </div>
-
-   .. grid-item::
-      :class: integration-item
-
-      .. raw:: html
-
-         <div class="integration-card">
-            <div class="integration-name">PyTorch</div>
-            <div class="integration-desc">Deep learning models</div>
+         <div class="integration-right">
+            <a href="user_guide/integrations.html#time-series-with-sktime">
+               <span class="integration-desc">Optimize forecasters and transformers</span>
+            </a>
          </div>
+      </div>
+      <div class="integration-card skpro">
+         <div class="integration-left">
+            <a href="https://github.com/sktime/skpro" target="_blank">skpro</a>
+         </div>
+         <div class="integration-right">
+            <a href="user_guide/integrations.html#probabilistic-models-with-skpro">
+               <span class="integration-desc">Tune probabilistic regressors</span>
+            </a>
+         </div>
+      </div>
+      <div class="integration-card pytorch">
+         <div class="integration-left">
+            <a href="https://github.com/pytorch/pytorch" target="_blank">PyTorch</a>
+         </div>
+         <div class="integration-right">
+            <a href="user_guide/integrations.html#deep-learning-with-pytorch">
+               <span class="integration-desc">Optimize architectures and training parameters</span>
+            </a>
+         </div>
+      </div>
+   </div>
 
 ----
 
