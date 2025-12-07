@@ -55,6 +55,7 @@ jobs:
 
   test-no-extras:
     name: test-no-extras
+    needs: [code-quality, doctest]
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
@@ -92,6 +93,7 @@ jobs:
 
   test-all-extras:
     name: test-all-extras
+    needs: [code-quality, doctest]
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
@@ -129,6 +131,7 @@ jobs:
 
   test-sklearn-versions:
     name: test-sklearn-${{ matrix.sklearn-version }}-python-${{ matrix.python-version }}
+    needs: [code-quality, doctest]
     runs-on: ubuntu-latest
 
     strategy:
@@ -157,8 +160,61 @@ jobs:
         run: |
           python -m pytest -x -p no:warnings src/hyperactive/integrations/sklearn/
 
+  doctest:
+    name: doctest
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .[test]
+
+      - name: Run doctests
+        run: |
+          python -m pytest --doctest-modules src/hyperactive/ -v
+
+  coverage:
+    name: coverage
+    needs: [code-quality, doctest]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .[all_extras,test,test_parallel_backends]
+
+      - name: Run tests with coverage
+        run: |
+          python -m pytest src/hyperactive/ --cov=src/hyperactive --cov-report=xml --cov-report=term -p no:warnings
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
+          verbose: true
+
   test-examples:
     name: test-examples
+    needs: [code-quality, doctest]
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
