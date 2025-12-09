@@ -22,12 +22,31 @@ class BaseOptimizer(BaseObject):
 
     def __init__(self):
         super().__init__()
+        self._callbacks_pre_solve = []
+        self._callbacks_post_solve = []
+
         assert hasattr(self, "experiment"), "Optimizer must have an experiment."
         search_config = self.get_params()
         self._experiment = search_config.pop("experiment", None)
 
         if self.get_tag("info:name") is None:
             self.set_tags(**{"info:name": self.__class__.__name__})
+
+    def add_callback(self, callback, pre=False):
+        """Register a callback.
+
+        Parameters
+        ----------
+        callback : callable
+            For post callbacks: callback(optimizer, best_params).
+            For pre callbacks: callback(optimizer).
+        pre : bool, default=False
+            If True, callback runs before solve. If False, after.
+        """
+        if pre:
+            self._callbacks_pre_solve.append(callback)
+        else:
+            self._callbacks_post_solve.append(callback)
 
     def get_search_config(self):
         """Get the search configuration.
@@ -76,12 +95,26 @@ class BaseOptimizer(BaseObject):
             The dict ``best_params`` can be used in ``experiment.score`` or
             ``experiment.evaluate`` directly.
         """
+        self._run_callbacks_pre_solve()
+
         experiment = self.get_experiment()
         search_config = self.get_search_config()
 
         best_params = self._solve(experiment, **search_config)
         self.best_params_ = best_params
+        self._run_callbacks_post_solve(best_params)
+
         return best_params
+
+    def _run_callbacks_pre_solve(self):
+        """Run pre-solve callbacks."""
+        for callback in self._callbacks_pre_solve:
+            callback(self)
+
+    def _run_callbacks_post_solve(self, best_params):
+        """Run post-solve callbacks."""
+        for callback in self._callbacks_post_solve:
+            callback(self, best_params)
 
     def _solve(self, experiment, *args, **kwargs):
         """Run the optimization search process.
