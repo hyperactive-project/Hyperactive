@@ -1,0 +1,6 @@
+{% extends "pydata_sphinx_theme/layout.html" %}
+
+{% block extrahead %}
+{{ super() }}
+<meta name="python-version-range" content="{{ python_version_range }}">
+{% endblock %}

@@ -128,6 +128,7 @@ class CmaEsOptimizer(_BaseOptunaAdapter):
         from sklearn.datasets import make_regression
         from sklearn.neural_network import MLPRegressor
 
+        from hyperactive.experiment.bench import Sphere
         from hyperactive.experiment.integrations import SklearnCvExperiment
 
         # Test case 1: Basic continuous parameters (from base)
@@ -165,6 +166,8 @@ class CmaEsOptimizer(_BaseOptunaAdapter):
         )
 
         # Test case 3: High-dimensional continuous space (CMA-ES strength)
+        # Use Sphere benchmark which expects x0, x1, ..., xN params
+        sphere_exp = Sphere(n_dim=6)
         high_dim_continuous = {
             f"x{i}": (-1.0, 1.0)
             for i in range(6)  # 6D continuous optimization
@@ -174,7 +177,7 @@ class CmaEsOptimizer(_BaseOptunaAdapter):
             {
                 "param_space": high_dim_continuous,
                 "n_trials": 12,
-                "experiment": mlp_exp,
+                "experiment": sphere_exp,
                 "sigma0": 0.7,  # Larger initial spread
                 "n_startup_trials": 3,
             }

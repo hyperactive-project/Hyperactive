@@ -16,7 +16,7 @@ package alongside direct interfaces to Optuna and scikit-learn optimizers, suppo
 
 ---
 
-| | [Overview](https://github.com/SimonBlanke/Hyperactive#overview) • [Installation](https://github.com/SimonBlanke/Hyperactive#installation) • [Tutorial](https://nbviewer.org/github/SimonBlanke/hyperactive-tutorial/blob/main/notebooks/hyperactive_tutorial.ipynb) • [API reference](https://simonblanke.github.io/hyperactive-documentation/5.0/) • [Citation](https://github.com/SimonBlanke/Hyperactive#citing-hyperactive) |
+| | [Overview](https://github.com/SimonBlanke/Hyperactive#overview) • [Installation](https://github.com/SimonBlanke/Hyperactive#installation) • [Tutorial](https://nbviewer.org/github/SimonBlanke/hyperactive-tutorial/blob/main/notebooks/hyperactive_tutorial.ipynb) • [API reference](https://hyperactive.readthedocs.io/en/latest/#) • [Citation](https://github.com/SimonBlanke/Hyperactive#citing-hyperactive) |
 |---|---|
 | **Open&#160;Source** | [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![GC.OS Sponsored](https://img.shields.io/badge/GC.OS-Sponsored%20Project-orange.svg?style=flat&colorA=0eac92&colorB=2077b4)](https://gc-os-ai.github.io/) |
 | **Community** | [![Discord](https://img.shields.io/static/v1?logo=discord&label=Discord&message=chat&color=lightgreen)](https://discord.gg/7uKdHfdcJG) [![LinkedIn](https://img.shields.io/static/v1?logo=linkedin&label=LinkedIn&message=news&color=lightblue)](https://www.linkedin.com/company/german-center-for-open-source-ai)  |
