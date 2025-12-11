@@ -59,7 +59,7 @@ build = [
   "wheel",
 ]
 test = [
-  "pytest == 9.0.1",
+  "pytest == 9.0.2",
   "flake8",
   "pytest-cov",
   "pathos",
@@ -71,9 +71,19 @@ test_parallel_backends = [
   "joblib",
   'ray >=2.40.0; python_version < "3.13"',
 ]
+docs = [
+  "myst-parser",
+  "numpydoc",
+  "pydata-sphinx-theme",
+  "Sphinx>=7.0.0,<9.0.0",
+  "sphinx-copybutton",
+  "sphinx-design",
+  "sphinx-issues",
+]
 all_extras = [
   "hyperactive[integrations]",
   "optuna<5",
+  "cmaes",  # Required for CmaEsOptimizer (optuna's CMA-ES sampler)
   "lightning",
 ]
 

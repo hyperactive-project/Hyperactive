@@ -1,0 +1,19 @@
+# Requirements for building Hyperactive documentation
+
+# Core Sphinx and extensions
+sphinx>=7.0.0
+sphinx-autobuild
+sphinx-copybutton
+sphinx-design
+sphinx-issues
+myst-parser
+numpydoc
+
+# Theme
+pydata-sphinx-theme
+
+# For intersphinx linking
+# These need to be importable to build docs
+numpy
+pandas
+scikit-learn

@@ -78,19 +78,19 @@ uninstall:
 	rm -fr build dist *.egg-info
 
 install-test-requirements:
-	python -m pip install .[test]
+	python -m pip install --no-cache-dir .[test]
 
 install-build-requirements:
-	python -m pip install .[build]
+	python -m pip install --no-cache-dir .[build]
 
 install-all-extras:
-	python -m pip install .[all_extras]
+	python -m pip install --no-cache-dir .[all_extras]
 
 install-no-extras-for-test:
-	python -m pip install .[test]
+	python -m pip install --no-cache-dir .[test]
 
 install-all-extras-for-test:
-	python -m pip install .[all_extras,test,test_parallel_backends,sktime-integration]
+	python -m pip install --no-cache-dir .[all_extras,test,test_parallel_backends,sktime-integration]
 
 install-editable:
 	pip install -e .

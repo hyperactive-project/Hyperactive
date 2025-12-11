@@ -1,0 +1,67 @@
+# =============================================================================
+# Draft Changelog Configuration
+# =============================================================================
+#
+# Used by: draft-changelog.yml
+#
+# OUTPUT:
+#   A draft release in GitHub Releases containing:
+#   - Title: v5.1.0 (based on version-resolver)
+#   - Body: Grouped list of PRs (based on categories)
+#
+# =============================================================================
+
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+
+template: |
+  ## What's Changed
+
+  $CHANGES
+
+  **Full Changelog**: https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...v$RESOLVED_VERSION
+
+categories:
+  - title: 'New Features'
+    labels:
+      - 'Feature'
+      - 'enhancement'
+  - title: 'Bug Fixes'
+    labels:
+      - 'Fix'
+      - 'bug'
+      - 'Hotfix'
+  - title: 'Refactoring'
+    labels:
+      - 'Refactor'
+      - 'refactoring'
+  - title: 'Documentation'
+    labels:
+      - 'documentation'
+      - 'docs'
+  - title: 'Maintenance'
+    labels:
+      - 'maintenance'
+      - 'dependencies'
+      - 'Release'
+
+version-resolver:
+  major:
+    labels:
+      - 'major'
+      - 'breaking'
+  minor:
+    labels:
+      - 'minor'
+      - 'Feature'
+  patch:
+    labels:
+      - 'patch'
+      - 'Fix'
+      - 'Hotfix'
+  default: patch
+
+exclude-labels:
+  - 'skip-changelog'
+  - 'duplicate'
+  - 'invalid'
