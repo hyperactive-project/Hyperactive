@@ -21,8 +21,10 @@ class TorchExperiment(BaseExperiment):
 
     Parameters
     ----------
-    datamodule : L.LightningDataModule
-        A PyTorch Lightning DataModule that handles data loading and preparation.
+    data_module : type
+        A PyTorch Lightning DataModule class (not an instance) that
+        handles data loading and preparation. It will be instantiated
+        with hyperparameters during optimization.
     lightning_module : type
         A PyTorch Lightning Module class (not an instance) that will be instantiated
         with hyperparameters during optimization.
@@ -93,20 +95,18 @@ class TorchExperiment(BaseExperiment):
     ...     def val_dataloader(self):
     ...         return DataLoader(self.val, batch_size=self.batch_size)
     >>>
-    >>> datamodule = RandomDataModule(batch_size=16)
-    >>> datamodule.setup()
-    >>>
     >>> # Create Experiment
     >>> experiment = TorchExperiment(
-    ...     datamodule=datamodule,
+    ...     data_module=RandomDataModule,
     ...     lightning_module=SimpleLightningModule,
     ...     trainer_kwargs={'max_epochs': 3},
     ...     objective_metric="val_loss"
     ... )
     >>>
-    >>> params = {"input_dim": 10, "hidden_dim": 16, "lr": 1e-3}
+    >>> lm_params = {"input_dim": 10, "hidden_dim": 16, "lr": 1e-3}
+    >>> dm_params = {"batch_size": 32}
     >>>
-    >>> val_result, metadata = experiment._evaluate(params)
+    >>> val_result, metadata = experiment._evaluate(lm_params, dm_params)
     """
 
     _tags = {
@@ -118,12 +118,12 @@ class TorchExperiment(BaseExperiment):
 
     def __init__(
         self,
-        datamodule,
+        data_module,
         lightning_module,
         trainer_kwargs=None,
         objective_metric: str = "val_loss",
     ):
-        self.datamodule = datamodule
+        self.data_module = data_module
         self.lightning_module = lightning_module
         self.trainer_kwargs = trainer_kwargs or {}
         self.objective_metric = objective_metric
@@ -154,7 +154,7 @@ class TorchExperiment(BaseExperiment):
         sig = inspect.signature(self.lightning_module.__init__)
         return [p for p in sig.parameters.keys() if p != "self"]
 
-    def _evaluate(self, params):
+    def _evaluate(self, lm_params, dm_params):
         """Evaluate the parameters.
 
         Parameters
@@ -172,9 +172,10 @@ class TorchExperiment(BaseExperiment):
         import lightning as L
 
         try:
-            model = self.lightning_module(**params)
+            model = self.lightning_module(**lm_params)
             trainer = L.Trainer(**self._trainer_kwargs)
-            trainer.fit(model, self.datamodule)
+            data = self.data_module(**dm_params)
+            trainer.fit(model, data)
 
             val_result = trainer.callback_metrics.get(self.objective_metric)
             metadata = {}
@@ -195,7 +196,7 @@ class TorchExperiment(BaseExperiment):
             return val_result, metadata
 
         except Exception as e:
-            print(f"Training failed with params {params}: {e}")
+            print(f"Training failed with params {lm_params}: {e}")
             return np.float64(float("inf")), {}
 
     @classmethod
@@ -265,10 +266,8 @@ class TorchExperiment(BaseExperiment):
             def val_dataloader(self):
                 return DataLoader(self.val, batch_size=self.batch_size)
 
-        datamodule = RandomDataModule(batch_size=16)
-
         params = {
-            "datamodule": datamodule,
+            "data_module": RandomDataModule,
             "lightning_module": SimpleLightningModule,
             "trainer_kwargs": {
                 "max_epochs": 1,
@@ -339,10 +338,8 @@ class TorchExperiment(BaseExperiment):
             def val_dataloader(self):
                 return DataLoader(self.val, batch_size=self.batch_size)
 
-        datamodule2 = RegressionDataModule(batch_size=16, num_samples=150)
-
         params2 = {
-            "datamodule": datamodule2,
+            "data_module": RegressionDataModule,
             "lightning_module": RegressionModule,
             "trainer_kwargs": {
                 "max_epochs": 1,
@@ -368,6 +365,12 @@ class TorchExperiment(BaseExperiment):
         list of dict
             The parameters to be used for scoring.
         """
-        score_params1 = {"input_dim": 10, "hidden_dim": 20, "lr": 0.001}
-        score_params2 = {"num_layers": 3, "hidden_size": 64, "dropout": 0.2}
-        return [score_params1, score_params2]
+        score_lm_params1 = {"input_dim": 10, "hidden_dim": 20, "lr": 0.001}
+        score_lm_params2 = {"num_layers": 3, "hidden_size": 64, "dropout": 0.2}
+        score_dm_params1 = {"batch_size": 16}
+        score_dm_params2 = {"batch_size": 8, "num_samples": 200}
+
+        return [
+            {"lm_params": score_lm_params1, "dm_params": score_dm_params1},
+            {"lm_params": score_lm_params2, "dm_params": score_dm_params2},
+        ]
