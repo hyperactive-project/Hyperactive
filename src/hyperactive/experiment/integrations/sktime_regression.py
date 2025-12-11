@@ -5,6 +5,7 @@
 import numpy as np
 
 from hyperactive.base import BaseExperiment
+from hyperactive.experiment.integrations._skl_metrics import _coerce_to_scorer_and_sign
 
 
 class SktimeRegressionExperiment(BaseExperiment):
@@ -130,31 +131,30 @@ class SktimeRegressionExperiment(BaseExperiment):
 
         super().__init__()
 
-        self._cv = cv
-        if scoring is None:
-            from sktime.performance_metrics.forecasting import (
-                MeanAbsolutePercentageError,
-            )
-
-            self._scoring = MeanAbsolutePercentageError(symmetric=True)
-        else:
-            self._scoring = scoring
-
-        if scoring is None or (
-            hasattr(scoring, "get_tag") and scoring.get_tag("lower_is_better", False)
-        ):
-            higher_or_lower_better = "lower"
-        else:
-            higher_or_lower_better = "higher"
+        # normalize scoring and infer optimization direction
+        self._scoring, _sign = _coerce_to_scorer_and_sign(scoring, "regressor")
+        higher_or_lower_better = "higher" if _sign == 1 else "lower"
         self.set_tags(**{"property:higher_or_lower_is_better": higher_or_lower_better})
 
-    def _get_model_parameters(self):
-        """Return the parameters of the model.
+        # default handling for cv
+        if isinstance(cv, int):
+            from sklearn.model_selection import KFold
+
+            self._cv = KFold(n_splits=cv, shuffle=True)
+        elif cv is None:
+            from sklearn.model_selection import KFold
+
+            self._cv = KFold(n_splits=3, shuffle=True)
+        else:
+            self._cv = cv
+
+    def _paramnames(self):
+        """Return the parameter names of the search.
 
         Returns
         -------
-        list
-            The parameters of the model.
+        list of str
+            The parameter names of the search parameters.
         """
         return list(self.estimator.get_params().keys())
 
@@ -180,7 +180,7 @@ class SktimeRegressionExperiment(BaseExperiment):
         # determine metric function for sktime.evaluate via centralized coerce helper
         metric_func = getattr(self._scoring, "_metric_func", None)
         if metric_func is None:
-            # very defensive fallback (should not happen due to _coerce_to_scorer)
+            # defensive fallback; _coerce_to_scorer should always attach one
             from sklearn.metrics import (
                 mean_squared_error as metric_func,  # type: ignore
             )
