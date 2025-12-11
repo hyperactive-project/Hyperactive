@@ -30,6 +30,8 @@ class TorchExperiment(BaseExperiment):
         with hyperparameters during optimization.
     trainer_kwargs : dict, optional (default=None)
         A dictionary of keyword arguments to pass to the PyTorch Lightning Trainer.
+    dm_kwargs : dict, optional (default=None)
+        A dictionary of keyword arguments to pass to the Data Module upon instantiation.
     objective_metric : str, optional (default='val_loss')
         The metric used to evaluate the model's performance. This should correspond
         to a metric logged in the LightningModule during validation.
@@ -100,13 +102,13 @@ class TorchExperiment(BaseExperiment):
     ...     data_module=RandomDataModule,
     ...     lightning_module=SimpleLightningModule,
     ...     trainer_kwargs={'max_epochs': 3},
+    ...     dm_kwargs={'batch_size': 16},
     ...     objective_metric="val_loss"
     ... )
     >>>
-    >>> lm_params = {"input_dim": 10, "hidden_dim": 16, "lr": 1e-3}
-    >>> dm_params = {"batch_size": 32}
+    >>> params = {"input_dim": 10, "hidden_dim": 16, "lr": 1e-3}
     >>>
-    >>> val_result, metadata = experiment._evaluate(lm_params, dm_params)
+    >>> val_result, metadata = experiment._evaluate(params)
     """
 
     _tags = {
@@ -121,11 +123,13 @@ class TorchExperiment(BaseExperiment):
         data_module,
         lightning_module,
         trainer_kwargs=None,
+        dm_kwargs=None,
         objective_metric: str = "val_loss",
     ):
         self.data_module = data_module
         self.lightning_module = lightning_module
         self.trainer_kwargs = trainer_kwargs or {}
+        self.dm_kwargs = dm_kwargs or {}
         self.objective_metric = objective_metric
 
         super().__init__()
@@ -154,7 +158,7 @@ class TorchExperiment(BaseExperiment):
         sig = inspect.signature(self.lightning_module.__init__)
         return [p for p in sig.parameters.keys() if p != "self"]
 
-    def _evaluate(self, lm_params, dm_params):
+    def _evaluate(self, params):
         """Evaluate the parameters.
 
         Parameters
@@ -172,9 +176,9 @@ class TorchExperiment(BaseExperiment):
         import lightning as L
 
         try:
-            model = self.lightning_module(**lm_params)
+            model = self.lightning_module(**params)
             trainer = L.Trainer(**self._trainer_kwargs)
-            data = self.data_module(**dm_params)
+            data = self.data_module(**self.dm_kwargs)
             trainer.fit(model, data)
 
             val_result = trainer.callback_metrics.get(self.objective_metric)
@@ -196,9 +200,7 @@ class TorchExperiment(BaseExperiment):
             return val_result, metadata
 
         except Exception as e:
-            print(
-                f"Training failed (lm_params={lm_params}, dm_params={dm_params}): {e}"
-            )
+            print(f"Training failed with params {params}: {e}")
             return np.float64(float("inf")), {}
 
     @classmethod
@@ -277,6 +279,7 @@ class TorchExperiment(BaseExperiment):
                 "enable_model_summary": False,
                 "logger": False,
             },
+            "dm_kwargs": {"batch_size": 16},
             "objective_metric": "val_loss",
         }
 
@@ -349,6 +352,7 @@ class TorchExperiment(BaseExperiment):
                 "enable_model_summary": False,
                 "logger": False,
             },
+            "dm_kwargs": {"batch_size": 8, "num_samples": 200},
             "objective_metric": "val_loss",
         }
 
@@ -367,12 +371,7 @@ class TorchExperiment(BaseExperiment):
         list of dict
             The parameters to be used for scoring.
         """
-        score_lm_params1 = {"input_dim": 10, "hidden_dim": 20, "lr": 0.001}
-        score_lm_params2 = {"num_layers": 3, "hidden_size": 64, "dropout": 0.2}
-        score_dm_params1 = {"batch_size": 16}
-        score_dm_params2 = {"batch_size": 8, "num_samples": 200}
+        score_params1 = {"input_dim": 10, "hidden_dim": 20, "lr": 0.001}
+        score_params2 = {"num_layers": 3, "hidden_size": 64, "dropout": 0.2}
 
-        return [
-            {"lm_params": score_lm_params1, "dm_params": score_dm_params1},
-            {"lm_params": score_lm_params2, "dm_params": score_dm_params2},
-        ]
+        return [score_params1, score_params2]
