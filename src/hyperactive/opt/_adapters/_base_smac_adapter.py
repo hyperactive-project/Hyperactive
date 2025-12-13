@@ -413,17 +413,32 @@ class _BaseSMACAdapter(BaseOptimizer):
         -------
         list of dict
             List of parameter configurations for testing.
+
+        Notes
+        -----
+        Test parameter sets cover:
+
+        * Float tuple ranges (continuous parameters)
+        * Integer tuple ranges (discrete parameters)
+        * Categorical lists (string and numeric)
+        * Boolean categorical parameters
+        * Mixed parameter types (float + int + categorical)
+        * Warm start initialization
+        * Random state for reproducibility
+        * Deterministic vs non-deterministic settings
         """
         from sklearn.datasets import load_iris
         from sklearn.svm import SVC
 
+        from hyperactive.experiment.bench import Ackley
         from hyperactive.experiment.integrations import SklearnCvExperiment
 
         X, y = load_iris(return_X_y=True)
         sklearn_exp = SklearnCvExperiment(estimator=SVC(), X=X, y=y)
+        ackley_exp = Ackley.create_test_instance()
 
-        # Test with tuple ranges
-        params_tuples = {
+        # Test 1: Float tuple ranges (continuous parameters)
+        params_float_tuples = {
             "param_space": {
                 "C": (0.01, 10.0),
                 "gamma": (0.0001, 1.0),
@@ -432,8 +447,8 @@ class _BaseSMACAdapter(BaseOptimizer):
             "experiment": sklearn_exp,
         }
 
-        # Test with discrete lists
-        params_lists = {
+        # Test 2: Categorical lists (discrete values)
+        params_categorical = {
             "param_space": {
                 "C": [0.01, 0.1, 1.0, 10.0],
                 "gamma": [0.0001, 0.001, 0.01, 0.1],
@@ -442,17 +457,151 @@ class _BaseSMACAdapter(BaseOptimizer):
             "experiment": sklearn_exp,
         }
 
-        # Test with mixed types
-        from hyperactive.experiment.bench import Ackley
+        # Test 3: Integer tuple ranges
+        params_integer_tuples = {
+            "param_space": {
+                "x0": (-5, 5),
+                "x1": (-5, 5),
+            },
+            "n_iter": 10,
+            "experiment": ackley_exp,
+        }
 
-        ackley_exp = Ackley.create_test_instance()
-        params_bench = {
+        # Test 4: Mixed parameter types (float + categorical)
+        params_mixed_float_cat = {
+            "param_space": {
+                "C": (0.01, 100.0),
+                "gamma": (0.0001, 1.0),
+                "kernel": ["rbf", "linear", "poly"],
+            },
+            "n_iter": 10,
+            "experiment": sklearn_exp,
+        }
+
+        # Test 5: Mixed parameter types (int + float + categorical)
+        params_mixed_all = {
+            "param_space": {
+                "x0": (-5.0, 5.0),
+                "x1": [1, 2, 3, 4, 5],
+            },
+            "n_iter": 10,
+            "experiment": ackley_exp,
+        }
+
+        # Test 6: Boolean categorical parameters
+        params_boolean_cat = {
+            "param_space": {
+                "C": (0.1, 10.0),
+                "shrinking": [True, False],
+            },
+            "n_iter": 10,
+            "experiment": sklearn_exp,
+        }
+
+        # Test 7: String categorical with many options
+        params_string_cat = {
+            "param_space": {
+                "C": (0.1, 10.0),
+                "kernel": ["rbf", "linear", "poly", "sigmoid"],
+            },
+            "n_iter": 10,
+            "experiment": sklearn_exp,
+        }
+
+        # Test 8: With random_state for reproducibility
+        params_random_state = {
             "param_space": {
                 "x0": (-5.0, 5.0),
                 "x1": (-5.0, 5.0),
             },
-            "n_iter": 20,
+            "n_iter": 15,
+            "random_state": 42,
             "experiment": ackley_exp,
         }
 
-        return [params_tuples, params_lists, params_bench]
+        # Test 9: With deterministic=False (stochastic objective)
+        params_non_deterministic = {
+            "param_space": {
+                "x0": (-5.0, 5.0),
+                "x1": (-5.0, 5.0),
+            },
+            "n_iter": 10,
+            "deterministic": False,
+            "experiment": ackley_exp,
+        }
+
+        # Test 10: With warm_start initialization
+        params_warm_start = {
+            "param_space": {
+                "x0": (-5.0, 5.0),
+                "x1": (-5.0, 5.0),
+            },
+            "n_iter": 15,
+            "initialize": {"warm_start": [{"x0": 0.0, "x1": 0.0}]},
+            "experiment": ackley_exp,
+        }
+
+        # Test 11: Multiple warm start points
+        params_multi_warm_start = {
+            "param_space": {
+                "x0": (-5.0, 5.0),
+                "x1": (-5.0, 5.0),
+            },
+            "n_iter": 15,
+            "initialize": {
+                "warm_start": [
+                    {"x0": 0.0, "x1": 0.0},
+                    {"x0": 1.0, "x1": -1.0},
+                    {"x0": -2.0, "x1": 2.0},
+                ]
+            },
+            "random_state": 123,
+            "experiment": ackley_exp,
+        }
+
+        # Test 12: Large integer range
+        params_large_int_range = {
+            "param_space": {
+                "x0": (-100, 100),
+                "x1": (0, 1000),
+            },
+            "n_iter": 10,
+            "experiment": ackley_exp,
+        }
+
+        # Test 13: Small float range (high precision)
+        params_small_float_range = {
+            "param_space": {
+                "x0": (-0.001, 0.001),
+                "x1": (-0.001, 0.001),
+            },
+            "n_iter": 10,
+            "experiment": ackley_exp,
+        }
+
+        # Test 14: Asymmetric ranges
+        params_asymmetric = {
+            "param_space": {
+                "x0": (-10.0, 2.0),
+                "x1": (0.5, 100.0),
+            },
+            "n_iter": 10,
+            "experiment": ackley_exp,
+        }
+
+        return [
+            params_float_tuples,
+            params_categorical,
+            params_integer_tuples,
+            params_mixed_float_cat,
+            params_mixed_all,
+            params_boolean_cat,
+            params_string_cat,
+            params_random_state,
+            params_non_deterministic,
+            params_warm_start,
+            params_multi_warm_start,
+            params_large_int_range,
+            params_small_float_range,
+            params_asymmetric,
+        ]
