@@ -200,25 +200,240 @@ class SmacGaussianProcess(_BaseSMACAdapter):
         list of dict
             List of parameter configurations for testing.
 
+        Notes
+        -----
+        SmacGaussianProcess tests focus on continuous parameter spaces,
+        where Gaussian Processes excel. Tests cover:
+
+        * Different dimensional spaces (1D to 4D)
+        * Various range sizes (narrow, wide, asymmetric)
+        * Sample efficiency (fewer iterations)
+        * Reproducibility with random_state
+        * sklearn continuous hyperparameter optimization
+
+        Categorical parameters are intentionally excluded since GPs
+        work best with continuous spaces. Use SmacRandomForest for
+        mixed or categorical parameter spaces.
+
         Examples
         --------
         >>> params = SmacGaussianProcess.get_test_params()
         >>> len(params) >= 1
         True
         """
-        # Only use continuous parameters for GP-based optimization
+        from sklearn.datasets import load_iris, load_wine
+        from sklearn.linear_model import Ridge
+        from sklearn.svm import SVR
+
         from hyperactive.experiment.bench import Ackley
+        from hyperactive.experiment.integrations import SklearnCvExperiment
 
-        ackley_exp = Ackley.create_test_instance()
+        # Create Ackley instances with different dimensions
+        ackley_1d = Ackley(d=1)
+        ackley_2d = Ackley.create_test_instance()  # default is 2D
+        ackley_3d = Ackley(d=3)
+        ackley_4d = Ackley(d=4)
 
-        params_continuous = {
+        X_iris, y_iris = load_iris(return_X_y=True)
+        X_wine, y_wine = load_wine(return_X_y=True)
+
+        # Test GP-1: Basic 2D continuous space
+        params_2d_basic = {
             "param_space": {
                 "x0": (-5.0, 5.0),
                 "x1": (-5.0, 5.0),
             },
             "n_iter": 20,
-            "experiment": ackley_exp,
+            "experiment": ackley_2d,
             "random_state": 42,
         }
 
-        return [params_continuous]
+        # Test GP-2: 1D continuous space (simplest case)
+        params_1d = {
+            "param_space": {
+                "x0": (-10.0, 10.0),
+            },
+            "n_iter": 15,
+            "experiment": ackley_1d,
+            "random_state": 42,
+        }
+
+        # Test GP-3: 3D continuous space
+        params_3d = {
+            "param_space": {
+                "x0": (-5.0, 5.0),
+                "x1": (-5.0, 5.0),
+                "x2": (-5.0, 5.0),
+            },
+            "n_iter": 25,
+            "experiment": ackley_3d,
+            "random_state": 42,
+        }
+
+        # Test GP-4: 4D continuous space (GP limit for efficiency)
+        params_4d = {
+            "param_space": {
+                "x0": (-3.0, 3.0),
+                "x1": (-3.0, 3.0),
+                "x2": (-3.0, 3.0),
+                "x3": (-3.0, 3.0),
+            },
+            "n_iter": 30,
+            "experiment": ackley_4d,
+            "random_state": 42,
+        }
+
+        # Test GP-5: Narrow range (high precision optimization)
+        params_narrow = {
+            "param_space": {
+                "x0": (-0.5, 0.5),
+                "x1": (-0.5, 0.5),
+            },
+            "n_iter": 15,
+            "experiment": ackley_2d,
+            "random_state": 42,
+        }
+
+        # Test GP-6: Wide range
+        params_wide = {
+            "param_space": {
+                "x0": (-100.0, 100.0),
+                "x1": (-100.0, 100.0),
+            },
+            "n_iter": 20,
+            "experiment": ackley_2d,
+            "random_state": 42,
+        }
+
+        # Test GP-7: Asymmetric ranges
+        params_asymmetric = {
+            "param_space": {
+                "x0": (-10.0, 2.0),
+                "x1": (0.001, 50.0),
+            },
+            "n_iter": 20,
+            "experiment": ackley_2d,
+            "random_state": 42,
+        }
+
+        # Test GP-8: Very small range (local optimization)
+        params_small = {
+            "param_space": {
+                "x0": (-0.01, 0.01),
+                "x1": (-0.01, 0.01),
+            },
+            "n_iter": 15,
+            "experiment": ackley_2d,
+            "random_state": 42,
+        }
+
+        # Test GP-9: Sample efficient (fewer iterations)
+        params_sample_efficient = {
+            "param_space": {
+                "x0": (-5.0, 5.0),
+                "x1": (-5.0, 5.0),
+            },
+            "n_iter": 10,
+            "experiment": ackley_2d,
+            "random_state": 42,
+        }
+
+        # Test GP-10: With reproducibility test (different seeds)
+        params_seed_42 = {
+            "param_space": {
+                "x0": (-5.0, 5.0),
+                "x1": (-5.0, 5.0),
+            },
+            "n_iter": 15,
+            "random_state": 42,
+            "experiment": ackley_2d,
+        }
+
+        # Test GP-11: Different random state
+        params_seed_123 = {
+            "param_space": {
+                "x0": (-5.0, 5.0),
+                "x1": (-5.0, 5.0),
+            },
+            "n_iter": 15,
+            "random_state": 123,
+            "experiment": ackley_2d,
+        }
+
+        # Test GP-12: Sklearn SVR with continuous params only
+        svr_exp = SklearnCvExperiment(estimator=SVR(), X=X_iris, y=y_iris)
+        params_svr = {
+            "param_space": {
+                "C": (0.01, 100.0),
+                "gamma": (0.0001, 1.0),
+                "epsilon": (0.01, 1.0),
+            },
+            "n_iter": 15,
+            "experiment": svr_exp,
+            "random_state": 42,
+        }
+
+        # Test GP-13: Sklearn Ridge regression (simple continuous)
+        ridge_exp = SklearnCvExperiment(estimator=Ridge(), X=X_wine, y=y_wine)
+        params_ridge = {
+            "param_space": {
+                "alpha": (0.001, 100.0),
+            },
+            "n_iter": 15,
+            "experiment": ridge_exp,
+            "random_state": 42,
+        }
+
+        # Test GP-14: With warm_start
+        params_warm_start = {
+            "param_space": {
+                "x0": (-5.0, 5.0),
+                "x1": (-5.0, 5.0),
+            },
+            "n_iter": 20,
+            "initialize": {"warm_start": [{"x0": 0.0, "x1": 0.0}]},
+            "experiment": ackley_2d,
+            "random_state": 42,
+        }
+
+        # Test GP-15: Non-deterministic setting
+        params_non_det = {
+            "param_space": {
+                "x0": (-5.0, 5.0),
+                "x1": (-5.0, 5.0),
+            },
+            "n_iter": 15,
+            "deterministic": False,
+            "experiment": ackley_2d,
+            "random_state": 42,
+        }
+
+        # Test GP-16: Positive-only range
+        params_positive = {
+            "param_space": {
+                "x0": (0.1, 10.0),
+                "x1": (0.1, 10.0),
+            },
+            "n_iter": 15,
+            "experiment": ackley_2d,
+            "random_state": 42,
+        }
+
+        return [
+            params_2d_basic,
+            params_1d,
+            params_3d,
+            params_4d,
+            params_narrow,
+            params_wide,
+            params_asymmetric,
+            params_small,
+            params_sample_efficient,
+            params_seed_42,
+            params_seed_123,
+            params_svr,
+            params_ridge,
+            params_warm_start,
+            params_non_det,
+            params_positive,
+        ]
