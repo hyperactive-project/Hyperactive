@@ -233,6 +233,15 @@ class SmacRandomForest(_BaseSMACAdapter):
         list of dict
             List of parameter configurations for testing.
 
+        Notes
+        -----
+        In addition to base class tests, SmacRandomForest adds:
+
+        * Different n_initial_points values (controls exploration)
+        * Mixed parameter spaces (RF handles categoricals natively)
+        * Sklearn hyperparameter optimization with many param types
+        * Higher dimensional spaces
+
         Examples
         --------
         >>> params = SmacRandomForest.get_test_params()
@@ -241,10 +250,137 @@ class SmacRandomForest(_BaseSMACAdapter):
         """
         params = super().get_test_params(parameter_set)
 
-        # Add test with custom parameters
-        from hyperactive.experiment.bench import Ackley
+        from sklearn.datasets import load_iris, load_wine
+        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.svm import SVC
 
-        ackley_exp = Ackley.create_test_instance()
+        from hyperactive.experiment.bench import Ackley
+        from hyperactive.experiment.integrations import SklearnCvExperiment
+
+        # Create Ackley instances with different dimensions
+        ackley_exp = Ackley.create_test_instance()  # 2D
+        ackley_3d = Ackley(d=3)
+        ackley_5d = Ackley(d=5)
+
+        X_iris, y_iris = load_iris(return_X_y=True)
+        X_wine, y_wine = load_wine(return_X_y=True)
+
+        # Test RF-1: Default n_initial_points
+        params.append(
+            {
+                "param_space": {
+                    "x0": (-5.0, 5.0),
+                    "x1": (-5.0, 5.0),
+                },
+                "n_iter": 20,
+                "n_initial_points": 10,
+                "experiment": ackley_exp,
+                "random_state": 42,
+            }
+        )
+
+        # Test RF-2: Small n_initial_points (more exploitation)
+        params.append(
+            {
+                "param_space": {
+                    "x0": (-5.0, 5.0),
+                    "x1": (-5.0, 5.0),
+                },
+                "n_iter": 15,
+                "n_initial_points": 3,
+                "experiment": ackley_exp,
+                "random_state": 42,
+            }
+        )
+
+        # Test RF-3: Large n_initial_points (more exploration)
+        params.append(
+            {
+                "param_space": {
+                    "x0": (-5.0, 5.0),
+                    "x1": (-5.0, 5.0),
+                },
+                "n_iter": 25,
+                "n_initial_points": 15,
+                "experiment": ackley_exp,
+                "random_state": 42,
+            }
+        )
+
+        # Test RF-4: Mixed params - RF handles categoricals natively
+        sklearn_exp_svc = SklearnCvExperiment(estimator=SVC(), X=X_iris, y=y_iris)
+        params.append(
+            {
+                "param_space": {
+                    "C": (0.01, 100.0),
+                    "gamma": (0.0001, 1.0),
+                    "kernel": ["rbf", "linear", "poly"],
+                    "shrinking": [True, False],
+                },
+                "n_iter": 15,
+                "n_initial_points": 5,
+                "experiment": sklearn_exp_svc,
+                "random_state": 42,
+            }
+        )
+
+        # Test RF-5: Comprehensive sklearn RF hyperparameter optimization
+        sklearn_exp_rf = SklearnCvExperiment(
+            estimator=RandomForestClassifier(random_state=42),
+            X=X_wine,
+            y=y_wine,
+            cv=3,
+        )
+        params.append(
+            {
+                "param_space": {
+                    "n_estimators": (10, 100),
+                    "max_depth": (1, 15),
+                    "min_samples_split": (2, 10),
+                    "min_samples_leaf": (1, 5),
+                    "max_features": ["sqrt", "log2"],
+                    "bootstrap": [True, False],
+                },
+                "n_iter": 15,
+                "n_initial_points": 5,
+                "experiment": sklearn_exp_rf,
+                "random_state": 42,
+            }
+        )
+
+        # Test RF-6: Integer + float + categorical combined (numeric categorical)
+        params.append(
+            {
+                "param_space": {
+                    "x0": (-5.0, 5.0),
+                    "x1": (-10, 10),
+                    "x2": [-3.0, -1.0, 0.0, 1.0, 3.0],
+                },
+                "n_iter": 15,
+                "n_initial_points": 5,
+                "experiment": ackley_3d,
+                "random_state": 42,
+            }
+        )
+
+        # Test RF-7: Higher dimensional space (RF scales well)
+        params.append(
+            {
+                "param_space": {
+                    "x0": (-5.0, 5.0),
+                    "x1": (-5.0, 5.0),
+                    "x2": (-5.0, 5.0),
+                    "x3": (-5.0, 5.0),
+                    "x4": (-5.0, 5.0),
+                },
+                "n_iter": 20,
+                "n_initial_points": 10,
+                "experiment": ackley_5d,
+                "random_state": 42,
+            }
+        )
+
+        # Test RF-8: With warm_start and n_initial_points
         params.append(
             {
                 "param_space": {
@@ -253,7 +389,24 @@ class SmacRandomForest(_BaseSMACAdapter):
                 },
                 "n_iter": 20,
                 "n_initial_points": 5,
+                "initialize": {"warm_start": [{"x0": 0.0, "x1": 0.0}]},
                 "experiment": ackley_exp,
+                "random_state": 42,
+            }
+        )
+
+        # Test RF-9: Many categorical options
+        params.append(
+            {
+                "param_space": {
+                    "C": (0.1, 10.0),
+                    "kernel": ["rbf", "linear", "poly", "sigmoid"],
+                    "degree": [2, 3, 4, 5],
+                    "gamma": ["scale", "auto"],
+                },
+                "n_iter": 15,
+                "n_initial_points": 5,
+                "experiment": sklearn_exp_svc,
                 "random_state": 42,
             }
         )
