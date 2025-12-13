@@ -68,6 +68,9 @@ sktime-integration = [
   "skpro",
   'sktime; python_version < "3.14"',
 ]
+smac = [
+  "smac>=2.0.0",
+]
 build = [
   "setuptools",
   "build",
@@ -97,6 +100,7 @@ docs = [
 ]
 all_extras = [
   "hyperactive[integrations]",
+  "hyperactive[smac]",
   "optuna<5",
   "cmaes",  # Required for CmaEsOptimizer (optuna's CMA-ES sampler)
   "lightning",
