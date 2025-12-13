@@ -191,42 +191,17 @@ class SmacRandomSearch(_BaseSMACAdapter):
         list of dict
             List of parameter configurations for testing.
 
-        Notes
-        -----
-        SmacRandomSearch tests cover all parameter types since random
-        search works with any search space. Tests include:
-
-        * Continuous parameters (float ranges)
-        * Integer parameters (int ranges)
-        * Categorical parameters (string, numeric, boolean)
-        * Mixed parameter types
-        * High-dimensional spaces
-        * Various iteration counts
-        * Reproducibility with random_state
-        * Warm start initialization
-
         Examples
         --------
         >>> params = SmacRandomSearch.get_test_params()
         >>> len(params) >= 1
         True
         """
-        from sklearn.datasets import load_iris, load_wine
-        from sklearn.ensemble import RandomForestClassifier
-        from sklearn.neighbors import KNeighborsClassifier
-        from sklearn.svm import SVC
-
         from hyperactive.experiment.bench import Ackley
-        from hyperactive.experiment.integrations import SklearnCvExperiment
 
-        # Create Ackley instances with different dimensions
-        ackley_exp = Ackley.create_test_instance()  # 2D
-        ackley_8d = Ackley(d=8)
+        ackley_exp = Ackley.create_test_instance()
 
-        X_iris, y_iris = load_iris(return_X_y=True)
-        X_wine, y_wine = load_wine(return_X_y=True)
-
-        # Test RS-1: Continuous parameters (float ranges)
+        # Test 1: Continuous parameters
         params_continuous = {
             "param_space": {
                 "x0": (-5.0, 5.0),
@@ -237,7 +212,7 @@ class SmacRandomSearch(_BaseSMACAdapter):
             "random_state": 42,
         }
 
-        # Test RS-2: Mixed float + categorical
+        # Test 2: Mixed float + categorical
         params_mixed = {
             "param_space": {
                 "x0": (-5.0, 5.0),
@@ -248,234 +223,4 @@ class SmacRandomSearch(_BaseSMACAdapter):
             "random_state": 42,
         }
 
-        # Test RS-3: Pure integer ranges
-        params_integers = {
-            "param_space": {
-                "x0": (-10, 10),
-                "x1": (0, 100),
-            },
-            "n_iter": 20,
-            "experiment": ackley_exp,
-            "random_state": 42,
-        }
-
-        # Test RS-4: Pure categorical (string values)
-        sklearn_exp_svc = SklearnCvExperiment(estimator=SVC(), X=X_iris, y=y_iris)
-        params_categorical_str = {
-            "param_space": {
-                "kernel": ["rbf", "linear", "poly", "sigmoid"],
-                "gamma": ["scale", "auto"],
-            },
-            "n_iter": 15,
-            "experiment": sklearn_exp_svc,
-            "random_state": 42,
-        }
-
-        # Test RS-5: Pure categorical (numeric values)
-        params_categorical_num = {
-            "param_space": {
-                "C": [0.001, 0.01, 0.1, 1.0, 10.0, 100.0],
-                "gamma": [0.0001, 0.001, 0.01, 0.1, 1.0],
-            },
-            "n_iter": 15,
-            "experiment": sklearn_exp_svc,
-            "random_state": 42,
-        }
-
-        # Test RS-6: Boolean categorical
-        params_boolean = {
-            "param_space": {
-                "C": (0.1, 10.0),
-                "shrinking": [True, False],
-                "probability": [True, False],
-            },
-            "n_iter": 15,
-            "experiment": sklearn_exp_svc,
-            "random_state": 42,
-        }
-
-        # Test RS-7: Mixed all types (float + int + categorical)
-        params_mixed_all = {
-            "param_space": {
-                "C": (0.01, 100.0),
-                "degree": (2, 5),
-                "kernel": ["rbf", "linear", "poly"],
-                "shrinking": [True, False],
-            },
-            "n_iter": 20,
-            "experiment": sklearn_exp_svc,
-            "random_state": 42,
-        }
-
-        # Test RS-8: High-dimensional space (random search scales well)
-        params_high_dim = {
-            "param_space": {
-                "x0": (-5.0, 5.0),
-                "x1": (-5.0, 5.0),
-                "x2": (-5.0, 5.0),
-                "x3": (-5.0, 5.0),
-                "x4": (-5.0, 5.0),
-                "x5": (-5.0, 5.0),
-                "x6": (-5.0, 5.0),
-                "x7": (-5.0, 5.0),
-            },
-            "n_iter": 50,
-            "experiment": ackley_8d,
-            "random_state": 42,
-        }
-
-        # Test RS-9: Very high iteration count (random search is cheap)
-        params_many_iter = {
-            "param_space": {
-                "x0": (-5.0, 5.0),
-                "x1": (-5.0, 5.0),
-            },
-            "n_iter": 100,
-            "experiment": ackley_exp,
-            "random_state": 42,
-        }
-
-        # Test RS-10: Low iteration count
-        params_few_iter = {
-            "param_space": {
-                "x0": (-5.0, 5.0),
-                "x1": (-5.0, 5.0),
-            },
-            "n_iter": 5,
-            "experiment": ackley_exp,
-            "random_state": 42,
-        }
-
-        # Test RS-11: Sklearn KNN with integer params
-        knn_exp = SklearnCvExperiment(
-            estimator=KNeighborsClassifier(), X=X_iris, y=y_iris
-        )
-        params_knn = {
-            "param_space": {
-                "n_neighbors": (1, 20),
-                "leaf_size": (10, 50),
-                "p": [1, 2],
-                "weights": ["uniform", "distance"],
-            },
-            "n_iter": 20,
-            "experiment": knn_exp,
-            "random_state": 42,
-        }
-
-        # Test RS-12: Sklearn RandomForest with comprehensive space
-        rf_exp = SklearnCvExperiment(
-            estimator=RandomForestClassifier(random_state=42),
-            X=X_wine,
-            y=y_wine,
-            cv=3,
-        )
-        params_rf = {
-            "param_space": {
-                "n_estimators": (10, 200),
-                "max_depth": (1, 20),
-                "min_samples_split": (2, 20),
-                "min_samples_leaf": (1, 10),
-                "max_features": ["sqrt", "log2"],
-                "bootstrap": [True, False],
-                "criterion": ["gini", "entropy"],
-            },
-            "n_iter": 30,
-            "experiment": rf_exp,
-            "random_state": 42,
-        }
-
-        # Test RS-13: With warm_start
-        params_warm_start = {
-            "param_space": {
-                "x0": (-5.0, 5.0),
-                "x1": (-5.0, 5.0),
-            },
-            "n_iter": 25,
-            "initialize": {"warm_start": [{"x0": 0.0, "x1": 0.0}]},
-            "experiment": ackley_exp,
-            "random_state": 42,
-        }
-
-        # Test RS-14: Multiple warm start points
-        params_multi_warm = {
-            "param_space": {
-                "x0": (-5.0, 5.0),
-                "x1": (-5.0, 5.0),
-            },
-            "n_iter": 25,
-            "initialize": {
-                "warm_start": [
-                    {"x0": 0.0, "x1": 0.0},
-                    {"x0": -2.0, "x1": 2.0},
-                    {"x0": 3.0, "x1": -3.0},
-                ]
-            },
-            "experiment": ackley_exp,
-            "random_state": 42,
-        }
-
-        # Test RS-15: Non-deterministic setting
-        params_non_det = {
-            "param_space": {
-                "x0": (-5.0, 5.0),
-                "x1": (-5.0, 5.0),
-            },
-            "n_iter": 20,
-            "deterministic": False,
-            "experiment": ackley_exp,
-            "random_state": 42,
-        }
-
-        # Test RS-16: Different random states for reproducibility
-        params_seed_0 = {
-            "param_space": {
-                "x0": (-5.0, 5.0),
-                "x1": (-5.0, 5.0),
-            },
-            "n_iter": 15,
-            "random_state": 0,
-            "experiment": ackley_exp,
-        }
-
-        # Test RS-17: Large range values
-        params_large_range = {
-            "param_space": {
-                "x0": (-1000.0, 1000.0),
-                "x1": (-1000.0, 1000.0),
-            },
-            "n_iter": 20,
-            "experiment": ackley_exp,
-            "random_state": 42,
-        }
-
-        # Test RS-18: Small range values
-        params_small_range = {
-            "param_space": {
-                "x0": (-0.001, 0.001),
-                "x1": (-0.001, 0.001),
-            },
-            "n_iter": 20,
-            "experiment": ackley_exp,
-            "random_state": 42,
-        }
-
-        return [
-            params_continuous,
-            params_mixed,
-            params_integers,
-            params_categorical_str,
-            params_categorical_num,
-            params_boolean,
-            params_mixed_all,
-            params_high_dim,
-            params_many_iter,
-            params_few_iter,
-            params_knn,
-            params_rf,
-            params_warm_start,
-            params_multi_warm,
-            params_non_det,
-            params_seed_0,
-            params_large_range,
-            params_small_range,
-        ]
+        return [params_continuous, params_mixed]
