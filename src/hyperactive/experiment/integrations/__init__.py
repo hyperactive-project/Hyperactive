@@ -8,6 +8,9 @@ from hyperactive.experiment.integrations.skpro_probareg import (
 from hyperactive.experiment.integrations.sktime_classification import (
     SktimeClassificationExperiment,
 )
+from hyperactive.experiment.integrations.sktime_detector import (
+    SktimeDetectorExperiment,
+)
 from hyperactive.experiment.integrations.sktime_forecasting import (
     SktimeForecastingExperiment,
 )
@@ -20,5 +23,6 @@ __all__ = [
     "SkproProbaRegExperiment",
     "SktimeClassificationExperiment",
     "SktimeForecastingExperiment",
+    "SktimeDetectorExperiment",
     "TorchExperiment",
 ]
