@@ -68,7 +68,16 @@ class SktimeDetectorExperiment(BaseExperiment):
             self._cv = cv
 
     def _paramnames(self):
-        return list(self.detector.get_params().keys())
+        # If detector is not provided (e.g., soft-deps missing or test stub),
+        # return an empty list so callers can still iterate safely.
+        if self.detector is None:
+            return []
+
+        # Some detector-like objects may not expose `get_params`; guard that.
+        try:
+            return list(self.detector.get_params().keys())
+        except Exception:
+            return None
 
     def _evaluate(self, params):
         """
@@ -78,6 +87,9 @@ class SktimeDetectorExperiment(BaseExperiment):
         function if present. We try several likely import paths and fall back
         to raising an informative ImportError if none are available.
         """
+        if self.detector is None:
+            return np.nan, {}
+
         evaluate = None
         candidates = [
             "sktime.anomaly_detection.model_evaluation.evaluate",
@@ -237,6 +249,7 @@ class SktimeDetectorExperiment(BaseExperiment):
 
             try:
                 from sktime.datasets import load_unit_test
+
                 X, y = load_unit_test(return_X_y=True, return_type="pd-multiindex")
             except Exception:
                 X = None

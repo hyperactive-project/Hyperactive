@@ -8,14 +8,14 @@ from hyperactive.experiment.integrations.skpro_probareg import (
 from hyperactive.experiment.integrations.sktime_classification import (
     SktimeClassificationExperiment,
 )
+from hyperactive.experiment.integrations.sktime_detector import (
+    SktimeDetectorExperiment,
+)
 from hyperactive.experiment.integrations.sktime_forecasting import (
     SktimeForecastingExperiment,
 )
 from hyperactive.experiment.integrations.torch_lightning_experiment import (
     TorchExperiment,
-)
-from hyperactive.experiment.integrations.sktime_detector import (
-    SktimeDetectorExperiment,
 )
 
 __all__ = [
