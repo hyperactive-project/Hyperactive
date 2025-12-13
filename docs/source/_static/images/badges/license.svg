@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="104" height="20">
+  <title>license: MIT</title>
+  <!-- Label background -->
+  <rect width="65" height="20" fill="#555"/>
+  <!-- Value background -->
+  <rect x="65" width="39" height="20" fill="#5D5D7A"/>
+  <!-- Label text -->
+  <text x="32.5" y="14" fill="#fff" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11" text-anchor="middle">license</text>
+  <!-- Value text -->
+  <text x="84.5" y="14" fill="#fff" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11" text-anchor="middle">MIT</text>
+</svg>

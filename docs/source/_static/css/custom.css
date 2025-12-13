@@ -1,0 +1,1300 @@
+/* Custom CSS for Hyperactive documentation */
+/* Purple/Violet theme matching the Hyperactive logo */
+
+/* ============================================
+   Google Font Import for Hero Title
+   ============================================ */
+@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;600;700&display=swap');
+
+/* ============================================
+   PyData Theme Color Overrides (purple theme)
+   ============================================ */
+html[data-theme="light"] {
+    --pst-color-primary: #5D5D7A;
+    --pst-color-primary-bg: #f0f0f8;
+    --pst-color-secondary: #7070A0;
+    --pst-color-accent: #8080B0;
+    --pst-color-info: #7070A0;
+    --pst-color-link: #5D5D7A;
+    --pst-color-link-hover: #4A4A65;
+    --pst-color-target: rgba(125, 125, 170, 0.2);
+}
+
+html[data-theme="dark"] {
+    --pst-color-primary: #9090C0;
+    --pst-color-primary-bg: #2a2a3a;
+    --pst-color-secondary: #A0A0D0;
+    --pst-color-accent: #B0B0E0;
+    --pst-color-info: #9090C0;
+    --pst-color-link: #A0A0D0;
+    --pst-color-link-hover: #B0B0E0;
+    --pst-color-target: rgba(160, 160, 208, 0.2);
+    --separator-color: #3d3d4d;
+}
+
+/* ============================================
+   CSS Variables for consistent theming
+   ============================================ */
+:root {
+    /* Purple/violet colors from the Hyperactive logo */
+    --hyperactive-primary: #5D5D7A;
+    --hyperactive-secondary: #7070A0;
+    --hyperactive-accent: #8080B0;
+    --hyperactive-dark: #4A4A65;
+    --hyperactive-light: #f8f9fa;
+    --hyperactive-gradient: linear-gradient(135deg, #3D3D55 0%, #5858A0 100%);
+    --hyperactive-gradient-dark: linear-gradient(135deg, #2D2D45 0%, #484890 100%);
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --card-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    /* Neutral separator color */
+    --separator-color: #dee2e6;
+
+    /* Backend brand colors - from official logos */
+    --gfo-light: #80b4ff;
+    --gfo-dark: #000054;
+    --gfo-grey: #555555;
+    --optuna-dark: #123692;
+    --optuna-light: #3b82c4;
+    --sklearn-orange: #F7931E;
+    --sklearn-blue: #29ABE2;
+
+    /* Integration brand colors */
+    --sktime-blue: #0075b7;
+    --sktime-teal: #00a890;
+    --skpro-blue: #0076b7;
+    --skpro-teal: #01ab90;
+    --pytorch-orange: #ee4c2c;
+    --pytorch-yellow: #eaa700;
+}
+
+/* ============================================
+   Top Navbar Styling
+   ============================================ */
+.bd-header.navbar {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    min-height: auto !important;
+}
+
+.bd-header .navbar-header-items {
+    flex-wrap: nowrap !important;
+}
+
+.bd-header .navbar-header-items__center {
+    flex-wrap: nowrap !important;
+}
+
+.bd-header .navbar-header-items__start {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+.navbar-brand {
+    padding: 0.25rem 0 !important;
+    margin-right: 0.75rem !important;
+    flex-shrink: 0 !important;
+}
+
+.navbar-brand .logo__image {
+    height: 36px !important;
+    width: auto !important;
+    max-height: 36px !important;
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.navbar-brand p,
+.navbar-brand .logo__title {
+    display: none !important;
+}
+
+.bd-navbar .navbar-nav {
+    gap: 0.1rem;
+    flex-wrap: nowrap !important;
+}
+
+.bd-navbar .nav-link {
+    padding: 0.4rem 0.5rem !important;
+    white-space: nowrap;
+    font-size: 0.85rem;
+}
+
+.bd-navbar .dropdown-toggle {
+    padding: 0.4rem 0.5rem !important;
+    font-size: 0.85rem;
+}
+
+/* ============================================
+   Right Sidebar - On This Page spacing
+   ============================================ */
+.bd-toc-nav.page-toc {
+    margin-top: 1.25rem;
+}
+
+.pst-page-navigation-heading {
+    margin-bottom: 0.5rem;
+}
+
+/* ============================================
+   Hero Section
+   ============================================ */
+.hero-section {
+    background: var(--hyperactive-gradient);
+    padding: 3rem 2rem;
+    margin: -1rem -1rem 2rem -1rem;
+    border-radius: 0 0 20px 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+        radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1;
+}
+
+.hero-title {
+    font-family: 'Raleway', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 3.5rem;
+    font-weight: 300;
+    color: #ffffff;
+    margin: 0 0 3.5rem 0;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.hero-tagline {
+    font-size: 1.25rem;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0 0 0.5rem 0;
+    letter-spacing: 0.05em;
+    font-style: italic;
+}
+
+/* ============================================
+   Back to Top Link (in sidebar)
+   ============================================ */
+.back-to-top-sidebar {
+    display: none;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--pst-color-border);
+}
+
+.back-to-top-sidebar.visible {
+    display: block;
+}
+
+.back-to-top-sidebar a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--hyperactive-primary);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.back-to-top-sidebar a:hover {
+    color: var(--hyperactive-dark);
+}
+
+html[data-theme="dark"] .back-to-top-sidebar a {
+    color: var(--hyperactive-secondary);
+}
+
+html[data-theme="dark"] .back-to-top-sidebar a:hover {
+    color: var(--hyperactive-accent);
+}
+
+.hero-subtitle {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+}
+
+/* ============================================
+   Stats Strip (below hero)
+   ============================================ */
+.stats-strip {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    gap: 0;
+    margin: 0 0 2rem 0;
+    padding: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--pst-color-border);
+    background: var(--pst-color-surface);
+}
+
+.stat-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem 1rem;
+    text-align: center;
+    position: relative;
+    transition: background 0.2s ease;
+}
+
+.stat-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 20%;
+    height: 60%;
+    width: 1px;
+    background: var(--pst-color-border);
+}
+
+.stat-item:hover {
+    background: var(--pst-color-background);
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--hyperactive-primary);
+    line-height: 1.2;
+    margin-bottom: 0.25rem;
+}
+
+html[data-theme="dark"] .stat-value {
+    color: var(--hyperactive-secondary);
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--pst-color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.stat-icon {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.7;
+}
+
+/* Responsive: stack on mobile */
+@media (max-width: 640px) {
+    .stats-strip {
+        flex-wrap: wrap;
+    }
+
+    .stat-item {
+        flex: 1 1 50%;
+        padding: 1rem 0.75rem;
+    }
+
+    .stat-item:not(:last-child)::after {
+        display: none;
+    }
+
+    .stat-item:nth-child(1),
+    .stat-item:nth-child(2) {
+        border-bottom: 1px solid var(--pst-color-border);
+    }
+
+    .stat-item:nth-child(odd) {
+        border-right: 1px solid var(--pst-color-border);
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+    }
+}
+
+/* ============================================
+   Badge Banner (replaces Maturity Banner)
+   ============================================ */
+.badge-banner {
+    text-align: center;
+    padding: 1rem 1rem 1.5rem;
+    margin: 1rem 0;
+}
+
+.badge-items {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.badge-items a {
+    display: inline-block;
+    line-height: 0;
+}
+
+.badge-items img {
+    height: 28px;
+    vertical-align: middle;
+    border-radius: 0 !important;
+    image-rendering: crisp-edges;
+}
+
+/* Legacy Maturity Banner (kept for backwards compatibility) */
+.maturity-banner {
+    background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 50%, #f8f9fa 100%);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    margin: 1.5rem 0;
+    border: 1px solid #dee2e6;
+}
+
+html[data-theme="dark"] .maturity-banner {
+    background: linear-gradient(90deg, #2d2d3a 0%, #252530 50%, #2d2d3a 100%);
+    border-color: #3d3d4d;
+}
+
+.maturity-items {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.maturity-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #495057;
+}
+
+html[data-theme="dark"] .maturity-item {
+    color: #adb5bd;
+}
+
+.maturity-icon {
+    font-size: 1.25rem;
+}
+
+.maturity-text {
+    font-size: 0.95rem;
+}
+
+/* ============================================
+   Feature Cards
+   ============================================ */
+.feature-card {
+    border: 1px solid #e9ecef !important;
+    border-left: 3px solid var(--hyperactive-primary) !important;
+    box-shadow: var(--card-shadow);
+    transition: all 0.2s ease;
+    border-radius: 8px !important;
+    overflow: hidden;
+}
+
+html[data-theme="dark"] .feature-card {
+    border-color: #3d3d4d !important;
+    border-left-color: var(--hyperactive-secondary) !important;
+}
+
+.feature-card:hover {
+    box-shadow: var(--card-shadow-hover);
+    border-left-color: var(--hyperactive-secondary) !important;
+}
+
+html[data-theme="dark"] .feature-card:hover {
+    border-left-color: var(--hyperactive-accent) !important;
+}
+
+.feature-card .sd-card-body {
+    padding: 1.25rem;
+}
+
+.feature-card .sd-card-footer {
+    font-size: 0.85rem;
+    color: var(--hyperactive-dark);
+    padding: 0;
+    background: #f0f1f3;
+    border-top: 1px solid #e0e2e6;
+}
+
+.feature-card .sd-card-footer p {
+    margin: 0;
+}
+
+.feature-card .sd-card-footer a {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1.25rem;
+    color: var(--hyperactive-dark);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.feature-card .sd-card-footer a::after {
+    content: "→";
+    margin-left: auto;
+    padding-left: 1rem;
+    opacity: 0;
+    transform: translateX(-8px);
+    transition: all 0.2s ease;
+}
+
+.feature-card .sd-card-footer a:hover {
+    background: #e4e6ea;
+}
+
+.feature-card .sd-card-footer a:hover::after {
+    opacity: 0.6;
+    transform: translateX(0);
+}
+
+html[data-theme="dark"] .feature-card .sd-card-footer {
+    background: #2a2a3a;
+    border-top-color: #3d3d4d;
+    color: #c8c8d8;
+}
+
+html[data-theme="dark"] .feature-card .sd-card-footer a {
+    color: #c8c8d8;
+}
+
+html[data-theme="dark"] .feature-card .sd-card-footer a:hover {
+    background: #3a3a4a;
+}
+
+/* ============================================
+   Algorithm Cards
+   ============================================ */
+.algo-card {
+    border-left: 4px solid var(--hyperactive-primary) !important;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    transition: all 0.2s ease;
+}
+
+html[data-theme="dark"] .algo-card {
+    background: linear-gradient(135deg, #2d2d3a 0%, #252530 100%);
+}
+
+.algo-card:hover {
+    border-left-color: var(--hyperactive-secondary) !important;
+    transform: translateX(4px);
+}
+
+.algo-card ul {
+    margin: 0;
+    padding-left: 1.2rem;
+}
+
+.algo-card li {
+    margin-bottom: 0.3rem;
+    font-size: 0.9rem;
+}
+
+.optuna-card {
+    border-left-color: var(--hyperactive-accent) !important;
+}
+
+.optuna-card:hover {
+    border-left-color: var(--hyperactive-primary) !important;
+}
+
+/* ============================================
+   Backend Cards (GFO, Optuna, sklearn)
+   ============================================ */
+.backend-card {
+    border-radius: 8px !important;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+    border: none !important;
+    position: relative;
+    background: var(--pst-color-surface);
+}
+
+/* Side accent bar using pseudo-element for multi-color support */
+.backend-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    border-radius: 8px 0 0 8px;
+}
+
+.backend-card .sd-card-header {
+    padding: 1.25rem 1.5rem 0.75rem;
+    border-bottom: none;
+    background: transparent;
+}
+
+.backend-card .sd-card-header .sd-card-text {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.backend-card .sd-card-header a {
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+}
+
+.backend-card .sd-card-header a:hover {
+    text-decoration: underline;
+}
+
+.backend-card .sd-card-body {
+    padding: 0.5rem 1.5rem 1rem;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.backend-card .sd-card-body ul {
+    margin: 0.75rem 0 0 0;
+    padding-left: 1.25rem;
+}
+
+.backend-card .sd-card-body li {
+    margin-bottom: 0.4rem;
+}
+
+.backend-card .sd-card-footer {
+    padding: 0;
+    border-top: 1px solid var(--pst-color-border);
+    background: transparent;
+    transition: background 0.2s ease;
+}
+
+.backend-card .sd-card-footer a {
+    display: flex;
+    align-items: center;
+    padding: 0.875rem 1.5rem;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.backend-card .sd-card-footer a::after {
+    content: "→";
+    margin-left: auto;
+    padding-left: 1rem;
+    opacity: 0;
+    transform: translateX(-8px);
+    transition: all 0.2s ease;
+}
+
+.backend-card .sd-card-footer:hover {
+    background: var(--pst-color-background);
+}
+
+.backend-card .sd-card-footer a:hover::after {
+    opacity: 0.6;
+    transform: translateX(0);
+}
+
+/* GFO: Tri-color (dark navy | light blue | grey) */
+.backend-card-gfo::before {
+    background: linear-gradient(to bottom,
+        var(--gfo-dark) 0%, var(--gfo-dark) 33%,
+        var(--gfo-light) 33%, var(--gfo-light) 66%,
+        var(--gfo-grey) 66%, var(--gfo-grey) 100%);
+}
+
+/* Optuna: Vertical gradient (dark blue → light blue) */
+.backend-card-optuna::before {
+    background: linear-gradient(to bottom, var(--optuna-dark) 0%, var(--optuna-light) 100%);
+}
+
+/* sklearn: 50/50 split (orange | cyan) */
+.backend-card-sklearn::before {
+    background: linear-gradient(to bottom, var(--sklearn-orange) 50%, var(--sklearn-blue) 50%);
+}
+
+/* ============================================
+   Integration Cards (horizontal, two-part)
+   ============================================ */
+.integration-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+    margin: 1.5rem 0;
+}
+
+@media (max-width: 768px) {
+    .integration-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.integration-card {
+    background: var(--pst-color-surface);
+    border-radius: 8px;
+    display: flex;
+    box-shadow: var(--card-shadow);
+    position: relative;
+    overflow: hidden;
+}
+
+.integration-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+}
+
+.integration-left {
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    min-width: 140px;
+}
+
+.integration-left a {
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+}
+
+.integration-left a:hover {
+    text-decoration: underline;
+}
+
+.integration-right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    border-left: 1px solid var(--pst-color-border);
+    position: relative;
+    transition: background 0.2s ease;
+}
+
+.integration-right a {
+    display: flex;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    width: 100%;
+    height: 100%;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
+}
+
+.integration-right a::after {
+    content: "→";
+    margin-left: auto;
+    padding-left: 1rem;
+    opacity: 0;
+    transform: translateX(-8px);
+    transition: all 0.2s ease;
+}
+
+.integration-right:hover {
+    background: var(--pst-color-background);
+}
+
+.integration-right:hover a::after {
+    opacity: 0.6;
+    transform: translateX(0);
+}
+
+.integration-desc {
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+/* Integration card colors */
+.integration-card.sklearn::before {
+    background: linear-gradient(to bottom, var(--sklearn-orange) 50%, var(--sklearn-blue) 50%);
+}
+
+.integration-card.sktime::before {
+    background: linear-gradient(to bottom, var(--sktime-blue) 0%, var(--sktime-teal) 100%);
+}
+
+.integration-card.skpro::before {
+    background: linear-gradient(to bottom, var(--skpro-blue) 0%, var(--skpro-teal) 100%);
+}
+
+.integration-card.pytorch::before {
+    background: linear-gradient(to bottom, var(--pytorch-orange) 50%, var(--pytorch-yellow) 50%);
+}
+
+/* ============================================
+   Navigation Cards
+   ============================================ */
+/* ============================================
+   Contents Navigation Cards (horizontal style)
+   ============================================ */
+.contents-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+@media (max-width: 992px) {
+    .contents-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 576px) {
+    .contents-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.contents-card {
+    background: var(--pst-color-surface);
+    border-radius: 8px;
+    display: flex;
+    align-items: stretch;
+    box-shadow: var(--card-shadow);
+    position: relative;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    transition: box-shadow 0.2s ease;
+}
+
+.contents-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(to bottom, var(--hyperactive-primary) 0%, var(--hyperactive-secondary) 100%);
+}
+
+.contents-card:hover {
+    box-shadow: var(--card-shadow-hover);
+}
+
+.contents-card-inner {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 1rem 1.25rem 1rem 1.5rem;
+    transition: all 0.2s ease;
+}
+
+.contents-card:hover .contents-card-inner {
+    background: var(--pst-color-background);
+}
+
+.contents-card-text {
+    flex: 1;
+}
+
+.contents-card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+}
+
+.contents-card-desc {
+    font-size: 0.85rem;
+    opacity: 0.7;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.contents-card-arrow {
+    opacity: 0;
+    transform: translateX(-8px);
+    transition: all 0.2s ease;
+    margin-left: 1rem;
+    font-size: 1rem;
+}
+
+.contents-card:hover .contents-card-arrow {
+    opacity: 0.6;
+    transform: translateX(0);
+}
+
+/* ============================================
+   Visualization Section
+   ============================================ */
+.visualization-section {
+    text-align: center;
+    padding: 2rem 0;
+}
+
+.visualization-section h2 {
+    color: var(--hyperactive-primary);
+    margin-bottom: 0.5rem;
+}
+
+.visualization-section p {
+    color: #6c757d;
+    margin-bottom: 1.5rem;
+}
+
+.optimization-gif {
+    max-width: 100%;
+    max-height: 400px;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow-hover);
+    border: 3px solid var(--hyperactive-primary);
+}
+
+/* ============================================
+   Sponsor Section
+   ============================================ */
+.sponsor-section {
+    text-align: center;
+    padding: 1.5rem 0;
+}
+
+.sponsor-section img {
+    transition: transform 0.2s ease;
+}
+
+.sponsor-section img:hover {
+    transform: scale(1.05);
+}
+
+/* ============================================
+   Code Blocks Enhancement
+   ============================================ */
+.highlight {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.highlight pre {
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+/* ============================================
+   Tab Set Styling
+   ============================================ */
+.sd-tab-set {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+}
+
+.sd-tab-label {
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.sd-tab-label:hover {
+    background-color: rgba(93, 93, 122, 0.1);
+}
+
+input[name^="sd-tab-set"]:checked + label {
+    border-bottom-color: var(--hyperactive-primary) !important;
+    color: var(--hyperactive-primary);
+}
+
+/* ============================================
+   Section Separators - Full Width Horizontal Lines
+   ============================================ */
+hr {
+    border: none;
+    height: 1px;
+    background-color: var(--separator-color);
+    margin: 2.5rem 0;
+    width: 100%;
+}
+
+/* ============================================
+   Section Headers - Clean without decorative underlines
+   ============================================ */
+h2 {
+    position: relative;
+    padding-bottom: 0;
+}
+
+/* Remove the short underline pseudo-element */
+h2::after {
+    display: none;
+}
+
+/* ============================================
+   Button Enhancements
+   ============================================ */
+.sd-btn-primary {
+    background: var(--hyperactive-gradient) !important;
+    border: none !important;
+    transition: all 0.3s ease !important;
+}
+
+.sd-btn-primary:hover {
+    background: var(--hyperactive-gradient-dark) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(93, 93, 122, 0.4);
+}
+
+/* ============================================
+   Responsive Adjustments
+   ============================================ */
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 2rem 1rem;
+        margin: -1rem -0.5rem 1.5rem -0.5rem;
+    }
+
+    .hero-title {
+        font-size: 2.5rem;
+    }
+
+    .hero-tagline {
+        font-size: 1.4rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+
+    .maturity-items {
+        gap: 1rem;
+    }
+
+    .maturity-item {
+        font-size: 0.85rem;
+    }
+
+    .feature-icon {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-title {
+        font-size: 2rem;
+    }
+
+    .maturity-items {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+@media print {
+    .hero-section {
+        background: #f8f9fa !important;
+        color: #000 !important;
+    }
+
+    .hero-title,
+    .hero-tagline,
+    .hero-subtitle {
+        color: #000 !important;
+    }
+}
+
+/* ============================================
+   Vertical Tabs Component
+   ============================================ */
+.vertical-tabs {
+    display: flex;
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+.vertical-tabs-nav {
+    display: flex;
+    flex-direction: column;
+    width: 190px;
+    flex-shrink: 0;
+    background: var(--pst-color-background);
+    border-radius: 10px;
+    padding: 0.5rem;
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--pst-color-border);
+    align-self: flex-start;
+}
+
+.vertical-tab-btn {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: transparent;
+    border: none;
+    border-left: 3px solid transparent;
+    border-radius: 6px;
+    text-align: left;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--pst-color-text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    margin: 2px 0;
+}
+
+.vertical-tab-btn:hover {
+    background: var(--pst-color-surface);
+    color: var(--pst-color-text-base);
+}
+
+.vertical-tab-btn.active {
+    border-left-color: var(--hyperactive-primary);
+    background: var(--pst-color-surface);
+    color: var(--hyperactive-primary);
+}
+
+html[data-theme="dark"] .vertical-tab-btn.active {
+    border-left-color: var(--hyperactive-secondary);
+    color: var(--hyperactive-secondary);
+}
+
+.vertical-tab-btn .tab-indicator {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--hyperactive-primary);
+    margin-right: 0.75rem;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.2s ease;
+}
+
+.vertical-tab-btn.active .tab-indicator {
+    opacity: 1;
+    transform: scale(1);
+}
+
+html[data-theme="dark"] .vertical-tab-btn .tab-indicator {
+    background: var(--hyperactive-secondary);
+}
+
+.vertical-tabs-content {
+    flex: 1;
+    min-height: 200px;
+    overflow: hidden;
+}
+
+.vertical-tab-panel {
+    display: none;
+}
+
+.vertical-tab-panel.active {
+    display: block;
+    animation: revealVertical 0.35s ease-out;
+}
+
+@keyframes revealVertical {
+    from {
+        opacity: 0;
+        clip-path: inset(0 0 100% 0);
+    }
+    to {
+        opacity: 1;
+        clip-path: inset(0 0 0 0);
+    }
+}
+
+/* Code block styling within vertical tabs */
+.vertical-tab-panel .highlight {
+    margin: 0;
+    border-radius: 4px;
+    box-shadow: var(--card-shadow);
+    height: 380px;
+    overflow: hidden;
+}
+
+.vertical-tab-panel .highlight pre {
+    margin: 0;
+    padding: 1rem 1.25rem;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    height: 100%;
+    overflow-y: auto;
+    border-radius: 4px;
+}
+
+/* Responsive: Convert to horizontal on smaller screens */
+@media (max-width: 768px) {
+    .vertical-tabs {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .vertical-tabs-nav {
+        flex-direction: row;
+        min-width: 100%;
+        overflow-x: auto;
+        padding: 0.25rem;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .vertical-tabs-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .vertical-tab-btn {
+        flex-shrink: 0;
+        border-left: none;
+        border-bottom: 3px solid transparent;
+        padding: 0.625rem 1rem;
+        white-space: nowrap;
+        margin: 0 2px;
+    }
+
+    .vertical-tab-btn.active {
+        border-left-color: transparent;
+        border-bottom-color: var(--hyperactive-primary);
+    }
+
+    html[data-theme="dark"] .vertical-tab-btn.active {
+        border-bottom-color: var(--hyperactive-secondary);
+    }
+
+    .vertical-tab-btn .tab-indicator {
+        display: none;
+    }
+}
+
+/* Section title styling for Quick Install/Example */
+.vertical-tabs-section-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--pst-color-text-muted);
+    padding: 0.75rem 1.25rem 0.5rem;
+    margin: 0;
+}
+
+/* Tab description subtitle */
+.vertical-tab-btn .tab-subtitle {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--pst-color-text-muted);
+    margin-top: 0.125rem;
+}
+
+.vertical-tab-btn.active .tab-subtitle {
+    color: var(--hyperactive-secondary);
+}
+
+html[data-theme="dark"] .vertical-tab-btn.active .tab-subtitle {
+    color: var(--hyperactive-accent);
+}
+
+/* ============================================
+   Segmented Control Tabs (for Quick Install)
+   ============================================ */
+.segmented-tabs {
+    margin: 1.5rem 0;
+}
+
+.segmented-tabs-nav {
+    display: inline-flex;
+    background: var(--pst-color-background);
+    border-radius: 10px;
+    padding: 4px;
+    gap: 2px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--pst-color-border);
+}
+
+.segmented-tab-btn {
+    padding: 0.5rem 1.25rem;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--pst-color-text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.segmented-tab-btn:hover {
+    color: var(--pst-color-text-base);
+}
+
+.segmented-tab-btn.active {
+    background: var(--pst-color-surface);
+    color: var(--hyperactive-primary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+html[data-theme="dark"] .segmented-tab-btn.active {
+    color: var(--hyperactive-secondary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.segmented-tabs-content {
+    margin-top: 1rem;
+}
+
+.segmented-tab-panel {
+    display: none;
+    animation: segmentedFadeIn 0.2s ease;
+}
+
+.segmented-tab-panel.active {
+    display: block;
+}
+
+@keyframes segmentedFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.segmented-tab-panel .highlight {
+    border-radius: 8px;
+    margin: 0;
+}
+
+.segmented-tab-panel .highlight pre {
+    margin: 0;
+    padding: 0.875rem 1.25rem;
+    font-size: 0.9rem;
+}
+
+/* Responsive: stack on very small screens */
+@media (max-width: 540px) {
+    .segmented-tabs-nav {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .segmented-tab-btn {
+        flex: 1 1 auto;
+        text-align: center;
+        padding: 0.5rem 0.75rem;
+    }
+}
