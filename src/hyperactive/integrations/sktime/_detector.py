@@ -71,7 +71,7 @@ class TSDetectorOptCv(_DelegatedDetector):
         optimizer = self.optimizer.clone()
         optimizer.set_params(experiment=self.experiment)
         best_params = optimizer.solve()
-        # If no detector was supplied (soft dependency missing), return empty params
+        # If no detector was supplied (soft dependency missing), return
         if self.detector is None:
             self.best_params_ = best_params
             self.best_detector_ = None
@@ -118,11 +118,13 @@ class TSDetectorOptCv(_DelegatedDetector):
 
     def _predict(self, X):
         if not self.refit:
-            raise RuntimeError(
-                f"In {self.__class__.__name__}, refit must be True to make predictions,"
-                f" but found refit=False. If refit=False, {self.__class__.__name__} can"
-                " be used only to tune hyper-parameters, as a parameter estimator."
+            msg = (
+                f"In {self.__class__.__name__}, refit must be True to make "
+                f"predictions, but found refit=False. If refit=False, "
+                f"{self.__class__.__name__} can be used only to tune "
+                "hyper-parameters, as a parameter estimator."
             )
+            raise RuntimeError(msg)
         return super()._predict(X=X)
 
     @classmethod
@@ -136,6 +138,7 @@ class TSDetectorOptCv(_DelegatedDetector):
             DummyDetector = None
 
         from hyperactive.opt.gridsearch import GridSearchSk
+
         # Build a minimal experiment instance for test fixtures so that
         # optimizer test harnesses (which expect an `experiment` parameter)
         # can operate. If sktime deps are missing, fall back to None.
@@ -151,10 +154,14 @@ class TSDetectorOptCv(_DelegatedDetector):
                 X = None
                 y = None
 
-        # Always try to build an experiment so optimizer tests have a valid instance
+        # Always try to build an experiment so optimizer tests have it
         try:
+            if DummyDetector is not None:
+                detector_instance = DummyDetector()
+            else:
+                detector_instance = None
             test_experiment = SktimeDetectorExperiment(
-                detector=DummyDetector() if DummyDetector is not None else None,
+                detector=detector_instance,
                 X=X,
                 y=y,
             )

@@ -1,25 +1,24 @@
-"""
-Example: tune an sktime detector with Hyperactive's TSDetectorOptCv.
+"""Tune an sktime detector with Hyperactive's TSDetectorOptCv.
 
 Run with:
 
     PYTHONPATH=src python examples/sktime_detector_example.py
 
-This script uses a DummyRegularAnomalies detector and a GridSearchSk optimizer as a minimal demo.
+Uses a DummyRegularAnomalies detector and a GridSearchSk optimizer.
 """
 from hyperactive.integrations.sktime import TSDetectorOptCv
 from hyperactive.opt.gridsearch import GridSearchSk
 
 try:
-    from sktime.detection.dummy import DummyRegularAnomalies
     from sktime.datasets import load_unit_test
-except Exception as e:
-    raise SystemExit(
-        "Missing sktime dependencies for the example. Install sktime to run this example."
-    )
+    from sktime.detection.dummy import DummyRegularAnomalies
+except Exception:
+    msg = "Missing sktime dependencies. Install sktime to run this example."
+    raise SystemExit(msg)
 
 
 def main():
+    """Demonstrate sktime detector tuning with Hyperactive."""
     X, y = load_unit_test(return_X_y=True, return_type="pd-multiindex")
 
     detector = DummyRegularAnomalies()
