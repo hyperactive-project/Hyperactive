@@ -38,6 +38,11 @@ from .optuna import (
     RandomOptimizer,
     TPEOptimizer,
 )
+from .smac import (
+    SmacGaussianProcess,
+    SmacRandomForest,
+    SmacRandomSearch,
+)
 
 __all__ = [
     "GridSearchSk",
@@ -71,4 +76,7 @@ __all__ = [
     "NSGAIIOptimizer",
     "NSGAIIIOptimizer",
     "QMCOptimizer",
+    "SmacRandomForest",
+    "SmacGaussianProcess",
+    "SmacRandomSearch",
 ]
