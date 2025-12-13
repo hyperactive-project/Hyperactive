@@ -14,7 +14,6 @@ from hyperactive.tests._doctest import run_doctest
 # default is False, can be set to True by pytest --only_changed_modules True flag
 ONLY_CHANGED_MODULES = False
 
-
 class PackageConfig:
     """Contains package config variables for test classes."""
 
@@ -50,8 +49,9 @@ class PackageConfig:
         "info:local_vs_global",  # "local", "mixed", "global"
         "info:explore_vs_exploit",  # "explore", "exploit", "mixed"
         "info:compute",  # "low", "middle", "high"
+        # capabilities
+        "capability:categorical",
     ]
-
 
 class BaseFixtureGenerator(PackageConfig, _BaseFixtureGenerator):
     """Fixture generator for base testing functionality in sktime.
@@ -134,7 +134,6 @@ class BaseFixtureGenerator(PackageConfig, _BaseFixtureGenerator):
     # which sequence the conditional fixtures are generated in
     fixture_sequence = ["object_class", "object_instance"]
 
-
 class TestAllObjects(BaseFixtureGenerator, _TestAllObjects):
     """Generic tests for all objects in the package."""
 
@@ -167,7 +166,6 @@ class TestAllObjects(BaseFixtureGenerator, _TestAllObjects):
 
         super().test_valid_object_class_tags(object_instance)
 
-
 class ExperimentFixtureGenerator(BaseFixtureGenerator):
     """Fixture generator for experiments.
 
@@ -181,7 +179,6 @@ class ExperimentFixtureGenerator(BaseFixtureGenerator):
     """
 
     object_type_filter = "experiment"
-
 
 class TestAllExperiments(ExperimentFixtureGenerator, _QuickTester):
     """Module level tests for all experiment classes."""
@@ -238,7 +235,6 @@ class TestAllExperiments(ExperimentFixtureGenerator, _QuickTester):
             elif sign_tag == "lower" and det_tag == "deterministic":
                 assert score == -e_score
 
-
 class OptimizerFixtureGenerator(BaseFixtureGenerator):
     """Fixture generator for optimizers.
 
@@ -252,7 +248,6 @@ class OptimizerFixtureGenerator(BaseFixtureGenerator):
     """
 
     object_type_filter = "optimizer"
-
 
 class TestAllOptimizers(OptimizerFixtureGenerator, _QuickTester):
     """Module level tests for all optimizer classes."""
@@ -348,6 +343,43 @@ class TestAllOptimizers(OptimizerFixtureGenerator, _QuickTester):
         assert isinstance(best_params, dict), "Best parameters should be a dictionary"
         assert "C" in best_params, "Best parameters should contain 'C'"
         assert "gamma" in best_params, "Best parameters should contain 'gamma'"
+
+    def test_gfo_categorical_encoding(self, object_instance):
+        """GFO optimizers should handle categoricals via internal encoding."""
+        from hyperactive.opt._adapters._gfo import _BaseGFOadapter
+
+        if not isinstance(object_instance, _BaseGFOadapter):
+            return None
+
+        import numpy as np
+        from sklearn.datasets import load_iris
+        from sklearn.svm import SVC
+
+        from hyperactive.experiment.integrations import SklearnCvExperiment
+
+        X, y = load_iris(return_X_y=True)
+        sklearn_exp = SklearnCvExperiment(estimator=SVC(), X=X, y=y)
+
+        search_space = {
+            "C": np.array([0.1, 1.0]),
+            "kernel": np.array(["linear", "rbf"]),
+        }
+        _config = {
+            "search_space": search_space,
+            "n_iter": 5,
+            "experiment": sklearn_exp,
+        }
+        optimizer = object_instance.clone().set_params(**_config)
+        optimizer.solve()
+        best_params = optimizer.best_params_
+
+        assert isinstance(best_params, dict)
+        assert "kernel" in best_params
+        assert best_params["kernel"] in {"linear", "rbf"}
+
+        # Verify internal categorical mappings were populated correctly
+        assert "kernel" in optimizer._categorical_mappings
+        assert set(optimizer._categorical_mappings["kernel"]) == {"linear", "rbf"}
 
     def test_selection_direction_backend(self, object_instance):
         """Backends return argmax over standardized scores on controlled setup.
@@ -462,3 +494,4 @@ class TestAllOptimizers(OptimizerFixtureGenerator, _QuickTester):
 
         # For other backends, no-op here; targeted direction tests live elsewhere
         return None
+
