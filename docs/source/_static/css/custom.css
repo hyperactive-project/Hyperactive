@@ -1,10 +1,8 @@
 /* Custom CSS for Hyperactive documentation */
 /* Purple/Violet theme matching the Hyperactive logo */
 
-/* ============================================
-   Google Font Import for Hero Title
-   ============================================ */
-@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;600;700&display=swap');
+/* NOTE: Raleway font is loaded via layout.html with preload for better performance.
+   This prevents the Flash of Unstyled Text (FOUT) on the hero title. */
 
 /* ============================================
    PyData Theme Color Overrides (purple theme)
