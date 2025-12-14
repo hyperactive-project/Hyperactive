@@ -4,8 +4,12 @@
 Optimizers
 ==========
 
-Choose the right algorithm for your optimization problem.
 Hyperactive provides 31 algorithms across 5 categories and 3 backends.
+Optimizers navigate the search space to find optimal parameters. Each implements a
+different strategy for balancing exploration (trying diverse regions) and exploitation
+(refining promising solutions). Local search methods like Hill Climbing work well for
+smooth landscapes. Population-based methods handle multiple local optima. Model-based
+methods like Bayesian Optimization minimize evaluations for expensive objective functions.
 
 ----
 

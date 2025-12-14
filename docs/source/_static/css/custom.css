@@ -132,6 +132,17 @@ html[data-theme="dark"] {
     margin-top: 1.25rem;
 }
 
+/* Remove vertical line from right sidebar */
+.bd-sidebar-secondary .toc-entry,
+.bd-sidebar-secondary nav.page-toc {
+    border-left: none;
+}
+
+/* Fixed position for right sidebar */
+.bd-sidebar-secondary {
+    min-width: 200px;
+}
+
 .pst-page-navigation-heading {
     margin-bottom: 0.5rem;
 }
@@ -930,14 +941,43 @@ hr {
 }
 
 /* ============================================
-   Section Headers - Clean without decorative underlines
+   Section Headers - Subtle styling
    ============================================ */
-h2 {
-    position: relative;
-    padding-bottom: 0;
+
+/* Page titles (h1 from ===) - subtle background highlight */
+/* Exclude home page by targeting pages with h1 that aren't in the hero */
+article h1:not(.hero-title) {
+    background-color: rgba(93, 93, 122, 0.2);
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    width: fit-content;
 }
 
-/* Remove the short underline pseudo-element */
+/* Home page h1s get h2 styling (underline, not background) */
+/* Target pages that contain .hero-section */
+article:has(.hero-section) h1 {
+    background-color: transparent;
+    padding: 0;
+    border-radius: 0;
+    width: auto;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--pst-color-border);
+}
+
+/* Remove headerlink from affecting h1 width */
+article h1 a.headerlink {
+    position: absolute;
+    margin-left: 0.5rem;
+}
+
+/* Section titles (h2 from ---) - subtle underline */
+article h2 {
+    position: relative;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--pst-color-border);
+}
+
+/* Remove any pseudo-element underlines */
 h2::after {
     display: none;
 }

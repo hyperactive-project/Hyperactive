@@ -4,7 +4,10 @@
 Introduction
 ============
 
-Learn the fundamentals of Hyperactive and start optimizing in minutes.
+Optimization finds the best parameters from a set of possibilities. Evaluating every
+combination is usually impractical, so algorithms guide the search. Hyperactive provides
+a unified interface: define your problem once, then swap between different optimization
+algorithms without changing your code.
 
 ----
 

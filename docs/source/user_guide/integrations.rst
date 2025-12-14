@@ -4,9 +4,10 @@
 Framework Integrations
 ======================
 
-Use Hyperactive with your favorite ML frameworks. These integrations provide
-drop-in replacements for tools like ``GridSearchCV``, letting you use any
-Hyperactive optimizer with minimal code changes.
+Hyperactive integrates with popular ML frameworks, providing drop-in replacements
+for tools like ``GridSearchCV``. Each ML framework has its own conventions for training and evaluation. The integration
+classes handle cross-validation setup, scoring metrics, and parameter translation, so
+you can use any optimizer with scikit-learn, sktime, skpro, or PyTorch models.
 
 ----
 

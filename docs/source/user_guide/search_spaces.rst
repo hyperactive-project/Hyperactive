@@ -4,7 +4,9 @@
 Search Spaces
 =============
 
-Define where to search for optimal parameters.
+The search space defines all configurations the optimizer can explore. Too narrow and
+you miss good solutions; too broad and the optimizer wastes iterations. In Hyperactive,
+search spaces are dictionaries mapping parameter names to lists of possible values.
 
 ----
 

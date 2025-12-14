@@ -60,7 +60,7 @@ alongside direct interfaces to Optuna and scikit-learn optimizers.
 .. _features:
 
 Features
-================
+========
 
 What makes Hyperactive stand out for optimization tasks.
 
@@ -136,7 +136,7 @@ What makes Hyperactive stand out for optimization tasks.
 ----
 
 Optimization Backends
-==================
+=====================
 
 Hyperactive provides a unified interface to three powerful optimization backends.
 Choose the one that best fits your needs, or switch between them effortlessly.

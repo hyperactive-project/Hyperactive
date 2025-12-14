@@ -4,7 +4,10 @@
 Experiments
 ===========
 
-Define what to optimize.
+An experiment is the objective function that evaluates parameters and returns a score.
+It encapsulates your optimization problem separately from the optimizer, so you can
+swap algorithms without changing your evaluation code. Hyperactive supports custom
+functions and built-in classes for common ML tasks with cross-validation.
 
 ----
 
