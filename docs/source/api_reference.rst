@@ -13,7 +13,7 @@ It describes the classes and functions included in Hyperactive.
     :maxdepth: 1
 
     api_reference/base
-    api_reference/optimizers
+    api_reference/optimizers/index
     api_reference/experiments_function
     api_reference/experiments_integrations
     api_reference/experiments_benchmarks

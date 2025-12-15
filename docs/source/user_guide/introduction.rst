@@ -4,128 +4,221 @@
 Introduction
 ============
 
-This page introduces Hyperactive's core concepts: optimizers, experiments, and search spaces.
-Understanding these concepts will help you use Hyperactive effectively for any optimization task.
+Optimization finds the best parameters from a set of possibilities. Evaluating every
+combination is usually impractical, so algorithms guide the search. Hyperactive provides
+a unified interface: define your problem once, then swap between different optimization
+algorithms without changing your code.
 
+----
+
+Why Hyperactive?
+----------------
+
+Hyperactive makes optimization simple. Define your problem once, then swap between
+31 different algorithms with a single line change.
+
+.. grid:: 2 2 4 4
+   :gutter: 3
+
+   .. grid-item-card:: Swap Algorithms
+      :class-card: sd-bg-light
+
+      Try different optimizers without rewriting code. One line change switches
+      from hill climbing to Bayesian optimization.
+
+   .. grid-item-card:: 31 Algorithms
+      :class-card: sd-bg-light
+
+      Local search, global search, population-based, and model-based methods.
+      All with the same simple interface.
+
+   .. grid-item-card:: ML Integrations
+      :class-card: sd-bg-light
+
+      Ready-to-use experiments for sklearn, sktime, skpro, and PyTorch.
+      Tune models with minimal code.
+
+   .. grid-item-card:: Any Python Function
+      :class-card: sd-bg-light
+
+      Works with simulations, engineering problems, or any function that
+      returns a score.
+
+----
+
+Quick Start
+-----------
+
+The simplest optimization in 5 lines:
+
+.. literalinclude:: ../_snippets/user_guide/introduction.py
+   :language: python
+   :start-after: # [start:simplest_example]
+   :end-before: # [end:simplest_example]
+
+----
+
+ML Integration Examples
+-----------------------
+
+Tune machine learning models with ready-to-use experiment classes:
+
+.. tab-set::
+
+   .. tab-item:: sklearn
+
+      .. code-block:: python
+
+         from hyperactive.experiment.integrations import SklearnCvExperiment
+         from sklearn.ensemble import GradientBoostingClassifier
+
+         experiment = SklearnCvExperiment(GradientBoostingClassifier(), X, y, cv=5)
+
+   .. tab-item:: sktime
+
+      .. code-block:: python
+
+         from hyperactive.experiment.integrations import SktimeForecastingExperiment
+         from sktime.forecasting.arima import ARIMA
+
+         experiment = SktimeForecastingExperiment(ARIMA(), y_train, fh=[1, 2, 3])
+
+   .. tab-item:: PyTorch
+
+      .. code-block:: python
+
+         from hyperactive.experiment.integrations import TorchTrainerExperiment
+         import pytorch_lightning as pl
+
+         experiment = TorchTrainerExperiment(YourLightningModule, train_loader)
+
+See :doc:`integrations` for complete examples and all available integrations.
+
+----
 
 Core Concepts
 -------------
 
-Hyperactive is built around three key concepts:
+Hyperactive is built around three simple concepts:
 
-1. **Experiments** — Define *what* to optimize (the objective function)
-2. **Optimizers** — Define *how* to optimize (the search algorithm)
-3. **Search Spaces** — Define *where* to search (the parameter ranges)
+.. raw:: html
 
+   <div class="theme-aware-diagram">
+      <img src="../_static/diagrams/intro_concepts_light.svg"
+           alt="Hyperactive core concepts: Experiment, Search Space, and Optimizer flow to Best Parameters"
+           class="only-light" />
+      <img src="../_static/diagrams/intro_concepts_dark.svg"
+           alt="Hyperactive core concepts: Experiment, Search Space, and Optimizer flow to Best Parameters"
+           class="only-dark" />
+   </div>
 
-Experiments: What to Optimize
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+|
 
-An **experiment** represents your optimization problem. It takes parameters as input
-and returns a score that Hyperactive will maximize.
+.. grid:: 1 1 3 3
+   :gutter: 4
 
-The simplest experiment is a Python function:
+   .. grid-item-card:: Experiment
+      :class-card: sd-border-primary
 
-.. literalinclude:: ../_snippets/user_guide/introduction.py
-   :language: python
-   :start-after: # [start:simple_objective]
-   :end-before: # [end:simple_objective]
+      **What to optimize**
+      ^^^
+      Any Python function that takes parameters and returns a score.
+      Hyperactive will maximize this score.
 
-For machine learning, Hyperactive provides built-in experiments:
+      .. code-block:: python
 
-.. literalinclude:: ../_snippets/user_guide/introduction.py
-   :language: python
-   :start-after: # [start:sklearn_experiment_intro]
-   :end-before: # [end:sklearn_experiment_intro]
+         def experiment(params):
+             return score
 
-See :ref:`user_guide_experiments` for more details.
+      :doc:`Learn more <experiments>`
 
+   .. grid-item-card:: Search Space
+      :class-card: sd-border-success
 
-Optimizers: How to Optimize
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      **Where to search**
+      ^^^
+      A dictionary mapping parameter names to possible values.
+      Defines the boundaries of your optimization.
 
-An **optimizer** is the algorithm that explores the search space to find the best parameters.
-Hyperactive provides 20+ optimizers in different categories:
+      .. code-block:: python
 
-.. literalinclude:: ../_snippets/user_guide/introduction.py
-   :language: python
-   :start-after: # [start:optimizer_imports]
-   :end-before: # [end:optimizer_imports]
+         {"x": [1, 2, 3], "y": ["a", "b"]}
 
-Each optimizer has different characteristics:
+      :doc:`Learn more <search_spaces>`
 
-- **Local search** (HillClimbing, SimulatedAnnealing): Fast, may get stuck in local optima
-- **Global search** (RandomSearch, GridSearch): Thorough exploration, slower
-- **Population methods** (GeneticAlgorithm, ParticleSwarm): Good for complex landscapes
-- **Sequential methods** (BayesianOptimizer, TPE): Smart exploration, best for expensive evaluations
+   .. grid-item-card:: Optimizer
+      :class-card: sd-border-warning
 
-See :ref:`user_guide_optimizers` for a complete guide.
+      **How to search**
+      ^^^
+      The algorithm that explores the search space.
+      Choose based on your problem characteristics.
 
+      .. code-block:: python
 
-Search Spaces: Where to Search
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+         HillClimbing(space, experiment=exp)
 
-A **search space** defines the possible values for each parameter.
-Use dictionaries with lists or NumPy arrays:
+      :doc:`Learn more <optimizers/index>`
 
-.. literalinclude:: ../_snippets/user_guide/introduction.py
-   :language: python
-   :start-after: # [start:search_space_definition]
-   :end-before: # [end:search_space_definition]
+----
+
+The Power of Swapping
+---------------------
+
+Define your problem once, then try different algorithms with a single line change:
+
+.. tab-set::
+
+   .. tab-item:: Hill Climbing
+
+      .. literalinclude:: ../_snippets/user_guide/introduction.py
+         :language: python
+         :start-after: # [start:swap_hill_climbing]
+         :end-before: # [end:swap_hill_climbing]
+
+      Fast local search. Good for quick exploration.
+
+   .. tab-item:: Bayesian Optimization
+
+      .. literalinclude:: ../_snippets/user_guide/introduction.py
+         :language: python
+         :start-after: # [start:swap_bayesian]
+         :end-before: # [end:swap_bayesian]
+
+      Learns from past evaluations. Best for expensive functions.
+
+   .. tab-item:: Genetic Algorithm
+
+      .. literalinclude:: ../_snippets/user_guide/introduction.py
+         :language: python
+         :start-after: # [start:swap_genetic]
+         :end-before: # [end:swap_genetic]
+
+      Population-based evolution. Great for complex landscapes.
 
 .. tip::
 
-    Keep search spaces reasonably sized. Very large spaces (>10^8 combinations)
-    can cause memory issues with some optimizers.
+   The experiment and search space stay the same. Only the optimizer changes.
+   This makes it easy to benchmark different algorithms on your problem.
 
+----
 
-Basic Workflow
---------------
+Complete Example
+----------------
 
-Here's the complete workflow for using Hyperactive:
-
-Step 1: Define Your Experiment
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Either as a function or using built-in experiment classes:
+Here's a full working example that tunes a Random Forest classifier:
 
 .. literalinclude:: ../_snippets/user_guide/introduction.py
    :language: python
-   :start-after: # [start:workflow_experiment_options]
-   :end-before: # [end:workflow_experiment_options]
+   :start-after: # [start:complete_example]
+   :end-before: # [end:complete_example]
 
+----
 
-Step 2: Define the Search Space
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Common Parameters
+-----------------
 
-.. literalinclude:: ../_snippets/user_guide/introduction.py
-   :language: python
-   :start-after: # [start:workflow_search_space]
-   :end-before: # [end:workflow_search_space]
-
-
-Step 3: Choose an Optimizer
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. literalinclude:: ../_snippets/user_guide/introduction.py
-   :language: python
-   :start-after: # [start:workflow_optimizer]
-   :end-before: # [end:workflow_optimizer]
-
-
-Step 4: Run the Optimization
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. literalinclude:: ../_snippets/user_guide/introduction.py
-   :language: python
-   :start-after: # [start:workflow_solve]
-   :end-before: # [end:workflow_solve]
-
-
-Common Optimizer Parameters
----------------------------
-
-Most optimizers share these parameters:
+All optimizers share these parameters:
 
 .. list-table::
    :header-rows: 1
@@ -150,7 +243,6 @@ Most optimizers share these parameters:
      - dict
      - Control initial population (warm starts, etc.)
 
-
 Warm Starting
 ^^^^^^^^^^^^^
 
@@ -161,19 +253,56 @@ You can provide starting points for optimization:
    :start-after: # [start:warm_starting]
    :end-before: # [end:warm_starting]
 
+----
 
-Tips for Effective Optimization
--------------------------------
+Tips for Beginners
+------------------
 
-1. **Start simple**: Begin with ``HillClimbing`` or ``RandomSearch`` to establish baselines.
+.. grid:: 1 2 2 2
+   :gutter: 3
 
-2. **Right-size your search space**: Large spaces need more iterations. Consider using
-   ``np.logspace`` for parameters that span orders of magnitude.
+   .. grid-item-card:: Start Simple
 
-3. **Use appropriate iterations**: More iterations = better exploration, but longer runtime.
-   A good rule of thumb: at least 10x the number of parameters.
+      Begin with ``HillClimbing`` or ``RandomSearch`` to establish baselines
+      before trying sophisticated algorithms.
 
-4. **Set random_state**: For reproducible results, always set a random seed.
+   .. grid-item-card:: Right-Size Your Space
 
-5. **Consider your budget**: For expensive evaluations (training large models),
-   use smart optimizers like ``BayesianOptimizer`` that learn from previous evaluations.
+      Large search spaces need more iterations. Use ``np.logspace`` for
+      parameters that span orders of magnitude.
+
+   .. grid-item-card:: Set Random State
+
+      For reproducible results, always set ``random_state=42`` (or any integer).
+
+   .. grid-item-card:: Match Algorithm to Budget
+
+      Expensive evaluations? Use ``BayesianOptimizer`` which learns from
+      each evaluation. Cheap evaluations? ``RandomSearch`` explores well.
+
+----
+
+Next Steps
+----------
+
+.. grid:: 1 2 3 3
+   :gutter: 4
+
+   .. grid-item-card:: Experiments
+      :link: experiments
+      :link-type: doc
+
+      Learn how to define what to optimize, including custom functions
+      and built-in ML experiments.
+
+   .. grid-item-card:: Search Spaces
+      :link: search_spaces
+      :link-type: doc
+
+      Master parameter definitions, scaling strategies, and space sizing.
+
+   .. grid-item-card:: Optimizers
+      :link: optimizers/index
+      :link-type: doc
+
+      Explore all 31 algorithms and learn when to use each one.

@@ -1,355 +1,368 @@
 .. _user_guide_search_spaces:
 
-=========================
-Search Space Best Practices
-=========================
+=============
+Search Spaces
+=============
 
-This guide covers how to design effective search spaces for hyperparameter optimization.
-A well-designed search space can significantly improve optimization results and efficiency.
+The search space defines all configurations the optimizer can explore. Too narrow and
+you miss good solutions; too broad and the optimizer wastes iterations. In Hyperactive,
+search spaces are dictionaries mapping parameter names to lists of possible values.
 
+----
 
-Understanding Search Spaces
----------------------------
+What is a Search Space?
+-----------------------
 
-A search space defines the possible values for each parameter. Hyperactive samples
-from these values during optimization. The quality of your search space directly
-affects:
+A search space defines all possible parameter combinations the optimizer can explore.
+It's simply a dictionary mapping parameter names to lists of values.
 
-- **Optimization speed**: Smaller, targeted spaces converge faster
-- **Solution quality**: Including good values is essential for finding them
-- **Memory usage**: Very large spaces can cause memory issues with some optimizers
+.. raw:: html
 
+   <div class="theme-aware-diagram">
+      <img src="../_static/diagrams/search_space_concept_light.svg"
+           alt="Search space concept: parameters expand into combinations"
+           class="only-light" />
+      <img src="../_static/diagrams/search_space_concept_dark.svg"
+           alt="Search space concept: parameters expand into combinations"
+           class="only-dark" />
+   </div>
 
-Defining Search Spaces
-----------------------
-
-Basic Structure
-^^^^^^^^^^^^^^^
-
-Search spaces are Python dictionaries mapping parameter names to lists of possible values:
-
-.. code-block:: python
-
-    search_space = {
-        "n_estimators": [10, 50, 100, 200],
-        "max_depth": [3, 5, 10, None],
-        "min_samples_split": [2, 5, 10],
-    }
-
-
-Discrete Values
-^^^^^^^^^^^^^^^
-
-For parameters with a small set of distinct values:
+|
 
 .. code-block:: python
 
-    search_space = {
-        # Categorical choices
-        "kernel": ["linear", "rbf", "poly"],
+   search_space = {
+       "learning_rate": [0.001, 0.01, 0.1],      # 3 values
+       "n_estimators": [50, 100, 200, 500],      # 4 values
+       "max_depth": [3, 5, 10, None],            # 4 values
+   }
+   # Total: 3 × 4 × 4 = 48 combinations
 
-        # Boolean flags
-        "fit_intercept": [True, False],
+----
 
-        # Specific integer values
-        "n_neighbors": [3, 5, 7, 9, 11],
-    }
+Parameter Types
+---------------
 
+Hyperactive supports any value that can be stored in a Python list:
 
-Continuous Ranges
-^^^^^^^^^^^^^^^^^
+.. grid:: 1 2 3 3
+   :gutter: 4
 
-For parameters that vary continuously, use NumPy to create arrays:
+   .. grid-item-card:: Categorical
+      :class-card: sd-border-primary
 
-.. code-block:: python
+      Discrete choices like strings or objects.
 
-    import numpy as np
+      .. code-block:: python
 
-    search_space = {
-        # Linear spacing for uniform ranges
-        "momentum": np.linspace(0.5, 0.99, 50).tolist(),
+         "kernel": ["linear", "rbf", "poly"]
+         "optimizer": [Adam, SGD, RMSprop]
 
-        # Log spacing for parameters spanning orders of magnitude
-        "learning_rate": np.logspace(-4, -1, 50).tolist(),
+   .. grid-item-card:: Integer
+      :class-card: sd-border-success
 
-        # Integer range
-        "hidden_size": list(range(32, 257, 32)),  # 32, 64, 96, ...
-    }
+      Discrete numeric values.
 
-.. tip::
+      .. code-block:: python
 
-    Convert NumPy arrays to lists with ``.tolist()`` for cleaner code,
-    though Hyperactive accepts both formats.
+         "n_estimators": [50, 100, 200]
+         "hidden_size": list(range(32, 257, 32))
 
+   .. grid-item-card:: Continuous
+      :class-card: sd-border-warning
 
-Scale-Appropriate Spacing
--------------------------
+      Float values (discretized into steps).
 
-Linear vs Logarithmic
-^^^^^^^^^^^^^^^^^^^^^
+      .. code-block:: python
 
-The spacing between values should match how the parameter affects your objective:
+         "dropout": np.linspace(0, 0.5, 11)
+         "learning_rate": np.logspace(-4, -1, 20)
 
-**Linear spacing** — When changes have proportional effects:
+----
 
-.. code-block:: python
+Linear vs Logarithmic Spacing
+-----------------------------
 
-    # Dropout rate: 0.1 → 0.2 has similar effect as 0.5 → 0.6
-    "dropout": np.linspace(0.0, 0.5, 11).tolist()
+The spacing between values matters. Choose based on how the parameter affects your objective.
 
-**Logarithmic spacing** — When the parameter spans orders of magnitude:
+.. tab-set::
 
-.. code-block:: python
+   .. tab-item:: Linear Spacing
 
-    # Learning rate: 0.001 → 0.01 is as significant as 0.01 → 0.1
-    "learning_rate": np.logspace(-4, -1, 20).tolist()
+      Use when equal differences have equal effects.
 
-Common parameters that benefit from log spacing:
+      .. code-block:: python
+
+         # Dropout: 0.1 → 0.2 has similar effect as 0.4 → 0.5
+         "dropout": np.linspace(0.0, 0.5, 11).tolist()
+         # [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5]
+
+   .. tab-item:: Log Spacing
+
+      Use when the parameter spans orders of magnitude.
+
+      .. code-block:: python
+
+         # Learning rate: 0.001 → 0.01 is as significant as 0.01 → 0.1
+         "learning_rate": np.logspace(-4, -1, 10).tolist()
+         # [0.0001, 0.00028, 0.00077, 0.00215, 0.00599, 0.01668, 0.04642, 0.1]
+
+**Common parameters that benefit from log spacing:**
 
 - Learning rates (``1e-5`` to ``1e-1``)
 - Regularization strength (``1e-6`` to ``1e1``)
-- Batch sizes (powers of 2: 16, 32, 64, 128, ...)
+- Batch sizes (powers of 2)
 
+----
 
-Choosing Granularity
+Granularity and Size
 --------------------
 
-The number of values per parameter affects the total search space size:
+More values per parameter means more combinations to explore.
+
+.. admonition:: The Multiplication Effect
+   :class: important
+
+   With 3 parameters, each having 10 values: 10 × 10 × 10 = **1,000 combinations**
+
+   With 3 parameters, each having 100 values: 100 × 100 × 100 = **1,000,000 combinations**
+
+Calculate your search space size:
 
 .. code-block:: python
 
-    # Fine granularity: 100 values per parameter
-    # 3 parameters → 100^3 = 1,000,000 combinations
-    "param_a": np.linspace(0, 1, 100).tolist(),
-    "param_b": np.linspace(0, 1, 100).tolist(),
-    "param_c": np.linspace(0, 1, 100).tolist(),
+   from functools import reduce
+   import operator
 
-    # Coarse granularity: 10 values per parameter
-    # 3 parameters → 10^3 = 1,000 combinations
-    "param_a": np.linspace(0, 1, 10).tolist(),
-    "param_b": np.linspace(0, 1, 10).tolist(),
-    "param_c": np.linspace(0, 1, 10).tolist(),
+   total = reduce(operator.mul, [len(v) for v in search_space.values()])
+   print(f"Total combinations: {total:,}")
 
-**Guidelines:**
+**Size recommendations:**
 
-- Start coarse, refine after initial results
-- Use finer granularity for sensitive parameters
-- Use coarser granularity for less important parameters
+.. list-table::
+   :header-rows: 1
+   :widths: 20 35 45
 
+   * - Size
+     - Approach
+     - Recommended Optimizers
+   * - < 1,000
+     - Exhaustive or random search
+     - ``GridSearch``, ``RandomSearch``
+   * - 1,000 - 100,000
+     - Smart sampling
+     - ``BayesianOptimizer``, ``TPE``
+   * - 100,000 - 10M
+     - Population or local methods
+     - ``ParticleSwarm``, ``HillClimbing``
+   * - > 10M
+     - Reduce space or use iterative refinement
+     - Start coarse, then refine
 
-Search Space Size Considerations
---------------------------------
+.. tip::
 
-Calculate your total search space size:
+   Start with a coarse search space (fewer values per parameter), then refine around
+   the best region found.
+
+----
+
+Common Patterns
+---------------
+
+Ready-to-use search spaces for common ML models:
+
+.. tab-set::
+
+   .. tab-item:: Random Forest
+
+      .. code-block:: python
+
+         rf_space = {
+             "n_estimators": [50, 100, 200, 500],
+             "max_depth": [None, 5, 10, 20, 30],
+             "min_samples_split": [2, 5, 10],
+             "min_samples_leaf": [1, 2, 4],
+             "max_features": ["sqrt", "log2", None],
+         }
+
+   .. tab-item:: Gradient Boosting
+
+      .. code-block:: python
+
+         import numpy as np
+
+         gb_space = {
+             "n_estimators": [50, 100, 200, 500],
+             "learning_rate": np.logspace(-3, 0, 10).tolist(),
+             "max_depth": [3, 5, 7, 9],
+             "subsample": np.linspace(0.6, 1.0, 5).tolist(),
+         }
+
+   .. tab-item:: SVM
+
+      .. code-block:: python
+
+         import numpy as np
+
+         svm_space = {
+             "C": np.logspace(-2, 2, 10).tolist(),
+             "gamma": np.logspace(-4, -1, 10).tolist(),
+             "kernel": ["rbf", "poly", "sigmoid"],
+         }
+
+   .. tab-item:: Neural Network
+
+      .. code-block:: python
+
+         import numpy as np
+
+         nn_space = {
+             "hidden_layers": [1, 2, 3],
+             "hidden_size": [32, 64, 128, 256],
+             "learning_rate": np.logspace(-4, -2, 20).tolist(),
+             "dropout": np.linspace(0.0, 0.5, 6).tolist(),
+             "batch_size": [16, 32, 64, 128],
+             "activation": ["relu", "tanh", "elu"],
+         }
+
+----
+
+Parameter Dependencies
+----------------------
+
+Sometimes parameters have constraints or dependencies. Handle these in your experiment function:
 
 .. code-block:: python
 
-    from functools import reduce
-    import operator
+   import numpy as np
 
-    search_space = {
-        "n_estimators": [10, 50, 100, 200],        # 4 values
-        "max_depth": [3, 5, 10, None],              # 4 values
-        "learning_rate": np.logspace(-3, 0, 20),   # 20 values
-    }
+   def experiment(params):
+       # Constraint: min_samples_split >= min_samples_leaf
+       if params["min_samples_split"] < params["min_samples_leaf"]:
+           return -np.inf  # Invalid configuration
 
-    total_combinations = reduce(
-        operator.mul,
-        [len(v) for v in search_space.values()]
-    )
-    print(f"Total combinations: {total_combinations:,}")  # 320
+       # Constraint: degree only relevant for poly kernel
+       if params["kernel"] != "poly" and params["degree"] != 3:
+           return -np.inf
 
-**Recommendations by search space size:**
+       # Valid configuration
+       return evaluate_model(params)
+
+.. note::
+
+   Returning ``-np.inf`` effectively removes invalid combinations from consideration.
+   The optimizer will learn to avoid these regions.
+
+----
+
+Iterative Refinement
+--------------------
+
+A practical two-phase approach for finding optimal hyperparameters:
+
+**Phase 1: Coarse Search**
+
+Explore wide ranges with few values to find promising regions.
+
+.. code-block:: python
+
+   coarse_space = {
+       "learning_rate": [1e-4, 1e-3, 1e-2, 1e-1],
+       "hidden_size": [32, 128, 512],
+       "dropout": [0.0, 0.25, 0.5],
+   }
+
+   optimizer = RandomSearch(coarse_space, n_iter=50, experiment=objective)
+   best = optimizer.solve()
+   # Result: learning_rate=1e-3 region looks promising
+
+**Phase 2: Fine Search**
+
+Narrow in on the best region with more granularity.
+
+.. code-block:: python
+
+   fine_space = {
+       "learning_rate": np.logspace(-3.5, -2.5, 20).tolist(),  # Around 1e-3
+       "hidden_size": list(range(96, 192, 16)),                 # Around 128
+       "dropout": np.linspace(0.2, 0.4, 10).tolist(),          # Around 0.25
+   }
+
+   optimizer = BayesianOptimizer(fine_space, n_iter=100, experiment=objective)
+   final_best = optimizer.solve()
+
+----
+
+Common Mistakes
+---------------
+
+.. grid:: 1 2 2 2
+   :gutter: 3
+
+   .. grid-item-card:: Overly Large Spaces
+
+      .. code-block:: python
+
+         # Bad: 1000³ = 1 billion combinations
+         "param": np.linspace(0, 1, 1000)
+
+         # Better: 50³ = 125,000 combinations
+         "param": np.linspace(0, 1, 50)
+
+   .. grid-item-card:: Wrong Spacing
+
+      .. code-block:: python
+
+         # Bad: poor coverage of small values
+         "lr": np.linspace(0.0001, 0.1, 20)
+
+         # Good: even coverage across magnitudes
+         "lr": np.logspace(-4, -1, 20)
+
+   .. grid-item-card:: Missing Values
+
+      .. code-block:: python
+
+         # Bad: might miss optimal region
+         "max_depth": [2, 3, 4]
+
+         # Better: include None and wider range
+         "max_depth": [None, 3, 5, 10, 20, 50]
+
+   .. grid-item-card:: Too Fine Initially
+
+      .. code-block:: python
+
+         # Bad for initial search
+         "lr": np.logspace(-4, -1, 100)
+
+         # Better: start coarse, refine later
+         "lr": np.logspace(-4, -1, 10)
+
+----
+
+Quick Reference
+---------------
 
 .. list-table::
    :header-rows: 1
    :widths: 25 35 40
 
-   * - Size
-     - Recommended Approach
-     - Optimizer Suggestions
-   * - <100
-     - Grid search (exhaustive)
-     - ``GridSearch``
-   * - 100–10,000
-     - Random or local search
-     - ``RandomSearch``, ``HillClimbing``
-   * - 10,000–1,000,000
-     - Smart sampling required
-     - ``BayesianOptimizer``, ``TPE``
-   * - >1,000,000
-     - Reduce search space or use population methods
-     - ``ParticleSwarmOptimizer``, ``EvolutionStrategy``
-
-
-Handling Parameter Dependencies
--------------------------------
-
-Sometimes parameters have dependencies. Handle these in your objective function:
-
-.. code-block:: python
-
-    def objective(params):
-        # Constraint: min_samples_split >= min_samples_leaf
-        if params["min_samples_split"] < params["min_samples_leaf"]:
-            return -np.inf  # Invalid configuration
-
-        # Constraint: kernel-specific parameters
-        if params["kernel"] != "poly" and params["degree"] != 3:
-            return -np.inf  # degree only relevant for poly kernel
-
-        # Valid configuration — proceed with evaluation
-        return evaluate_model(params)
-
-.. note::
-
-    Returning ``-np.inf`` effectively removes invalid combinations from consideration.
-
-
-Common Search Space Patterns
-----------------------------
-
-Scikit-learn Classifiers
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: python
-
-    # Random Forest
-    rf_space = {
-        "n_estimators": [50, 100, 200, 500],
-        "max_depth": [None, 5, 10, 20, 30],
-        "min_samples_split": [2, 5, 10],
-        "min_samples_leaf": [1, 2, 4],
-        "max_features": ["sqrt", "log2", None],
-    }
-
-    # Gradient Boosting
-    gb_space = {
-        "n_estimators": [50, 100, 200],
-        "learning_rate": np.logspace(-3, 0, 10).tolist(),
-        "max_depth": [3, 5, 7, 9],
-        "subsample": np.linspace(0.6, 1.0, 5).tolist(),
-    }
-
-    # SVM
-    svm_space = {
-        "C": np.logspace(-2, 2, 10).tolist(),
-        "gamma": np.logspace(-4, -1, 10).tolist(),
-        "kernel": ["rbf", "poly", "sigmoid"],
-    }
-
-
-Neural Networks
-^^^^^^^^^^^^^^^
-
-.. code-block:: python
-
-    nn_space = {
-        "hidden_layers": [1, 2, 3],
-        "hidden_size": [32, 64, 128, 256],
-        "learning_rate": np.logspace(-4, -2, 20).tolist(),
-        "dropout": np.linspace(0.0, 0.5, 6).tolist(),
-        "batch_size": [16, 32, 64, 128],
-        "activation": ["relu", "tanh", "elu"],
-    }
-
-
-Iterative Refinement Strategy
------------------------------
-
-A practical approach for finding optimal hyperparameters:
-
-**Phase 1: Coarse Search**
-
-.. code-block:: python
-
-    # Wide ranges, few values
-    coarse_space = {
-        "learning_rate": [1e-4, 1e-3, 1e-2, 1e-1],
-        "hidden_size": [32, 128, 512],
-        "dropout": [0.0, 0.25, 0.5],
-    }
-
-    optimizer = RandomSearch(
-        search_space=coarse_space,
-        n_iter=50,
-        experiment=objective,
-    )
-    best = optimizer.solve()
-    # Result: learning_rate=1e-3 works best
-
-**Phase 2: Fine-tune Around Best Values**
-
-.. code-block:: python
-
-    # Narrow ranges around best from phase 1
-    fine_space = {
-        "learning_rate": np.logspace(-3.5, -2.5, 20).tolist(),  # Around 1e-3
-        "hidden_size": list(range(96, 192, 16)),                # Around 128
-        "dropout": np.linspace(0.2, 0.4, 10).tolist(),         # Around 0.25
-    }
-
-    optimizer = BayesianOptimizer(
-        search_space=fine_space,
-        n_iter=100,
-        experiment=objective,
-    )
-    final_best = optimizer.solve()
-
-
-Common Mistakes to Avoid
-------------------------
-
-**1. Overly Large Search Spaces**
-
-.. code-block:: python
-
-    # Bad: 1000 * 1000 * 1000 = 1 billion combinations
-    bad_space = {
-        "param_a": np.linspace(0, 1, 1000).tolist(),
-        "param_b": np.linspace(0, 1, 1000).tolist(),
-        "param_c": np.linspace(0, 1, 1000).tolist(),
-    }
-
-    # Better: 50 * 50 * 50 = 125,000 combinations
-    better_space = {
-        "param_a": np.linspace(0, 1, 50).tolist(),
-        "param_b": np.linspace(0, 1, 50).tolist(),
-        "param_c": np.linspace(0, 1, 50).tolist(),
-    }
-
-**2. Linear Spacing for Log-Scale Parameters**
-
-.. code-block:: python
-
-    # Bad: most values clustered at high end
-    bad_lr = np.linspace(0.0001, 0.1, 20).tolist()
-    # Values: 0.0001, 0.0053, 0.0106, ... (poor coverage of small values)
-
-    # Good: even distribution across magnitudes
-    good_lr = np.logspace(-4, -1, 20).tolist()
-    # Values: 0.0001, 0.00016, 0.00025, ... 0.063, 0.1
-
-**3. Missing Important Values**
-
-.. code-block:: python
-
-    # Bad: might miss optimal region entirely
-    bad_space = {"max_depth": [2, 3, 4]}
-
-    # Better: include None and reasonable range
-    better_space = {"max_depth": [None, 3, 5, 10, 20, 50]}
-
-**4. Ignoring Parameter Interactions**
-
-Some parameters interact strongly. Consider them together:
-
-.. code-block:: python
-
-    # Learning rate and batch size often interact
-    # Higher batch sizes often need higher learning rates
-    search_space = {
-        "batch_size": [16, 32, 64, 128],
-        "learning_rate": np.logspace(-4, -1, 20).tolist(),
-    }
-    # The optimizer will explore combinations to find the best pairing
+   * - Parameter Type
+     - Example
+     - When to Use
+   * - Categorical
+     - ``["rbf", "linear", "poly"]``
+     - Distinct choices
+   * - Integer range
+     - ``list(range(10, 101, 10))``
+     - Discrete numeric parameters
+   * - Linear float
+     - ``np.linspace(0, 1, 20).tolist()``
+     - Uniform parameters (dropout, momentum)
+   * - Log float
+     - ``np.logspace(-4, -1, 20).tolist()``
+     - Multi-magnitude parameters (learning rate)
+   * - Boolean
+     - ``[True, False]``
+     - Toggle features

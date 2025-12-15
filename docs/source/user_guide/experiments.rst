@@ -4,134 +4,271 @@
 Experiments
 ===========
 
-Experiments define *what* to optimize in Hyperactive. They encapsulate the objective
-function and any evaluation logic needed to score a set of parameters.
+An experiment is the objective function that evaluates parameters and returns a score.
+It encapsulates your optimization problem separately from the optimizer, so you can
+swap algorithms without changing your evaluation code. Hyperactive supports custom
+functions and built-in classes for common ML tasks with cross-validation.
 
-Defining Experiments
---------------------
+----
 
-There are two ways to define experiments in Hyperactive:
+What is an Experiment?
+----------------------
 
-1. **Custom functions** — Simple callables for any optimization problem
-2. **Built-in experiment classes** — Pre-built experiments for common ML tasks
+An experiment is any function that takes parameters and returns a score.
+Hyperactive will search for parameters that **maximize** this score.
 
+.. raw:: html
 
-Custom Objective Functions
---------------------------
+   <div class="theme-aware-diagram">
+      <img src="../_static/diagrams/experiment_flow_light.svg"
+           alt="Experiment flow: parameters go in, score comes out"
+           class="only-light" />
+      <img src="../_static/diagrams/experiment_flow_dark.svg"
+           alt="Experiment flow: parameters go in, score comes out"
+           class="only-dark" />
+   </div>
 
-The simplest way to define an experiment is as a Python function that takes
-a parameter dictionary and returns a score:
+|
+
+.. code-block:: python
+
+   def experiment(params):
+       # Your evaluation logic here
+       return score  # Hyperactive maximizes this
+
+----
+
+Two Approaches
+--------------
+
+Choose based on your use case:
+
+.. grid:: 1 2 2 2
+   :gutter: 4
+
+   .. grid-item-card:: Custom Functions
+      :class-card: sd-border-primary
+
+      **For any optimization problem**
+      ^^^
+      Write a function that evaluates parameters and returns a score.
+      Full flexibility for simulations, engineering, research, or any custom logic.
+
+      .. code-block:: python
+
+         def experiment(params):
+             result = run_simulation(params)
+             return result.quality
+
+   .. grid-item-card:: Built-in Classes
+      :class-card: sd-border-success
+
+      **For machine learning tasks**
+      ^^^
+      Pre-built experiments for sklearn, sktime, and PyTorch.
+      Handles cross-validation, scoring, and best practices automatically.
+
+      .. code-block:: python
+
+         from hyperactive.experiment.integrations import SklearnCvExperiment
+
+         experiment = SklearnCvExperiment(model, X, y, cv=5)
+
+----
+
+Custom Functions
+----------------
+
+The simplest form of experiment. Takes a dictionary of parameters and returns a number.
+
+Basic Example
+^^^^^^^^^^^^^
 
 .. literalinclude:: ../_snippets/user_guide/experiments.py
    :language: python
    :start-after: # [start:simple_objective]
    :end-before: # [end:simple_objective]
 
-Key points:
+.. important::
 
-- The function receives a dictionary with parameter names as keys
-- It must return a single numeric value (the score)
-- Hyperactive **maximizes** this score by default
-- To minimize, negate your loss function (as shown above)
+   **Hyperactive maximizes the score.** To minimize a loss, negate it:
 
+   .. code-block:: python
 
-Example: Optimizing a Mathematical Function
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      return -loss  # Convert minimization to maximization
+
+Mathematical Functions
+^^^^^^^^^^^^^^^^^^^^^^
+
+Optimizing benchmark or mathematical functions:
 
 .. literalinclude:: ../_snippets/user_guide/experiments.py
    :language: python
    :start-after: # [start:ackley_function]
    :end-before: # [end:ackley_function]
 
+External Simulations
+^^^^^^^^^^^^^^^^^^^^
 
-Example: Optimizing with External Resources
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Your objective function can use any Python code:
+Your function can call any Python code, including simulations, APIs, or file I/O:
 
 .. literalinclude:: ../_snippets/user_guide/experiments.py
    :language: python
    :start-after: # [start:external_simulation]
    :end-before: # [end:external_simulation]
 
+----
 
-Built-in Experiment Classes
----------------------------
+Built-in Experiments
+--------------------
 
-For common machine learning tasks, Hyperactive provides ready-to-use experiment classes
-that handle cross-validation, scoring, and other details.
+For common ML tasks, Hyperactive provides ready-to-use experiment classes.
 
+.. list-table::
+   :header-rows: 1
+   :widths: 30 40 30
+
+   * - Class
+     - Use Case
+     - Install
+   * - ``SklearnCvExperiment``
+     - Scikit-learn models with CV
+     - Included
+   * - ``SktimeForecastingExperiment``
+     - Time series forecasting
+     - ``pip install hyperactive[sktime]``
+   * - ``TorchTrainerExperiment``
+     - PyTorch Lightning models
+     - ``pip install hyperactive[torch]``
 
 SklearnCvExperiment
 ^^^^^^^^^^^^^^^^^^^
 
-For optimizing scikit-learn estimators with cross-validation:
+The most common choice for tuning sklearn classifiers and regressors.
 
 .. literalinclude:: ../_snippets/user_guide/experiments.py
    :language: python
    :start-after: # [start:sklearn_cv_experiment]
    :end-before: # [end:sklearn_cv_experiment]
 
+**Key parameters:**
+
+- ``estimator``: Any sklearn estimator
+- ``X, y``: Your training data
+- ``cv``: Number of cross-validation folds (default: 5)
+- ``scoring``: Scoring metric (default: estimator's default)
 
 SktimeForecastingExperiment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-For time series forecasting optimization (requires ``sktime``):
+For time series forecasting optimization:
 
 .. literalinclude:: ../_snippets/user_guide/experiments.py
    :language: python
    :start-after: # [start:sktime_forecasting]
    :end-before: # [end:sktime_forecasting]
 
+TorchTrainerExperiment
+^^^^^^^^^^^^^^^^^^^^^^
 
-TorchExperiment
-^^^^^^^^^^^^^^^
-
-For PyTorch Lightning model optimization (requires ``lightning``):
+For PyTorch Lightning model optimization:
 
 .. literalinclude:: ../_snippets/user_guide/experiments.py
    :language: python
    :start-after: # [start:torch_experiment]
    :end-before: # [end:torch_experiment]
 
+----
 
-Benchmark Experiments
----------------------
+Benchmark Functions
+-------------------
 
-Hyperactive includes standard benchmark functions for testing optimizers:
+Standard test functions for evaluating optimizers:
 
 .. literalinclude:: ../_snippets/user_guide/experiments.py
    :language: python
    :start-after: # [start:benchmark_experiments]
    :end-before: # [end:benchmark_experiments]
 
+Available benchmarks include: Ackley, Rastrigin, Rosenbrock, Sphere, and more.
+These are useful for comparing optimizer performance on known landscapes.
 
-Using the score() Method
-------------------------
+----
 
-Experiments can also be evaluated directly using the ``score()`` method:
+Direct Evaluation
+-----------------
+
+Experiments can be evaluated directly using the ``score()`` method:
 
 .. literalinclude:: ../_snippets/user_guide/experiments.py
    :language: python
    :start-after: # [start:score_method]
    :end-before: # [end:score_method]
 
+This is useful for debugging or manual exploration before running optimization.
 
-Tips for Designing Experiments
-------------------------------
+----
 
-1. **Return meaningful scores**: Ensure your score reflects what you want to optimize.
-   Higher is better (Hyperactive maximizes).
+Error Handling
+--------------
 
-2. **Handle errors gracefully**: If a parameter combination fails, return a very
-   low score (e.g., ``-np.inf``) rather than raising an exception.
-
-3. **Consider computation time**: For expensive experiments, use efficient optimizers
-   like ``BayesianOptimizer`` that learn from previous evaluations.
-
-4. **Use reproducibility**: Set random seeds in your experiment for consistent results.
+Robust experiments handle invalid parameter combinations gracefully:
 
 .. literalinclude:: ../_snippets/user_guide/experiments.py
    :language: python
    :start-after: # [start:robust_objective]
    :end-before: # [end:robust_objective]
+
+.. tip::
+
+   Returning ``-np.inf`` signals an invalid configuration.
+   The optimizer will learn to avoid this region of the search space.
+
+----
+
+Best Practices
+--------------
+
+.. grid:: 1 2 2 2
+   :gutter: 3
+
+   .. grid-item-card:: Return Meaningful Scores
+
+      Ensure your score reflects what you want to optimize.
+      Higher is better (Hyperactive maximizes).
+
+   .. grid-item-card:: Handle Errors Gracefully
+
+      Return ``-np.inf`` for invalid configurations instead
+      of raising exceptions.
+
+   .. grid-item-card:: Consider Compute Time
+
+      For expensive experiments, use ``BayesianOptimizer`` or
+      ``TPEOptimizer`` which learn from previous evaluations.
+
+   .. grid-item-card:: Use Reproducibility
+
+      Set random seeds inside your experiment for consistent
+      results across runs.
+
+----
+
+Quick Reference
+---------------
+
+.. code-block:: python
+
+   # Custom function
+   def experiment(params):
+       result = evaluate(params)
+       return score  # Higher is better
+
+   # Sklearn integration
+   from hyperactive.experiment.integrations import SklearnCvExperiment
+   experiment = SklearnCvExperiment(model, X, y, cv=5)
+
+   # Use with any optimizer
+   from hyperactive.opt.gfo import HillClimbing
+   optimizer = HillClimbing(search_space, experiment=experiment)
+   best = optimizer.solve()
