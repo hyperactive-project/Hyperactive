@@ -226,6 +226,60 @@ optimizer = TPEOptimizer(
 
 
 # ============================================================================
+# SMAC Backend
+# ============================================================================
+
+# [start:smac_imports]
+from hyperactive.opt.smac import (
+    SmacRandomForest,     # Random Forest surrogate
+    SmacGaussianProcess,  # Gaussian Process surrogate
+    SmacRandomSearch,     # Random sampling baseline
+)
+# [end:smac_imports]
+
+
+# [start:smac_random_forest]
+from hyperactive.opt.smac import SmacRandomForest
+
+# Define search space with continuous parameters
+smac_param_space = {
+    "x": (-5.0, 5.0),
+    "y": (-5.0, 5.0),
+}
+
+optimizer = SmacRandomForest(
+    param_space=smac_param_space,
+    n_iter=50,
+    n_initial_points=10,
+    experiment=objective,
+)
+# [end:smac_random_forest]
+
+
+# [start:smac_gaussian_process]
+from hyperactive.opt.smac import SmacGaussianProcess
+
+# Best for continuous parameter spaces
+optimizer = SmacGaussianProcess(
+    param_space=smac_param_space,
+    n_iter=50,
+    experiment=objective,
+)
+# [end:smac_gaussian_process]
+
+
+# [start:smac_random_search]
+from hyperactive.opt.smac import SmacRandomSearch
+
+optimizer = SmacRandomSearch(
+    param_space=smac_param_space,
+    n_iter=100,
+    experiment=objective,
+)
+# [end:smac_random_search]
+
+
+# ============================================================================
 # Configuration Examples
 # ============================================================================
 
