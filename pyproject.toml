@@ -69,7 +69,8 @@ sktime-integration = [
   'sktime; python_version < "3.14"',
 ]
 smac = [
-  "smac>=2.0.0",
+  "smac>=2.0.0,<3.0.0",
+  "ConfigSpace>=0.7.0,<2.0.0",
 ]
 build = [
   "setuptools",
