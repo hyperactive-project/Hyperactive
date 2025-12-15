@@ -7,7 +7,7 @@ where = ["src"]
 
 [project]
 name = "hyperactive"
-version = "5.0.2"
+version = "5.0.3"
 description = "An optimization and data collection toolbox for convenient and fast prototyping of computationally expensive models."
 readme = "README.md"
 requires-python = ">=3.10"
