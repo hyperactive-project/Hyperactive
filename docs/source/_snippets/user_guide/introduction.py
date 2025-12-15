@@ -13,6 +13,17 @@ y_train = np.array([0, 1, 0])
 X = X_train
 y = y_train
 
+# [start:simplest_example]
+from hyperactive.opt.gfo import HillClimbing
+
+def score(p):
+    return -(p["x"] ** 2)  # Find x that minimizes x²
+
+opt = HillClimbing({"x": range(-10, 11)}, experiment=score)
+best = opt.solve()  # {"x": 0}
+# [end:simplest_example]
+
+
 # [start:simple_objective]
 def objective(params):
     x = params["x"]
@@ -33,6 +44,14 @@ experiment = SklearnCvExperiment(
     cv=5,
 )
 # [end:sklearn_experiment_intro]
+
+
+# [start:sklearn_3_lines]
+from hyperactive.experiment.integrations import SklearnCvExperiment
+from sklearn.ensemble import GradientBoostingClassifier
+
+experiment = SklearnCvExperiment(GradientBoostingClassifier(), X, y, cv=5)
+# [end:sklearn_3_lines]
 
 
 # [start:optimizer_imports]
@@ -116,6 +135,67 @@ optimizer = HillClimbing(
     initialize={"warm_start": warm_start},
 )
 # [end:warm_starting]
+
+
+# [start:swap_hill_climbing]
+from hyperactive.opt.gfo import HillClimbing
+
+optimizer = HillClimbing(search_space, experiment=experiment)
+best = optimizer.solve()
+# [end:swap_hill_climbing]
+
+
+# [start:swap_bayesian]
+from hyperactive.opt.gfo import BayesianOptimizer
+
+optimizer = BayesianOptimizer(search_space, experiment=experiment)
+best = optimizer.solve()
+# [end:swap_bayesian]
+
+
+# [start:swap_genetic]
+from hyperactive.opt.gfo import GeneticAlgorithmOptimizer
+
+optimizer = GeneticAlgorithmOptimizer(search_space, experiment=experiment)
+best = optimizer.solve()
+# [end:swap_genetic]
+
+
+# [start:complete_example]
+import numpy as np
+from sklearn.datasets import load_iris
+from sklearn.ensemble import RandomForestClassifier
+from hyperactive.experiment.integrations import SklearnCvExperiment
+from hyperactive.opt.gfo import BayesianOptimizer
+
+# 1. Load your data
+X, y = load_iris(return_X_y=True)
+
+# 2. Define the experiment (what to optimize)
+experiment = SklearnCvExperiment(
+    estimator=RandomForestClassifier(),
+    X=X, y=y, cv=5,
+)
+
+# 3. Define the search space (where to search)
+search_space = {
+    "n_estimators": list(range(10, 200, 10)),
+    "max_depth": [3, 5, 10, 20, None],
+    "min_samples_split": [2, 5, 10],
+}
+
+# 4. Choose an optimizer (how to search)
+optimizer = BayesianOptimizer(
+    search_space=search_space,
+    n_iter=50,
+    experiment=experiment,
+    random_state=42,
+)
+
+# 5. Run and get the best parameters
+best_params = optimizer.solve()
+print(f"Best parameters: {best_params}")
+# [end:complete_example]
 
 
 if __name__ == "__main__":

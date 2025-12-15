@@ -11,22 +11,22 @@
 
    <!-- Stats are auto-counted in conf.py: n_algorithms, n_backends, n_integrations -->
    <div class="stats-strip">
-      <div class="stat-item">
+      <a href="user_guide/optimizers/index.html" class="stat-item">
          <div class="stat-value" id="stat-algorithms">31</div>
          <div class="stat-label">Algorithms</div>
-      </div>
-      <div class="stat-item">
+      </a>
+      <a href="user_guide/optimizers/index.html" class="stat-item">
          <div class="stat-value" id="stat-backends">3</div>
          <div class="stat-label">Backends</div>
-      </div>
-      <div class="stat-item">
+      </a>
+      <a href="user_guide/integrations.html" class="stat-item">
          <div class="stat-value" id="stat-integrations">5</div>
          <div class="stat-label">Integrations</div>
-      </div>
-      <div class="stat-item">
+      </a>
+      <a href="user_guide/experiments.html" class="stat-item">
          <div class="stat-value">One</div>
          <div class="stat-label">Unified API</div>
-      </div>
+      </a>
    </div>
 
 
@@ -60,7 +60,7 @@ alongside direct interfaces to Optuna and scikit-learn optimizers.
 .. _features:
 
 Features
-================
+========
 
 What makes Hyperactive stand out for optimization tasks.
 
@@ -136,7 +136,7 @@ What makes Hyperactive stand out for optimization tasks.
 ----
 
 Optimization Backends
-==================
+=====================
 
 Hyperactive provides a unified interface to three powerful optimization backends.
 Choose the one that best fits your needs, or switch between them effortlessly.

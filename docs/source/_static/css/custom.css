@@ -1,10 +1,8 @@
 /* Custom CSS for Hyperactive documentation */
 /* Purple/Violet theme matching the Hyperactive logo */
 
-/* ============================================
-   Google Font Import for Hero Title
-   ============================================ */
-@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;600;700&display=swap');
+/* NOTE: Raleway font is loaded via layout.html with preload for better performance.
+   This prevents the Flash of Unstyled Text (FOUT) on the hero title. */
 
 /* ============================================
    PyData Theme Color Overrides (purple theme)
@@ -130,6 +128,29 @@ html[data-theme="dark"] {
    ============================================ */
 .bd-toc-nav.page-toc {
     margin-top: 1.25rem;
+}
+
+/* Remove vertical line from right sidebar */
+.bd-sidebar-secondary .toc-entry,
+.bd-sidebar-secondary nav.page-toc {
+    border-left: none;
+}
+
+/* Right sidebar slide-in animation on page load */
+@keyframes slideInFromLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.bd-sidebar-secondary {
+    min-width: 200px;
+    animation: slideInFromLeft 0.3s ease forwards;
 }
 
 .pst-page-navigation-heading {
@@ -271,6 +292,11 @@ html[data-theme="dark"] .back-to-top-sidebar a:hover {
 
 .stat-item:hover {
     background: var(--pst-color-background);
+}
+
+a.stat-item {
+    text-decoration: none;
+    color: inherit;
 }
 
 .stat-value {
@@ -925,14 +951,43 @@ hr {
 }
 
 /* ============================================
-   Section Headers - Clean without decorative underlines
+   Section Headers - Subtle styling
    ============================================ */
-h2 {
-    position: relative;
-    padding-bottom: 0;
+
+/* Page titles (h1 from ===) - subtle background highlight */
+/* Exclude home page by targeting pages with h1 that aren't in the hero */
+article h1:not(.hero-title) {
+    background-color: rgba(93, 93, 122, 0.2);
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    width: fit-content;
 }
 
-/* Remove the short underline pseudo-element */
+/* Home page h1s get h2 styling (underline, not background) */
+/* Target pages that contain .hero-section */
+article:has(.hero-section) h1 {
+    background-color: transparent;
+    padding: 0;
+    border-radius: 0;
+    width: auto;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--pst-color-border);
+}
+
+/* Remove headerlink from affecting h1 width */
+article h1 a.headerlink {
+    position: absolute;
+    margin-left: 0.5rem;
+}
+
+/* Section titles (h2 from ---) - subtle underline */
+article h2 {
+    position: relative;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--pst-color-border);
+}
+
+/* Remove any pseudo-element underlines */
 h2::after {
     display: none;
 }
@@ -1297,4 +1352,24 @@ html[data-theme="dark"] .segmented-tab-btn.active {
         text-align: center;
         padding: 0.5rem 0.75rem;
     }
+}
+
+/* ============================================
+   Theme-Aware Diagrams
+   ============================================ */
+
+/* Container for theme-aware images */
+.theme-aware-diagram {
+    width: 100%;
+    text-align: center;
+}
+
+.theme-aware-diagram img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Override pydata theme's white background for diagram images */
+html[data-theme="dark"] .theme-aware-diagram img.only-dark {
+    background-color: transparent !important;
 }
