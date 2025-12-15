@@ -18,6 +18,7 @@ on GitHub.
    examples/population_based
    examples/sequential_model_based
    examples/optuna_backend
+   examples/scipy_backend
    examples/sklearn_backend
    examples/integrations
    examples/other
@@ -60,6 +61,10 @@ Backend Examples
 :ref:`examples_optuna_backend`
     Examples using Optuna's samplers including TPE, CMA-ES, NSGA-II/III,
     and Gaussian Process optimization.
+
+:ref:`examples_scipy_backend`
+    Examples using scipy.optimize algorithms including Differential Evolution,
+    Dual Annealing, Basin-hopping, SHGO, DIRECT, Nelder-Mead, and Powell.
 
 :ref:`examples_sklearn_backend`
     Scikit-learn compatible interfaces as drop-in replacements for
