@@ -10,36 +10,46 @@ own hyperparameters. This is common in AutoML scenarios.
 import numpy as np
 
 from hyperactive import SearchSpace
+from hyperactive.opt import RandomSearch
 
 
 def main():
-    # Nested search space using the _params suffix convention
-    # The keys of the dict become the categorical choices for "estimator"
-    # and each value defines the hyperparameters for that estimator
-
     try:
+        from sklearn.datasets import make_classification
         from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
+        from sklearn.model_selection import cross_val_score
         from sklearn.svm import SVC
     except ImportError:
         print("This example requires scikit-learn")
         return
 
+    # Generate a sample dataset
+    X, y = make_classification(
+        n_samples=200,
+        n_features=10,
+        n_informative=5,
+        n_redundant=2,
+        random_state=42,
+    )
+
+    # Nested search space using the _params suffix convention
+    # The keys of the dict become the categorical choices for "estimator"
+    # and each value defines the hyperparameters for that estimator
     space = SearchSpace(
         estimator_params={
             RandomForestClassifier: {
-                "n_estimators": np.arange(10, 201, 10),
-                "max_depth": [3, 5, 10, 20, None],
+                "n_estimators": np.arange(10, 101, 10),
+                "max_depth": [3, 5, 10, None],
                 "min_samples_split": [2, 5, 10],
             },
             SVC: {
-                "C": (0.01, 100.0, "log"),
+                "C": (0.1, 10.0, "log"),
                 "kernel": ["rbf", "linear"],
-                "gamma": (1e-4, 10.0, "log"),
             },
             GradientBoostingClassifier: {
-                "n_estimators": np.arange(50, 301, 50),
+                "n_estimators": np.arange(20, 101, 20),
                 "learning_rate": (0.01, 0.3, "log"),
-                "max_depth": [3, 5, 7],
+                "max_depth": [3, 5],
             },
         },
     )
@@ -54,41 +64,98 @@ def main():
         print(f"  {name}: {dim.dim_type.value}")
 
     print(f"\nAutomatic conditions created: {len(space.conditions)}")
-    for cond in space.conditions:
-        print(f"  - {cond.target_param} depends on {cond.depends_on}")
 
-    # Union operator to combine search spaces
+    # Define objective using real sklearn estimators
+    def estimator_objective(params):
+        """Evaluate estimator with cross-validation."""
+        estimator_class = params["estimator"]
+
+        # Get parameters for this specific estimator
+        est_params = {}
+        prefix = estimator_class.__name__.lower() + "__"
+
+        for key, value in params.items():
+            if key.startswith(prefix):
+                param_name = key[len(prefix) :]
+                est_params[param_name] = value
+
+        # Create and evaluate estimator
+        estimator = estimator_class(**est_params)
+        scores = cross_val_score(estimator, X, y, cv=3, scoring="accuracy")
+
+        return scores.mean()
+
+    # Run optimization
+    print("\n--- Running Optimization ---")
+
+    optimizer = RandomSearch(
+        search_space=space,
+        n_iter=30,
+        experiment=estimator_objective,
+    )
+
+    result = optimizer.solve()
+
+    print(f"\nBest estimator: {result['estimator'].__name__}")
+    print("Best parameters:")
+
+    prefix = result["estimator"].__name__.lower() + "__"
+    for key, value in result.items():
+        if key.startswith(prefix):
+            param_name = key[len(prefix) :]
+            print(f"  {param_name}: {value}")
+
+    print(f"Best CV accuracy: {estimator_objective(result):.4f}")
+
+    # Union operator example with actual optimization
     print("\n--- Union Operator Example ---")
 
     base_space = SearchSpace(
-        learning_rate=(1e-5, 1e-1, "log"),
+        learning_rate=(1e-4, 1e-1, "log"),
         batch_size=[32, 64, 128],
     )
 
-    augmentation_space = SearchSpace(
-        augment=[True, False],
-        flip_probability=(0.0, 1.0),
+    regularization_space = SearchSpace(
+        weight_decay=(1e-6, 1e-2, "log"),
+        dropout=np.arange(0.0, 0.6, 0.1),
     )
 
-    # Combine with | operator (union)
-    combined = base_space | augmentation_space
+    # Combine with | operator
+    combined = base_space | regularization_space
 
     print("Combined SearchSpace:")
     print(f"  Parameters: {list(combined.param_names)}")
 
-    # Union with conflict resolution
-    space_v1 = SearchSpace(lr=(1e-4, 1e-2))
-    space_v2 = SearchSpace(lr=(1e-5, 1e-1))  # different range
+    def training_objective(params):
+        """Simulate training optimization."""
+        lr = params["learning_rate"]
+        batch = params["batch_size"]
+        wd = params["weight_decay"]
+        dropout = params["dropout"]
 
-    # Default: last wins
-    merged = space_v1 | space_v2
-    print(f"\nUnion (last wins): lr bounds = "
-          f"({merged.dimensions['lr'].low}, {merged.dimensions['lr'].high})")
+        # Optimal: lr=0.01, batch=64, wd=1e-4, dropout=0.2
+        score = 0
+        score -= (np.log10(lr) + 2) ** 2
+        score -= ((batch - 64) / 32) ** 2
+        score -= (np.log10(wd) + 4) ** 2
+        score -= (dropout - 0.2) ** 2
 
-    # First wins
-    merged = space_v1.union(space_v2, on_conflict="first")
-    print(f"Union (first wins): lr bounds = "
-          f"({merged.dimensions['lr'].low}, {merged.dimensions['lr'].high})")
+        return score
+
+    optimizer = RandomSearch(
+        search_space=combined,
+        n_iter=50,
+        experiment=training_objective,
+    )
+
+    result = optimizer.solve()
+
+    print(f"\nBest training parameters:")
+    print(f"  learning_rate: {result['learning_rate']:.6f}")
+    print(f"  batch_size: {result['batch_size']}")
+    print(f"  weight_decay: {result['weight_decay']:.8f}")
+    print(f"  dropout: {result['dropout']:.2f}")
+    print(f"  Score: {training_objective(result):.4f}")
 
 
 if __name__ == "__main__":

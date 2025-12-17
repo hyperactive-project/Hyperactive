@@ -16,22 +16,40 @@ from hyperactive.opt import RandomSearch
 
 
 def svm_objective(params):
-    """Simulate SVM optimization with kernel-specific parameters."""
+    """Simulate SVM optimization with kernel-specific parameters.
+
+    The objective simulates finding optimal SVM hyperparameters.
+    - Best C is around 1.0 (log10(C) = 0)
+    - For RBF kernel: best gamma is around 0.1 (log10(gamma) = -1)
+    - For poly kernel: best degree is 3
+    """
     kernel = params["kernel"]
     C = params["C"]
 
-    # Base score from C
+    # Base score from C (optimal at C=1.0)
     score = -np.log10(C) ** 2
 
     # Kernel-specific scoring
     if kernel == "rbf":
         gamma = params.get("gamma", 1.0)
-        score -= np.log10(gamma) ** 2
+        # Optimal at gamma=0.1
+        score -= (np.log10(gamma) + 1) ** 2
     elif kernel == "poly":
         degree = params.get("degree", 3)
+        # Optimal at degree=3
         score -= (degree - 3) ** 2
+    # linear kernel has no additional parameters
 
     return score
+
+
+space = SearchSpace(
+    estimator={
+        RandomForestClassifier: {"n_estimators": [10, 50, 100]},
+        SVC: {"C": (0.01, 100.0, "log")},
+    },
+    lr=(1e-5, 1e-1, "log"),
+)
 
 
 def main():
@@ -69,21 +87,87 @@ def main():
     active = space.filter_active_params(poly_params)
     print(f"  Poly kernel active params: {list(active.keys())}")
 
+    # Run optimization
+    print("\n--- Running Optimization ---")
+
+    optimizer = RandomSearch(
+        search_space=space,
+        n_iter=50,
+        experiment=svm_objective,
+    )
+
+    result = optimizer.solve()
+
+    print(f"\nBest parameters found:")
+    print(f"  kernel: {result['kernel']}")
+    print(f"  C: {result['C']:.4f}")
+
+    # Show kernel-specific parameters
+    active_result = space.filter_active_params(result)
+    if "gamma" in active_result:
+        print(f"  gamma: {result['gamma']:.6f}")
+    if "degree" in active_result:
+        print(f"  degree: {result['degree']}")
+
+    print(f"  Score: {svm_objective(result):.4f}")
+
     # Method chaining for fluent API
-    space2 = (
+    print("\n--- Neural Network Example with Chained Conditions ---")
+
+    nn_space = (
         SearchSpace(
             activation=["relu", "tanh", "sigmoid"],
-            hidden_size=(32, 512),
-            dropout=(0.0, 0.5),
+            hidden_size=np.arange(32, 513, 32),
+            dropout=np.arange(0.0, 0.6, 0.1),
             alpha=(1e-5, 1e-2, "log"),  # L2 regularization
         )
         .add_condition("dropout", when=lambda p: p["activation"] == "relu")
         .add_condition("alpha", when=lambda p: p["hidden_size"] > 128)
     )
 
-    print("\nNeural network SearchSpace (chained):")
-    print(f"  Parameters: {list(space2.param_names)}")
-    print(f"  Conditions: {len(space2.conditions)}")
+    def nn_objective(params):
+        """Simulate neural network hyperparameter optimization."""
+        hidden = params["hidden_size"]
+        activation = params["activation"]
+
+        # Base score from hidden size (optimal around 256)
+        score = -(((hidden - 256) / 100) ** 2)
+
+        # Activation bonus
+        if activation == "relu":
+            score += 0.5
+            # Dropout penalty (optimal around 0.2 for relu)
+            dropout = params.get("dropout", 0.0)
+            score -= (dropout - 0.2) ** 2
+        elif activation == "tanh":
+            score += 0.3
+
+        # Regularization (only matters for large models)
+        if hidden > 128:
+            alpha = params.get("alpha", 1e-3)
+            score -= (np.log10(alpha) + 3) ** 2 * 0.1
+
+        return score
+
+    optimizer = RandomSearch(
+        search_space=nn_space,
+        n_iter=50,
+        experiment=nn_objective,
+    )
+
+    result = optimizer.solve()
+
+    print(f"\nBest neural network parameters:")
+    print(f"  activation: {result['activation']}")
+    print(f"  hidden_size: {result['hidden_size']}")
+
+    active_result = nn_space.filter_active_params(result)
+    if "dropout" in active_result:
+        print(f"  dropout: {result['dropout']:.2f}")
+    if "alpha" in active_result:
+        print(f"  alpha: {result['alpha']:.6f}")
+
+    print(f"  Score: {nn_objective(result):.4f}")
 
 
 if __name__ == "__main__":
