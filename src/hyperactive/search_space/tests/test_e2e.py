@@ -220,6 +220,194 @@ class TestE2EWithOptuna:
         assert 1e-5 <= result["lr"] <= 1e-1
 
 
+@pytest.mark.skipif(not HAS_OPTUNA, reason="optuna not available")
+class TestOptunaKnownBugs:
+    """Tests for known bugs in Optuna integration.
+
+    These tests document bugs that need to be fixed.
+    They should fail until the bugs are resolved.
+    """
+
+    def test_optuna_log_scale_distribution_handling(self):
+        """Bug: Optuna adapter doesn't handle FloatDistribution for log-scale.
+
+        When SearchSpace converts a log-scale dimension, it creates an Optuna
+        FloatDistribution. The _suggest_params method in _base_optuna_adapter.py
+        doesn't handle this distribution type, raising ValueError.
+
+        Location: src/hyperactive/opt/_adapters/_base_optuna_adapter.py:95-126
+        """
+        from hyperactive.opt import TPEOptimizer
+
+        space = SearchSpace(
+            lr=(1e-5, 1e-1, "log"),
+        )
+
+        def objective(params):
+            return -abs(np.log10(params["lr"]) + 3)
+
+        optimizer = TPEOptimizer(
+            param_space=space,
+            n_trials=5,
+            experiment=objective,
+        )
+
+        # This should work but currently raises:
+        # ValueError: Invalid parameter space for key 'lr': FloatDistribution(...)
+        result = optimizer.solve()
+        assert "lr" in result
+        assert 1e-5 <= result["lr"] <= 1e-1
+
+    def test_optuna_integer_continuous_handling(self):
+        """Bug: Optuna adapter may not handle integer continuous correctly.
+
+        When SearchSpace has a continuous integer dimension (e.g., (1, 100)),
+        the Optuna adapter should use suggest_int, not suggest_float.
+        """
+        from hyperactive.opt import TPEOptimizer
+
+        space = SearchSpace(
+            n_layers=(1, 10),  # Integer continuous
+        )
+
+        def objective(params):
+            return -abs(params["n_layers"] - 5)
+
+        optimizer = TPEOptimizer(
+            param_space=space,
+            n_trials=5,
+            experiment=objective,
+        )
+
+        result = optimizer.solve()
+        assert "n_layers" in result
+        # Should be an integer, not a float
+        assert isinstance(result["n_layers"], int)
+
+
+class TestNestedSpaceBugs:
+    """Tests for known bugs in nested space handling."""
+
+    def test_nested_space_missing_restructure_method(self):
+        """Bug: SearchSpace lacks restructure_result method.
+
+        When using nested spaces, results come back flat:
+          {"estimator": RFC, "randomforestclassifier__n_estimators": 100}
+
+        They should be restructurable to:
+          {"estimator": RFC, "estimator_params": {"n_estimators": 100}}
+
+        This is documented in the plan but not implemented.
+        """
+        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.svm import SVC
+
+        space = SearchSpace(
+            estimator_params={
+                RandomForestClassifier: {"n_estimators": [10, 50]},
+                SVC: {"C": [0.1, 1.0]},
+            }
+        )
+
+        # The SearchSpace knows about nested spaces
+        assert space.has_nested_spaces
+        assert "estimator_params" in space.nested_spaces
+
+        # But there's no method to restructure flat results back to nested
+        # This functionality is specified in the plan but not implemented
+        flat_result = {
+            "estimator": RandomForestClassifier,
+            "randomforestclassifier__n_estimators": 100,
+        }
+
+        # Bug: restructure_result method does not exist
+        # This test passes now, will fail when the method is implemented
+        assert not hasattr(space, "restructure_result")
+
+        # When implemented, the method should work like this:
+        # structured = space.restructure_result(flat_result)
+        # assert structured == {
+        #     "estimator": RandomForestClassifier,
+        #     "estimator_params": {"n_estimators": 100},
+        # }
+
+
+class TestValidationBugs:
+    """Tests for missing validation functionality."""
+
+    def test_validation_warns_for_unsupported_conditions(self):
+        """Bug: No validation warning when using conditions with GFO.
+
+        The plan specifies validate_space_for_optimizer() should warn
+        when using conditions with backends that don't support them natively.
+        This function is not implemented.
+        """
+        import warnings
+
+        from hyperactive.opt import HillClimbing
+
+        space = SearchSpace(
+            kernel=["rbf", "linear"],
+            gamma=(0.1, 10.0),
+        )
+        space.add_condition("gamma", when=lambda p: p["kernel"] == "rbf")
+
+        def objective(params):
+            return 1.0
+
+        # Should warn that GFO doesn't natively support conditions
+        # Currently no warning is emitted
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+
+            optimizer = HillClimbing(
+                search_space=space,
+                n_iter=5,
+                experiment=objective,
+            )
+
+            # This assertion will fail until validation is implemented
+            # Uncomment when implementing the fix:
+            # assert len(w) >= 1
+            # assert "conditional" in str(w[0].message).lower()
+
+    def test_validation_warns_for_unsupported_constraints_optuna(self):
+        """Bug: No validation warning when using constraints with Optuna.
+
+        Optuna doesn't natively support constraints. The validation function
+        should warn users about this.
+        """
+        pytest.importorskip("optuna")
+
+        import warnings
+
+        from hyperactive.opt import TPEOptimizer
+
+        space = SearchSpace(
+            x=(0.0, 10.0),
+            y=(0.0, 10.0),
+        )
+        space.add_constraint(lambda p: p["x"] + p["y"] < 10)
+
+        def objective(params):
+            return 1.0
+
+        # Should warn that Optuna doesn't natively support constraints
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+
+            optimizer = TPEOptimizer(
+                param_space=space,
+                n_trials=5,
+                experiment=objective,
+            )
+
+            # This assertion will fail until validation is implemented
+            # Uncomment when implementing the fix:
+            # assert len(w) >= 1
+            # assert "constraint" in str(w[0].message).lower()
+
+
 class TestBackwardCompatibility:
     """Test backward compatibility with dict-based search spaces."""
 

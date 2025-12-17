@@ -198,3 +198,166 @@ class TestConstraintHandling:
         # Check all valid combinations satisfy constraint
         for combo in valid:
             assert combo["x"] + combo["y"] <= 4
+
+
+class TestOptunaAdapterKnownBugs:
+    """Tests for known bugs in Optuna adapter.
+
+    These tests document bugs that need to be fixed.
+    """
+
+    @pytest.fixture
+    def skip_if_no_optuna(self):
+        """Skip test if optuna is not available."""
+        pytest.importorskip("optuna")
+
+    def test_log_scale_creates_float_distribution(self, skip_if_no_optuna):
+        """Test that log-scale creates FloatDistribution (setup for bug)."""
+        import optuna.distributions
+
+        space = SearchSpace(lr=(1e-5, 1e-1, "log"))
+        adapted = space.to_backend("optuna")
+
+        # This correctly creates a FloatDistribution
+        assert isinstance(adapted["lr"], optuna.distributions.FloatDistribution)
+        assert adapted["lr"].log is True
+
+    def test_suggest_params_handles_float_distribution(self, skip_if_no_optuna):
+        """Bug: _suggest_params doesn't handle FloatDistribution.
+
+        The _suggest_params method in _base_optuna_adapter.py checks:
+        1. hasattr(space, "suggest") - FloatDistribution doesn't have this
+        2. isinstance(space, tuple) - FloatDistribution isn't a tuple
+        3. isinstance(space, list) - FloatDistribution isn't a list
+
+        So it falls through to the error case.
+        """
+        import optuna
+        import optuna.distributions
+
+        from hyperactive.opt._adapters._base_optuna_adapter import _BaseOptunaAdapter
+
+        # Create a mock adapter to test _suggest_params directly
+        class MockOptunaAdapter(_BaseOptunaAdapter):
+            def _get_optimizer(self):
+                return optuna.samplers.TPESampler()
+
+        adapter = MockOptunaAdapter(
+            param_space={"x": [1, 2, 3]},
+            n_trials=1,
+            experiment=lambda p: 1.0,
+        )
+
+        # Create a param_space with FloatDistribution (as created by SearchSpace)
+        param_space = {
+            "lr": optuna.distributions.FloatDistribution(1e-5, 1e-1, log=True),
+        }
+
+        # Create a trial
+        study = optuna.create_study()
+        trial = study.ask()
+
+        # This should work but currently raises ValueError
+        # because _suggest_params doesn't handle FloatDistribution
+        params = adapter._suggest_params(trial, param_space)
+        assert "lr" in params
+        assert 1e-5 <= params["lr"] <= 1e-1
+
+    def test_integer_continuous_returns_int(self, skip_if_no_optuna):
+        """Bug: Integer continuous may return float instead of int.
+
+        When SearchSpace has (1, 10) with ints, the Optuna adapter
+        should use suggest_int to return an integer.
+        """
+        import optuna
+
+        from hyperactive.opt._adapters._base_optuna_adapter import _BaseOptunaAdapter
+
+        class MockOptunaAdapter(_BaseOptunaAdapter):
+            def _get_optimizer(self):
+                return optuna.samplers.TPESampler()
+
+        adapter = MockOptunaAdapter(
+            param_space={"x": [1, 2, 3]},
+            n_trials=1,
+            experiment=lambda p: 1.0,
+        )
+
+        # Integer range as tuple
+        param_space = {"n_layers": (1, 10)}
+
+        study = optuna.create_study()
+        trial = study.ask()
+
+        params = adapter._suggest_params(trial, param_space)
+        assert "n_layers" in params
+        # Should be an integer
+        assert isinstance(params["n_layers"], int)
+
+
+class TestAdapterEdgeCases:
+    """Tests for edge cases in adapters."""
+
+    def test_gfo_with_all_dimension_types(self):
+        """Test GFO adapter handles all dimension types together."""
+        import scipy.stats as st
+
+        space = SearchSpace(
+            categorical=["a", "b", "c"],
+            discrete=np.arange(10),
+            continuous=(0.0, 10.0),
+            continuous_int=(1, 100),
+            log_scale=(1e-5, 1e-1, "log"),
+            distribution=st.uniform(0, 1),
+            constant=42,
+        )
+
+        gfo_space = space.to_backend("gfo", resolution=20)
+
+        assert len(gfo_space["categorical"]) == 3
+        assert len(gfo_space["discrete"]) == 10
+        assert len(gfo_space["continuous"]) == 20
+        assert len(gfo_space["continuous_int"]) == 100  # All integers in range
+        assert len(gfo_space["log_scale"]) == 20
+        assert len(gfo_space["constant"]) == 1
+        assert gfo_space["constant"][0] == 42
+
+    def test_sklearn_with_all_dimension_types(self):
+        """Test sklearn adapter handles all dimension types."""
+        import scipy.stats as st
+
+        space = SearchSpace(
+            categorical=["a", "b", "c"],
+            discrete=np.arange(5),
+            continuous=(0.0, 10.0),
+            log_scale=(1e-5, 1e-1, "log"),
+            distribution=st.uniform(0, 1),
+            constant=42,
+        )
+
+        sklearn_space = space.to_backend("sklearn_random")
+
+        assert sklearn_space["categorical"] == ["a", "b", "c"]
+        assert sklearn_space["discrete"] == [0, 1, 2, 3, 4]
+        assert hasattr(sklearn_space["continuous"], "rvs")  # scipy distribution
+        assert hasattr(sklearn_space["log_scale"], "rvs")
+        assert sklearn_space["distribution"] is not None
+        assert sklearn_space["constant"] == [42]
+
+    def test_empty_search_space(self):
+        """Test adapters handle empty search space."""
+        space = SearchSpace()
+
+        gfo_space = space.to_backend("gfo")
+        assert gfo_space == {}
+
+        sklearn_space = space.to_backend("sklearn_random")
+        assert sklearn_space == {}
+
+    def test_single_value_categorical(self):
+        """Test adapters handle single-value categorical."""
+        space = SearchSpace(x=["only_option"])
+
+        gfo_space = space.to_backend("gfo")
+        assert len(gfo_space["x"]) == 1
+        assert gfo_space["x"][0] == "only_option"
