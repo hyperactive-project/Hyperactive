@@ -108,6 +108,137 @@ class TestE2EWithGFO:
         result = optimizer.solve()
         assert result["x"] + result["y"] < 10  # Constraint satisfied
 
+    def test_with_conditions_completes(self):
+        """Test SearchSpace with conditions completes optimization.
+
+        CRITICAL TEST: This catches the bug where conditions were incorrectly
+        converted to constraints, causing GFO to hang trying to find valid
+        parameter combinations.
+        """
+        from hyperactive.opt import RandomSearch
+
+        space = SearchSpace(
+            kernel=["rbf", "linear", "poly"],
+            C=(0.01, 100.0, "log"),
+            gamma=(1e-4, 10.0, "log"),
+            degree=[2, 3, 4, 5],
+        )
+        space.add_condition("gamma", when=lambda p: p["kernel"] == "rbf")
+        space.add_condition("degree", when=lambda p: p["kernel"] == "poly")
+
+        def objective(params):
+            kernel = params["kernel"]
+            score = -np.log10(params["C"]) ** 2
+            if kernel == "rbf":
+                score -= (np.log10(params.get("gamma", 1.0)) + 1) ** 2
+            elif kernel == "poly":
+                score -= (params.get("degree", 3) - 3) ** 2
+            return score
+
+        optimizer = RandomSearch(
+            search_space=space,
+            n_iter=30,
+            experiment=objective,
+        )
+
+        # This should complete quickly, not hang
+        result = optimizer.solve()
+
+        assert "kernel" in result
+        assert "C" in result
+        assert result["kernel"] in ["rbf", "linear", "poly"]
+
+    def test_with_conditions_hillclimbing(self):
+        """Test conditions work with HillClimbing optimizer."""
+        from hyperactive.opt import HillClimbing
+
+        space = SearchSpace(
+            mode=["simple", "advanced"],
+            x=np.arange(-5, 5, 0.5),
+            extra_param=[1, 2, 3],
+        )
+        space.add_condition("extra_param", when=lambda p: p["mode"] == "advanced")
+
+        def objective(params):
+            score = -params["x"] ** 2
+            if params["mode"] == "advanced":
+                score += params.get("extra_param", 0)
+            return score
+
+        optimizer = HillClimbing(
+            search_space=space,
+            n_iter=30,
+            experiment=objective,
+        )
+
+        result = optimizer.solve()
+        assert "mode" in result
+        assert "x" in result
+
+    def test_conditions_and_constraints_together(self):
+        """Test both conditions and constraints work together."""
+        from hyperactive.opt import RandomSearch
+
+        space = SearchSpace(
+            kernel=["rbf", "linear"],
+            C=(0.1, 10.0, "log"),
+            gamma=(0.01, 1.0, "log"),
+        )
+        # Condition: gamma only for rbf
+        space.add_condition("gamma", when=lambda p: p["kernel"] == "rbf")
+        # Constraint: C should not be too large
+        space.add_constraint(lambda p: p["C"] < 5)
+
+        def objective(params):
+            score = -np.log10(params["C"]) ** 2
+            if params["kernel"] == "rbf":
+                score -= np.log10(params.get("gamma", 0.1)) ** 2
+            return score
+
+        optimizer = RandomSearch(
+            search_space=space,
+            n_iter=30,
+            experiment=objective,
+        )
+
+        result = optimizer.solve()
+
+        # Constraint should be satisfied
+        assert result["C"] < 5
+        assert result["kernel"] in ["rbf", "linear"]
+
+    def test_multiple_conditions_completes(self):
+        """Test multiple conditions don't cause optimization to hang."""
+        from hyperactive.opt import RandomSearch
+
+        space = SearchSpace(
+            model=["svm", "rf", "nn"],
+            C=(0.1, 10.0, "log"),
+            n_estimators=[10, 50, 100],
+            hidden_size=[32, 64, 128],
+        )
+        space.add_condition("C", when=lambda p: p["model"] == "svm")
+        space.add_condition("n_estimators", when=lambda p: p["model"] == "rf")
+        space.add_condition("hidden_size", when=lambda p: p["model"] == "nn")
+
+        def objective(params):
+            model = params["model"]
+            if model == "svm":
+                return -np.log10(params.get("C", 1.0)) ** 2
+            elif model == "rf":
+                return params.get("n_estimators", 10) / 100
+            else:
+                return params.get("hidden_size", 32) / 128
+
+        optimizer = RandomSearch(
+            search_space=space,
+            n_iter=30,
+            experiment=objective,
+        )
+
+        result = optimizer.solve()
+        assert result["model"] in ["svm", "rf", "nn"]
+
 
 class TestE2EWithSklearn:
     """End-to-end tests with sklearn optimizers."""

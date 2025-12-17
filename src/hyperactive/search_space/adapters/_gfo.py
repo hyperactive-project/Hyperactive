@@ -133,6 +133,10 @@ class GFOSearchSpaceAdapter(BaseSearchSpaceAdapter):
         GFO accepts constraints as a list of callable predicates.
         Each constraint returns True if the parameter combination is valid.
 
+        Note: Conditions are NOT converted to constraints because GFO samples
+        all parameters. The objective function should use `params.get()` to
+        handle conditional parameters gracefully.
+
         Returns
         -------
         list[callable]
@@ -140,26 +144,8 @@ class GFOSearchSpaceAdapter(BaseSearchSpaceAdapter):
         """
         constraints = []
 
-        # Add explicit constraints
+        # Add explicit constraints only (not conditions)
         for constraint in self.space.constraints:
             constraints.append(constraint.predicate)
-
-        # Add conditions as implicit constraints
-        # (inactive params should be skipped by the optimizer)
-        for condition in self.space.conditions:
-            # Create a constraint that allows either:
-            # 1. The condition is met (param is active)
-            # 2. The param is not in the params dict
-
-            def condition_constraint(
-                params, cond=condition
-            ):
-                # If we can't evaluate, allow it
-                if not cond.can_evaluate(params):
-                    return True
-                # If param is active, allow it
-                return cond.is_active(params)
-
-            constraints.append(condition_constraint)
 
         return constraints if constraints else None

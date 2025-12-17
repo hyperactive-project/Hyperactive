@@ -178,7 +178,82 @@ class TestConstraintHandling:
         constraints = adapter.get_constraints()
 
         assert constraints is not None
-        assert len(constraints) >= 1
+        assert len(constraints) == 1  # Exactly 1 constraint, no conditions
+
+    def test_gfo_conditions_not_converted_to_constraints(self):
+        """Test GFO adapter does NOT convert conditions to constraints.
+
+        This is critical: conditions should not become constraints because
+        GFO samples all parameters. If conditions were constraints, they would
+        incorrectly reject valid parameter combinations where conditional
+        parameters happen to be sampled but aren't "active".
+        """
+        space = SearchSpace(
+            kernel=["rbf", "linear"],
+            gamma=(1e-4, 10.0, "log"),
+        )
+        space.add_condition("gamma", when=lambda p: p["kernel"] == "rbf")
+
+        adapter = GFOSearchSpaceAdapter(space)
+        constraints = adapter.get_constraints()
+
+        # No constraints should be returned (conditions are NOT constraints)
+        assert constraints is None
+
+    def test_gfo_constraints_only_not_conditions(self):
+        """Test GFO returns only explicit constraints, not conditions."""
+        space = SearchSpace(
+            kernel=["rbf", "linear"],
+            C=(0.01, 100.0, "log"),
+            gamma=(1e-4, 10.0, "log"),
+        )
+        # Add a condition (should NOT become a constraint)
+        space.add_condition("gamma", when=lambda p: p["kernel"] == "rbf")
+        # Add an explicit constraint (SHOULD be returned)
+        space.add_constraint(lambda p: p["C"] < 50)
+
+        adapter = GFOSearchSpaceAdapter(space)
+        constraints = adapter.get_constraints()
+
+        # Should have exactly 1 constraint (the explicit one)
+        assert constraints is not None
+        assert len(constraints) == 1
+
+        # Verify it's the right constraint
+        assert constraints[0]({"C": 10}) is True
+        assert constraints[0]({"C": 60}) is False
+
+    def test_gfo_multiple_conditions_no_constraints(self):
+        """Test multiple conditions don't create any constraints."""
+        space = SearchSpace(
+            model=["svm", "rf", "nn"],
+            C=(0.01, 100.0, "log"),
+            n_estimators=[10, 50, 100],
+            hidden_size=[32, 64, 128],
+        )
+        space.add_condition("C", when=lambda p: p["model"] == "svm")
+        space.add_condition("n_estimators", when=lambda p: p["model"] == "rf")
+        space.add_condition("hidden_size", when=lambda p: p["model"] == "nn")
+
+        adapter = GFOSearchSpaceAdapter(space)
+        constraints = adapter.get_constraints()
+
+        # No constraints - conditions are not constraints
+        assert constraints is None
+
+    def test_gfo_constraint_function_works(self):
+        """Test extracted constraint functions work correctly."""
+        space = SearchSpace(x=[1, 2, 3, 4, 5], y=[1, 2, 3, 4, 5])
+        space.add_constraint(lambda p: p["x"] + p["y"] < 6)
+
+        adapter = GFOSearchSpaceAdapter(space)
+        constraints = adapter.get_constraints()
+
+        # Test the constraint function
+        assert constraints[0]({"x": 1, "y": 1}) is True  # 2 < 6
+        assert constraints[0]({"x": 2, "y": 2}) is True  # 4 < 6
+        assert constraints[0]({"x": 3, "y": 3}) is False  # 6 not < 6
+        assert constraints[0]({"x": 5, "y": 5}) is False  # 10 not < 6
 
     def test_sklearn_filter_invalid(self):
         """Test sklearn adapter filters invalid combinations."""
