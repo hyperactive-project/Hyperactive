@@ -416,8 +416,8 @@ class TestNestedSpaceBugs:
         When using nested spaces, results come back flat:
           {"estimator": RFC, "randomforestclassifier__n_estimators": 100}
 
-        They should be restructurable to:
-          {"estimator": RFC, "estimator_params": {"n_estimators": 100}}
+        They should be restructurable to nested format for easier use:
+          {"estimator": RFC, "n_estimators": 100}
 
         This is documented in the plan but not implemented.
         """
@@ -425,7 +425,7 @@ class TestNestedSpaceBugs:
         from sklearn.svm import SVC
 
         space = SearchSpace(
-            estimator_params={
+            estimator={
                 RandomForestClassifier: {"n_estimators": [10, 50]},
                 SVC: {"C": [0.1, 1.0]},
             }
@@ -433,7 +433,7 @@ class TestNestedSpaceBugs:
 
         # The SearchSpace knows about nested spaces
         assert space.has_nested_spaces
-        assert "estimator_params" in space.nested_spaces
+        assert "estimator" in space.nested_spaces
 
         # But there's no method to restructure flat results back to nested
         # This functionality is specified in the plan but not implemented
@@ -446,11 +446,11 @@ class TestNestedSpaceBugs:
         # This test passes now, will fail when the method is implemented
         assert not hasattr(space, "restructure_result")
 
-        # When implemented, the method should work like this:
+        # When implemented, the method could work like this:
         # structured = space.restructure_result(flat_result)
         # assert structured == {
         #     "estimator": RandomForestClassifier,
-        #     "estimator_params": {"n_estimators": 100},
+        #     "n_estimators": 100,  # prefix stripped for active estimator
         # }
 
 

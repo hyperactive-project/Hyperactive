@@ -32,11 +32,11 @@ def main():
         random_state=42,
     )
 
-    # Nested search space using the _params suffix convention
-    # The keys of the dict become the categorical choices for "estimator"
+    # Nested search space: dict with class keys is automatically detected
+    # The keys become categorical choices for "estimator"
     # and each value defines the hyperparameters for that estimator
     space = SearchSpace(
-        estimator_params={
+        estimator={
             RandomForestClassifier: {
                 "n_estimators": np.arange(10, 101, 10),
                 "max_depth": [3, 5, 10, None],

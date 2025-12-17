@@ -95,7 +95,7 @@ class SearchSpace:
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sklearn.svm import SVC
     >>> space = SearchSpace(
-    ...     estimator_params={
+    ...     estimator={
     ...         RandomForestClassifier: {
     ...             "n_estimators": np.arange(10, 101, 10),
     ...             "max_depth": [3, 5, 10, None],
@@ -106,6 +106,10 @@ class SearchSpace:
     ...         },
     ...     },
     ... )
+
+    The nested space is detected automatically when a dict has class keys
+    mapping to parameter dicts. This creates a categorical "estimator"
+    dimension plus conditional parameters for each estimator type.
     """
 
     def __init__(
@@ -135,13 +139,9 @@ class SearchSpace:
 
         # Process keyword arguments
         for name, value in kwargs.items():
-            if name.endswith("_params") and isinstance(value, dict):
-                # Check if this looks like a nested space (dict with class keys)
-                if value and self._looks_like_nested_space(value):
-                    self._add_nested_space(name, value)
-                else:
-                    # Regular dict parameter
-                    self._add_dimension(name, value)
+            # Check if this looks like a nested space (dict with class keys)
+            if isinstance(value, dict) and self._looks_like_nested_space(value):
+                self._add_nested_space(name, value)
             else:
                 self._add_dimension(name, value)
 
@@ -189,15 +189,26 @@ class SearchSpace:
     def _add_nested_space(self, name: str, nested: dict[Any, dict]) -> None:
         """Add a nested search space.
 
+        Nested spaces are detected automatically when a dict has class/callable
+        keys mapping to parameter dicts. For example:
+
+            estimator={
+                RandomForestClassifier: {"n_estimators": [10, 50, 100]},
+                SVC: {"C": (0.01, 100.0, "log")},
+            }
+
+        This creates:
+        - A categorical dimension "estimator" with RFC and SVC as choices
+        - Flattened parameters like "randomforestclassifier__n_estimators"
+        - Automatic conditions so each param is only active for its estimator
+
         Parameters
         ----------
         name : str
-            The nested space name (e.g., "estimator_params").
+            The parameter name (e.g., "estimator").
         nested : dict
             Dictionary mapping keys (classes/functions) to parameter dicts.
         """
-        parent_name = name.replace("_params", "")
-
         # Convert nested dicts to SearchSpaces
         converted = {}
         for key, subspace_dict in nested.items():
@@ -207,15 +218,15 @@ class SearchSpace:
 
         # Create parent categorical dimension from keys
         parent_values = list(nested.keys())
-        self.dimensions[parent_name] = Dimension(
-            name=parent_name,
+        self.dimensions[name] = Dimension(
+            name=name,
             values=parent_values,
             dim_type=DimensionType.CATEGORICAL,
             dtype=object,
         )
 
         # Expand nested space to flat dimensions with conditions
-        self._expand_nested_space(parent_name, converted)
+        self._expand_nested_space(name, converted)
 
     def _expand_nested_space(
         self,

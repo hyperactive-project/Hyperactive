@@ -180,12 +180,12 @@ class TestSearchSpaceNestedSpaces:
     """Test nested search spaces."""
 
     def test_nested_space_detection(self):
-        """Test nested space is detected from _params suffix."""
+        """Test nested space is detected from class keys in dict."""
         from sklearn.ensemble import RandomForestClassifier
         from sklearn.svm import SVC
 
         space = SearchSpace(
-            estimator_params={
+            estimator={
                 RandomForestClassifier: {
                     "n_estimators": np.arange(10, 101, 10),
                 },
@@ -197,6 +197,7 @@ class TestSearchSpaceNestedSpaces:
 
         assert space.has_nested_spaces
         assert "estimator" in space.dimensions  # Parent dimension created
+        assert "estimator" in space.nested_spaces  # Nested space stored
 
     def test_nested_space_flattening(self):
         """Test nested space parameters are flattened with prefix."""
@@ -204,7 +205,7 @@ class TestSearchSpaceNestedSpaces:
         from sklearn.svm import SVC
 
         space = SearchSpace(
-            estimator_params={
+            estimator={
                 RandomForestClassifier: {
                     "n_estimators": np.arange(10, 101, 10),
                 },
@@ -224,7 +225,7 @@ class TestSearchSpaceNestedSpaces:
         from sklearn.svm import SVC
 
         space = SearchSpace(
-            estimator_params={
+            estimator={
                 RandomForestClassifier: {
                     "n_estimators": np.arange(10, 101, 10),
                 },
