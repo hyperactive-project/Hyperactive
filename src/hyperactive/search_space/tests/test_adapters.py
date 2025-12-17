@@ -198,7 +198,7 @@ class TestConstraintHandling:
         constraints = adapter.get_constraints()
 
         # No constraints should be returned (conditions are NOT constraints)
-        assert constraints is None
+        assert constraints == []
 
     def test_gfo_constraints_only_not_conditions(self):
         """Test GFO returns only explicit constraints, not conditions."""
@@ -239,7 +239,7 @@ class TestConstraintHandling:
         constraints = adapter.get_constraints()
 
         # No constraints - conditions are not constraints
-        assert constraints is None
+        assert constraints == []
 
     def test_gfo_constraint_function_works(self):
         """Test extracted constraint functions work correctly."""

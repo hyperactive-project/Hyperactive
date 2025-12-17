@@ -140,12 +140,6 @@ class GFOSearchSpaceAdapter(BaseSearchSpaceAdapter):
         Returns
         -------
         list[callable]
-            List of constraint functions.
+            List of constraint functions. Empty list if no constraints.
         """
-        constraints = []
-
-        # Add explicit constraints only (not conditions)
-        for constraint in self.space.constraints:
-            constraints.append(constraint.predicate)
-
-        return constraints if constraints else None
+        return [constraint.predicate for constraint in self.space.constraints]

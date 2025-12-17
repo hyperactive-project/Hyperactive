@@ -150,7 +150,8 @@ class _BaseGFOadapter(BaseOptimizer):
         Returns
         -------
         list or None
-            List of constraint functions or None.
+            List of constraint functions (may be empty), or None if
+            search_space is not a SearchSpace object.
         """
         from hyperactive.search_space import SearchSpace
 
