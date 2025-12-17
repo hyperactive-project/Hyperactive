@@ -272,6 +272,55 @@ class TestSearchSpaceNestedSpaces:
                 }
             )
 
+    def test_nested_space_preserves_all_dimension_fields(self):
+        """Test that all Dimension fields are preserved during nested space expansion.
+
+        This is a regression test for using dataclasses.replace() instead of
+        manual field copying. Manual copying would silently drop fields if
+        new fields are added to the Dimension dataclass.
+        """
+        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.svm import SVC
+
+        space = SearchSpace(
+            estimator={
+                RandomForestClassifier: {
+                    # Discrete dimension with low/high
+                    "n_estimators": np.arange(10, 101, 10),
+                },
+                SVC: {
+                    # Log-scale continuous dimension
+                    "C": (0.01, 100.0, "log"),
+                    # Regular continuous dimension
+                    "tol": (1e-5, 1e-2),
+                },
+            },
+        )
+
+        # Check RandomForestClassifier nested param
+        rf_dim = space.dimensions["randomforestclassifier__n_estimators"]
+        assert rf_dim.dim_type == DimensionType.DISCRETE
+        assert rf_dim.dtype == int
+        assert rf_dim.low == 10.0
+        assert rf_dim.high == 100.0
+        assert rf_dim.log_scale is False
+
+        # Check SVC log-scale param - all fields must be preserved
+        svc_c_dim = space.dimensions["svc__C"]
+        assert svc_c_dim.dim_type == DimensionType.CONTINUOUS_LOG
+        assert svc_c_dim.dtype == float
+        assert svc_c_dim.low == 0.01
+        assert svc_c_dim.high == 100.0
+        assert svc_c_dim.log_scale is True  # Critical: would be False if field was dropped
+
+        # Check SVC regular continuous param
+        svc_tol_dim = space.dimensions["svc__tol"]
+        assert svc_tol_dim.dim_type == DimensionType.CONTINUOUS
+        assert svc_tol_dim.dtype == float
+        assert svc_tol_dim.low == 1e-5
+        assert svc_tol_dim.high == 1e-2
+        assert svc_tol_dim.log_scale is False
+
 
 class TestSearchSpaceDimensionTypes:
     """Test dimension type queries."""
