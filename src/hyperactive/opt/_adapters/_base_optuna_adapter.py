@@ -107,10 +107,13 @@ class _BaseOptunaAdapter(BaseOptimizer):
         dict
             The suggested parameters
         """
+        import optuna.distributions
+
         params = {}
         for key, space in param_space.items():
-            if hasattr(space, "suggest"):  # optuna distribution object
-                params[key] = trial._suggest(space, key)
+            # Check for Optuna distribution objects (e.g., FloatDistribution)
+            if isinstance(space, optuna.distributions.BaseDistribution):
+                params[key] = trial._suggest(key, space)
             elif isinstance(space, tuple) and len(space) == 2:
                 # Tuples are treated as ranges (low, high)
                 low, high = space

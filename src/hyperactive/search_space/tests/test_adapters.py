@@ -200,11 +200,8 @@ class TestConstraintHandling:
             assert combo["x"] + combo["y"] <= 4
 
 
-class TestOptunaAdapterKnownBugs:
-    """Tests for known bugs in Optuna adapter.
-
-    These tests document bugs that need to be fixed.
-    """
+class TestOptunaAdapterAdvanced:
+    """Tests for advanced Optuna adapter functionality."""
 
     @pytest.fixture
     def skip_if_no_optuna(self):
@@ -212,7 +209,7 @@ class TestOptunaAdapterKnownBugs:
         pytest.importorskip("optuna")
 
     def test_log_scale_creates_float_distribution(self, skip_if_no_optuna):
-        """Test that log-scale creates FloatDistribution (setup for bug)."""
+        """Test that log-scale creates FloatDistribution."""
         import optuna.distributions
 
         space = SearchSpace(lr=(1e-5, 1e-1, "log"))
@@ -223,14 +220,10 @@ class TestOptunaAdapterKnownBugs:
         assert adapted["lr"].log is True
 
     def test_suggest_params_handles_float_distribution(self, skip_if_no_optuna):
-        """Bug: _suggest_params doesn't handle FloatDistribution.
+        """Test _suggest_params correctly handles FloatDistribution.
 
-        The _suggest_params method in _base_optuna_adapter.py checks:
-        1. hasattr(space, "suggest") - FloatDistribution doesn't have this
-        2. isinstance(space, tuple) - FloatDistribution isn't a tuple
-        3. isinstance(space, list) - FloatDistribution isn't a list
-
-        So it falls through to the error case.
+        The _suggest_params method in _base_optuna_adapter.py checks for
+        optuna.distributions.BaseDistribution instances and uses trial._suggest.
         """
         import optuna
         import optuna.distributions
@@ -257,17 +250,15 @@ class TestOptunaAdapterKnownBugs:
         study = optuna.create_study()
         trial = study.ask()
 
-        # This should work but currently raises ValueError
-        # because _suggest_params doesn't handle FloatDistribution
         params = adapter._suggest_params(trial, param_space)
         assert "lr" in params
         assert 1e-5 <= params["lr"] <= 1e-1
 
     def test_integer_continuous_returns_int(self, skip_if_no_optuna):
-        """Bug: Integer continuous may return float instead of int.
+        """Test integer continuous returns int.
 
         When SearchSpace has (1, 10) with ints, the Optuna adapter
-        should use suggest_int to return an integer.
+        uses suggest_int to return an integer.
         """
         import optuna
 

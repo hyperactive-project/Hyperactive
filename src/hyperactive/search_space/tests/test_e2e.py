@@ -221,21 +221,14 @@ class TestE2EWithOptuna:
 
 
 @pytest.mark.skipif(not HAS_OPTUNA, reason="optuna not available")
-class TestOptunaKnownBugs:
-    """Tests for known bugs in Optuna integration.
-
-    These tests document bugs that need to be fixed.
-    They should fail until the bugs are resolved.
-    """
+class TestOptunaAdvancedFeatures:
+    """Tests for advanced Optuna integration features."""
 
     def test_optuna_log_scale_distribution_handling(self):
-        """Bug: Optuna adapter doesn't handle FloatDistribution for log-scale.
+        """Test Optuna adapter handles FloatDistribution for log-scale.
 
         When SearchSpace converts a log-scale dimension, it creates an Optuna
-        FloatDistribution. The _suggest_params method in _base_optuna_adapter.py
-        doesn't handle this distribution type, raising ValueError.
-
-        Location: src/hyperactive/opt/_adapters/_base_optuna_adapter.py:95-126
+        FloatDistribution. The _suggest_params method handles this correctly.
         """
         from hyperactive.opt import TPEOptimizer
 
@@ -252,17 +245,15 @@ class TestOptunaKnownBugs:
             experiment=objective,
         )
 
-        # This should work but currently raises:
-        # ValueError: Invalid parameter space for key 'lr': FloatDistribution(...)
         result = optimizer.solve()
         assert "lr" in result
         assert 1e-5 <= result["lr"] <= 1e-1
 
     def test_optuna_integer_continuous_handling(self):
-        """Bug: Optuna adapter may not handle integer continuous correctly.
+        """Test Optuna adapter handles integer continuous correctly.
 
         When SearchSpace has a continuous integer dimension (e.g., (1, 100)),
-        the Optuna adapter should use suggest_int, not suggest_float.
+        the Optuna adapter uses suggest_int to return an integer.
         """
         from hyperactive.opt import TPEOptimizer
 
