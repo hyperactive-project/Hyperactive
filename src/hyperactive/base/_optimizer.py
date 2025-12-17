@@ -112,7 +112,58 @@ class BaseOptimizer(BaseObject):
         from hyperactive.search_space import SearchSpace
 
         if isinstance(search_space, SearchSpace):
+            self._validate_search_space_features(search_space)
             experiment.set_search_space(search_space)
+
+    def _validate_search_space_features(self, search_space):
+        """Validate SearchSpace features against optimizer capabilities.
+
+        Emits warnings when the SearchSpace uses features that the optimizer
+        does not natively support.
+
+        Parameters
+        ----------
+        search_space : SearchSpace
+            The search space to validate.
+        """
+        optimizer_name = self.get_tag("info:name") or self.__class__.__name__
+
+        # Check conditions support
+        if search_space.has_conditions:
+            if not self.get_tag("capability:search_space:conditional"):
+                warnings.warn(
+                    f"SearchSpace has conditions, but {optimizer_name} does not "
+                    f"natively support conditional search spaces. Conditional "
+                    f"parameters will still be sampled; use params.get() with "
+                    f"defaults in your objective function to handle inactive "
+                    f"parameters gracefully.",
+                    UserWarning,
+                    stacklevel=4,
+                )
+
+        # Check constraints support
+        if search_space.has_constraints:
+            if not self.get_tag("capability:search_space:constraints"):
+                warnings.warn(
+                    f"SearchSpace has constraints, but {optimizer_name} does not "
+                    f"natively support constraints. Constraints will not be "
+                    f"enforced during optimization. Consider handling constraint "
+                    f"violations in your objective function by returning a "
+                    f"penalty score.",
+                    UserWarning,
+                    stacklevel=4,
+                )
+
+        # Check nested spaces support
+        if search_space.has_nested_spaces:
+            if not self.get_tag("capability:search_space:nested"):
+                warnings.warn(
+                    f"SearchSpace has nested spaces, but {optimizer_name} does "
+                    f"not natively support nested/hierarchical search spaces. "
+                    f"Parameters will be flattened with prefixed names.",
+                    UserWarning,
+                    stacklevel=4,
+                )
 
     def _solve(self, experiment, *args, **kwargs):
         """Run the optimization search process.
