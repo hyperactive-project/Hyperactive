@@ -36,6 +36,14 @@ class BaseExperiment(BaseObject):
             The search space to use for param transformation.
             Set to None to disable transformation.
 
+        Notes
+        -----
+        The search space is stored as a private attribute ``_search_space``.
+        Following skbase conventions, this attribute is reset to None when
+        ``reset()`` or ``clone()`` is called on the experiment. This is
+        intentional: the search space is runtime configuration injected by
+        the optimizer, not a persistent hyper-parameter.
+
         Examples
         --------
         >>> experiment.set_search_space(space)
