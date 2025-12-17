@@ -74,6 +74,8 @@ class _BaseOptunaAdapter(BaseOptimizer):
         from hyperactive.search_space import SearchSpace
 
         if isinstance(param_space, SearchSpace):
+            # Validate SearchSpace features before conversion
+            self._validate_search_space_features(param_space)
             # Store reference to original SearchSpace for constraints
             self._search_space_obj = param_space
             return param_space.to_backend("optuna")

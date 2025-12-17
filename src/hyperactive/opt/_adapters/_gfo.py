@@ -69,6 +69,10 @@ class _BaseGFOadapter(BaseOptimizer):
 
         # Extract constraints from SearchSpace before converting
         original_space = search_config["search_space"]
+
+        # Validate SearchSpace features before conversion
+        self._validate_search_space_if_needed(original_space)
+
         space_constraints = self._get_constraints_from_search_space(original_space)
 
         # Merge constraints: SearchSpace constraints + explicit constraints
@@ -79,6 +83,19 @@ class _BaseGFOadapter(BaseOptimizer):
         search_config["search_space"] = self._to_dict_np(original_space)
 
         return search_config
+
+    def _validate_search_space_if_needed(self, search_space):
+        """Validate SearchSpace features before conversion.
+
+        Parameters
+        ----------
+        search_space : dict or SearchSpace
+            The search space to validate.
+        """
+        from hyperactive.search_space import SearchSpace
+
+        if isinstance(search_space, SearchSpace):
+            self._validate_search_space_features(search_space)
 
     def _handle_gfo_defaults(self, search_config):
         """Handle default values for GFO search configuration.

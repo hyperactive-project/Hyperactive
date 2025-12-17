@@ -188,6 +188,8 @@ class RandomSearchSk(BaseOptimizer):
         from hyperactive.search_space import SearchSpace
 
         if isinstance(param_distributions, SearchSpace):
+            # Validate SearchSpace features before conversion
+            self._validate_search_space_features(param_distributions)
             return param_distributions.to_backend("sklearn_random")
         return param_distributions
 

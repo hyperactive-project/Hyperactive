@@ -2,6 +2,8 @@
 
 # copyright: hyperactive developers, MIT License (see LICENSE file)
 
+import warnings
+
 from skbase.base import BaseObject
 
 
@@ -104,6 +106,13 @@ class BaseOptimizer(BaseObject):
             The experiment to configure.
         search_config : dict
             The search configuration containing search_space and other settings.
+
+        Notes
+        -----
+        This method is called after get_search_config(), so for adapters that
+        convert SearchSpace to dict (like GFO), search_config["search_space"]
+        will already be a dict. Validation of SearchSpace features should
+        happen in each adapter's get_search_config() before conversion.
         """
         search_space = search_config.get("search_space")
         if search_space is None or isinstance(search_space, dict):
