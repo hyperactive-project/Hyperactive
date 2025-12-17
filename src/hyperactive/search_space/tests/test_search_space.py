@@ -238,6 +238,40 @@ class TestSearchSpaceNestedSpaces:
         # Should have conditions for each nested parameter
         assert len(space.conditions) >= 2
 
+    def test_lambda_collision_raises_error(self):
+        """Test that multiple lambdas as nested space keys raises ValueError.
+
+        Lambda functions all have __name__ == '<lambda>', so they would produce
+        the same prefix and cause parameter name collisions.
+        """
+        with pytest.raises(ValueError, match="same prefix"):
+            SearchSpace(
+                transform={
+                    lambda x: x**2: {"power": [2, 3]},
+                    lambda x: x + 1: {"offset": [1, 2]},
+                }
+            )
+
+    def test_duplicate_prefix_from_same_name_raises(self):
+        """Test that keys producing the same prefix are detected."""
+
+        def my_func_a():
+            pass
+
+        def my_func_b():
+            pass
+
+        # Rename to have same __name__
+        my_func_b.__name__ = "my_func_a"
+
+        with pytest.raises(ValueError, match="same prefix"):
+            SearchSpace(
+                transform={
+                    my_func_a: {"x": [1, 2]},
+                    my_func_b: {"y": [3, 4]},
+                }
+            )
+
 
 class TestSearchSpaceDimensionTypes:
     """Test dimension type queries."""
