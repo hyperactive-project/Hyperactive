@@ -23,6 +23,16 @@ class _BaseGFOadapter(BaseOptimizer):
     _tags = {
         "authors": "SimonBlanke",
         "python_dependencies": ["gradient-free-optimizers>=1.5.0"],
+        # search space capabilities
+        "capability:search_space:continuous": True,  # via discretization
+        "capability:search_space:discrete": True,
+        "capability:search_space:categorical": True,
+        "capability:search_space:mixed": True,
+        "capability:search_space:log_scale": True,  # via log-discretization
+        "capability:search_space:conditional": False,  # handled at Hyperactive level
+        "capability:search_space:constraints": True,  # native GFO support
+        "capability:search_space:distributions": True,  # via sampling
+        "capability:search_space:nested": False,  # requires conditional
     }
 
     def __init__(self):
@@ -57,7 +67,16 @@ class _BaseGFOadapter(BaseOptimizer):
 
         search_config = self._handle_gfo_defaults(search_config)
 
-        search_config["search_space"] = self._to_dict_np(search_config["search_space"])
+        # Extract constraints from SearchSpace before converting
+        original_space = search_config["search_space"]
+        space_constraints = self._get_constraints_from_search_space(original_space)
+
+        # Merge constraints: SearchSpace constraints + explicit constraints
+        if space_constraints:
+            existing = search_config.get("constraints") or []
+            search_config["constraints"] = existing + space_constraints
+
+        search_config["search_space"] = self._to_dict_np(original_space)
 
         return search_config
 
@@ -88,12 +107,13 @@ class _BaseGFOadapter(BaseOptimizer):
         """Coerce the search space to a format suitable for gfo optimizers.
 
         gfo expects dicts of numpy arrays, not lists.
-        This method coerces lists or tuples in the search space to numpy arrays.
+        This method handles both dict-based search spaces and SearchSpace objects.
 
         Parameters
         ----------
-        search_space : dict with str keys and iterable values
-            The search space to coerce.
+        search_space : dict or SearchSpace
+            The search space to coerce. Can be either a dict with str keys
+            and iterable values, or a SearchSpace object.
 
         Returns
         -------
@@ -102,6 +122,14 @@ class _BaseGFOadapter(BaseOptimizer):
         """
         import numpy as np
 
+        # Check if it's a SearchSpace object
+        from hyperactive.search_space import SearchSpace
+
+        if isinstance(search_space, SearchSpace):
+            # Use the GFO adapter to convert
+            return search_space.to_backend("gfo")
+
+        # Original dict-based handling
         def coerce_to_numpy(arr):
             """Coerce a list or tuple to a numpy array."""
             if not isinstance(arr, np.ndarray):
@@ -110,6 +138,28 @@ class _BaseGFOadapter(BaseOptimizer):
 
         coerced_search_space = {k: coerce_to_numpy(v) for k, v in search_space.items()}
         return coerced_search_space
+
+    def _get_constraints_from_search_space(self, search_space):
+        """Extract constraints from SearchSpace if available.
+
+        Parameters
+        ----------
+        search_space : dict or SearchSpace
+            The search space.
+
+        Returns
+        -------
+        list or None
+            List of constraint functions or None.
+        """
+        from hyperactive.search_space import SearchSpace
+
+        if isinstance(search_space, SearchSpace):
+            from hyperactive.search_space.adapters import GFOSearchSpaceAdapter
+
+            adapter = GFOSearchSpaceAdapter(search_space)
+            return adapter.get_constraints()
+        return None
 
     def _solve(self, experiment, **search_config):
         """Run the optimization search process.

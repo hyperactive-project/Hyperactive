@@ -12,6 +12,16 @@ class _BaseOptunaAdapter(BaseOptimizer):
     _tags = {
         "python_dependencies": ["optuna"],
         "info:name": "Optuna-based optimizer",
+        # search space capabilities
+        "capability:search_space:continuous": True,  # native support
+        "capability:search_space:discrete": True,
+        "capability:search_space:categorical": True,
+        "capability:search_space:mixed": True,
+        "capability:search_space:log_scale": True,  # native support
+        "capability:search_space:conditional": True,  # via define-by-run
+        "capability:search_space:constraints": False,  # not native
+        "capability:search_space:distributions": True,  # via conversion
+        "capability:search_space:nested": True,  # via conditional support
     }
 
     def __init__(
@@ -53,7 +63,7 @@ class _BaseOptunaAdapter(BaseOptimizer):
 
         Parameters
         ----------
-        param_space : dict
+        param_space : dict or SearchSpace
             The parameter space to convert
 
         Returns
@@ -61,7 +71,26 @@ class _BaseOptunaAdapter(BaseOptimizer):
         dict
             The converted parameter space
         """
+        from hyperactive.search_space import SearchSpace
+
+        if isinstance(param_space, SearchSpace):
+            # Store reference to original SearchSpace for constraints
+            self._search_space_obj = param_space
+            return param_space.to_backend("optuna")
+
         return param_space
+
+    def _get_constraints_from_param_space(self):
+        """Extract constraints from SearchSpace if available.
+
+        Returns
+        -------
+        list or None
+            List of constraint functions or None.
+        """
+        if hasattr(self, "_search_space_obj") and self._search_space_obj is not None:
+            return [c.predicate for c in self._search_space_obj.constraints]
+        return None
 
     def _suggest_params(self, trial, param_space):
         """Suggest parameters using Optuna trial.
@@ -143,7 +172,7 @@ class _BaseOptunaAdapter(BaseOptimizer):
         ----------
         experiment : callable
             The experiment to optimize
-        param_space : dict
+        param_space : dict or SearchSpace
             The parameter space
         n_trials : int
             Number of trials
@@ -156,6 +185,9 @@ class _BaseOptunaAdapter(BaseOptimizer):
             The best parameters found
         """
         import optuna
+
+        # Convert param_space (handles SearchSpace objects)
+        self.param_space = self._convert_param_space(param_space)
 
         # Create optimizer with random state if provided
         optimizer = self._get_optimizer()

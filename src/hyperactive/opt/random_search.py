@@ -15,6 +15,8 @@ from hyperactive.utils.parallel import parallelize
 class RandomSearchSk(BaseOptimizer):
     """Random search optimizer leveraging sklearn's ``ParameterSampler``.
 
+    Supports both dict-based parameter distributions and SearchSpace objects.
+
     Parameters
     ----------
     param_distributions : dict[str, list | scipy.stats.rv_frozen]
@@ -105,6 +107,19 @@ class RandomSearchSk(BaseOptimizer):
         Index of ``best_params_`` in the sampled sequence.
     """
 
+    _tags = {
+        # search space capabilities
+        "capability:search_space:continuous": True,  # via scipy distributions
+        "capability:search_space:discrete": True,
+        "capability:search_space:categorical": True,
+        "capability:search_space:mixed": True,
+        "capability:search_space:log_scale": True,  # via loguniform
+        "capability:search_space:conditional": False,  # not supported
+        "capability:search_space:constraints": False,  # not native
+        "capability:search_space:distributions": True,  # native scipy support
+        "capability:search_space:nested": False,  # requires conditional
+    }
+
     def __init__(
         self,
         param_distributions=None,
@@ -157,6 +172,25 @@ class RandomSearchSk(BaseOptimizer):
                         "non-empty sequence."
                     )
 
+    def _convert_param_distributions(self, param_distributions):
+        """Convert parameter distributions (handles SearchSpace objects).
+
+        Parameters
+        ----------
+        param_distributions : dict or SearchSpace
+            The parameter distributions to convert.
+
+        Returns
+        -------
+        dict
+            Converted parameter distributions for sklearn ParameterSampler.
+        """
+        from hyperactive.search_space import SearchSpace
+
+        if isinstance(param_distributions, SearchSpace):
+            return param_distributions.to_backend("sklearn_random")
+        return param_distributions
+
     def _solve(
         self,
         experiment,
@@ -168,6 +202,8 @@ class RandomSearchSk(BaseOptimizer):
         backend_params,
     ):
         """Sample ``n_iter`` points and return the best parameter set."""
+        # Convert param_distributions (handles SearchSpace objects)
+        param_distributions = self._convert_param_distributions(param_distributions)
         self._check_param_distributions(param_distributions)
 
         sampler = ParameterSampler(

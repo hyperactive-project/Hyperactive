@@ -18,6 +18,16 @@ class BaseOptimizer(BaseObject):
         "info:compute": "middle",  # "low", "middle", "high"
         # see here for explanation of the tags:
         # https://simonblanke.github.io/gradient-free-optimizers-documentation/1.5/optimizers/  # noqa: E501
+        # search space capabilities
+        "capability:search_space:continuous": True,
+        "capability:search_space:discrete": True,
+        "capability:search_space:categorical": True,
+        "capability:search_space:mixed": True,
+        "capability:search_space:log_scale": False,
+        "capability:search_space:conditional": False,
+        "capability:search_space:constraints": False,
+        "capability:search_space:distributions": False,
+        "capability:search_space:nested": False,
     }
 
     def __init__(self):

@@ -50,6 +50,16 @@ class PackageConfig:
         "info:local_vs_global",  # "local", "mixed", "global"
         "info:explore_vs_exploit",  # "explore", "exploit", "mixed"
         "info:compute",  # "low", "middle", "high"
+        # search space capabilities
+        "capability:search_space:continuous",
+        "capability:search_space:discrete",
+        "capability:search_space:categorical",
+        "capability:search_space:mixed",
+        "capability:search_space:log_scale",
+        "capability:search_space:conditional",
+        "capability:search_space:constraints",
+        "capability:search_space:distributions",
+        "capability:search_space:nested",
     ]
 
 

@@ -13,3 +13,8 @@ import importlib.metadata
 
 __version__ = importlib.metadata.version("hyperactive")
 __license__ = "MIT"
+
+# Re-export SearchSpace for convenient access
+from hyperactive.search_space import SearchSpace
+
+__all__ = ["SearchSpace"]
