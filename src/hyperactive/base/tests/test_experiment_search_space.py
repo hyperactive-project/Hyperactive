@@ -482,3 +482,284 @@ class TestOptimizerExperimentIntegration:
 
         # Should receive plain dict, not ParamsView
         assert all(t == "dict" for t in received_types)
+
+
+class TestConfigureExperimentBehavior:
+    """Test _configure_experiment behavior across different optimizer types.
+
+    _configure_experiment is called after get_search_config(), so for adapters
+    that convert SearchSpace to dict (like GFO), it effectively does nothing.
+    This tests that the method correctly handles different input types.
+    """
+
+    def test_configure_experiment_with_dict_space_does_nothing(self):
+        """_configure_experiment should return early for dict search_space."""
+        from unittest.mock import Mock
+
+        from hyperactive.base import BaseOptimizer
+
+        # Create a minimal concrete optimizer
+        class TestOptimizer(BaseOptimizer):
+            def __init__(self, search_space=None, experiment=None):
+                self.search_space = search_space
+                self.experiment = experiment
+                super().__init__()
+
+            def _solve(self, experiment, **kwargs):
+                return {}
+
+        experiment = Mock()
+        experiment.set_search_space = Mock()
+
+        opt = TestOptimizer(
+            search_space={"x": [1, 2, 3]},
+            experiment=lambda p: 1.0,
+        )
+
+        # Call _configure_experiment with dict search_space
+        search_config = {"search_space": {"x": [1, 2, 3]}}
+        opt._configure_experiment(experiment, search_config)
+
+        # set_search_space should NOT be called for dict
+        experiment.set_search_space.assert_not_called()
+
+    def test_configure_experiment_with_none_space_does_nothing(self):
+        """_configure_experiment should return early for None search_space."""
+        from unittest.mock import Mock
+
+        from hyperactive.base import BaseOptimizer
+
+        class TestOptimizer(BaseOptimizer):
+            def __init__(self, search_space=None, experiment=None):
+                self.search_space = search_space
+                self.experiment = experiment
+                super().__init__()
+
+            def _solve(self, experiment, **kwargs):
+                return {}
+
+        experiment = Mock()
+        experiment.set_search_space = Mock()
+
+        opt = TestOptimizer(experiment=lambda p: 1.0)
+
+        search_config = {"search_space": None}
+        opt._configure_experiment(experiment, search_config)
+
+        experiment.set_search_space.assert_not_called()
+
+    def test_configure_experiment_with_searchspace_calls_set_and_validate(self):
+        """_configure_experiment should set and validate for SearchSpace."""
+        from unittest.mock import Mock, patch
+
+        from hyperactive.base import BaseOptimizer
+
+        class TestOptimizer(BaseOptimizer):
+            _tags = {
+                "capability:search_space:conditional": False,
+                "capability:search_space:constraints": False,
+                "capability:search_space:nested": False,
+            }
+
+            def __init__(self, search_space=None, experiment=None):
+                self.search_space = search_space
+                self.experiment = experiment
+                super().__init__()
+
+            def _solve(self, experiment, **kwargs):
+                return {}
+
+        experiment = Mock()
+        experiment.set_search_space = Mock()
+
+        space = SearchSpace(x=[1, 2, 3])
+        opt = TestOptimizer(
+            search_space=space,
+            experiment=lambda p: 1.0,
+        )
+
+        # Pass SearchSpace directly (not converted to dict)
+        search_config = {"search_space": space}
+        opt._configure_experiment(experiment, search_config)
+
+        # set_search_space SHOULD be called for SearchSpace
+        experiment.set_search_space.assert_called_once_with(space)
+
+    def test_gfo_adapter_converts_searchspace_before_configure_experiment(self):
+        """GFO adapter converts SearchSpace to dict before _configure_experiment.
+
+        This test verifies that for GFO, _configure_experiment receives a dict,
+        not a SearchSpace, because get_search_config() converts it first.
+        """
+        from hyperactive.opt import HillClimbing
+
+        space = SearchSpace(x=[1, 2, 3])
+        opt = HillClimbing(
+            search_space=space,
+            n_iter=1,
+            experiment=lambda p: 1.0,
+        )
+
+        # Get the search config (this is what _configure_experiment receives)
+        search_config = opt.get_search_config()
+
+        # Verify search_space is now a dict, not SearchSpace
+        assert isinstance(search_config["search_space"], dict)
+        assert not isinstance(search_config["search_space"], SearchSpace)
+
+
+class TestAdapterValidation:
+    """Test that each adapter validates SearchSpace features correctly."""
+
+    def test_gfo_adapter_validates_before_conversion(self):
+        """GFO adapter should validate SearchSpace before converting to dict."""
+        import warnings
+
+        from hyperactive.opt import HillClimbing
+
+        space = SearchSpace(
+            kernel=["rbf", "linear"],
+            gamma=(0.1, 10.0),
+        )
+        space.add_condition("gamma", when=lambda p: p["kernel"] == "rbf")
+
+        opt = HillClimbing(
+            search_space=space,
+            n_iter=1,
+            experiment=lambda p: 1.0,
+        )
+
+        # Validation happens in get_search_config
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            opt.get_search_config()
+
+            condition_warnings = [
+                x for x in w if "conditional" in str(x.message).lower()
+            ]
+            assert len(condition_warnings) >= 1
+
+    def test_sklearn_adapter_validates_before_conversion(self):
+        """sklearn adapter should validate SearchSpace before converting."""
+        import warnings
+
+        from hyperactive.opt import RandomSearchSk
+
+        space = SearchSpace(
+            kernel=["rbf", "linear"],
+            gamma=(0.1, 10.0),
+        )
+        space.add_condition("gamma", when=lambda p: p["kernel"] == "rbf")
+
+        opt = RandomSearchSk(
+            param_distributions=space,
+            n_iter=1,
+            experiment=lambda p: 1.0,
+        )
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            # Validation happens during solve (in _solve -> _convert_param_distributions)
+            opt.solve()
+
+            condition_warnings = [
+                x for x in w if "conditional" in str(x.message).lower()
+            ]
+            assert len(condition_warnings) >= 1
+
+    def test_no_validation_for_dict_space(self):
+        """No validation should occur for plain dict search spaces."""
+        import warnings
+
+        from hyperactive.opt import HillClimbing
+
+        # Plain dict, not SearchSpace
+        search_space = {"x": np.array([1, 2, 3])}
+
+        opt = HillClimbing(
+            search_space=search_space,
+            n_iter=1,
+            experiment=lambda p: 1.0,
+        )
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            opt.get_search_config()
+
+            # No warnings about features since dict has no feature metadata
+            search_space_warnings = [
+                x
+                for x in w
+                if "conditional" in str(x.message).lower()
+                or "constraint" in str(x.message).lower()
+                or "nested" in str(x.message).lower()
+            ]
+            assert len(search_space_warnings) == 0
+
+    def test_validation_warning_includes_optimizer_name(self):
+        """Validation warnings should include the optimizer name."""
+        import warnings
+
+        from hyperactive.opt import HillClimbing
+
+        space = SearchSpace(x=[1, 2, 3])
+        space.add_condition("x", when=lambda p: True)
+
+        opt = HillClimbing(
+            search_space=space,
+            n_iter=1,
+            experiment=lambda p: 1.0,
+        )
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            opt.get_search_config()
+
+            condition_warnings = [
+                x for x in w if "conditional" in str(x.message).lower()
+            ]
+            assert len(condition_warnings) >= 1
+            # Should mention "Hill Climbing" in the warning
+            assert "Hill Climbing" in str(condition_warnings[0].message)
+
+
+class TestBackwardCompatibilityWithDictSpace:
+    """Test backward compatibility when using dict instead of SearchSpace."""
+
+    def test_gfo_with_dict_backward_compatible(self):
+        """GFO should work with plain dict (backward compatibility)."""
+        from hyperactive.opt import HillClimbing
+
+        search_space = {"x": np.array([1, 2, 3])}
+
+        def objective(params):
+            return float(params["x"])
+
+        opt = HillClimbing(
+            search_space=search_space,
+            n_iter=5,
+            experiment=objective,
+        )
+
+        result = opt.solve()
+        assert "x" in result
+        assert result["x"] in [1, 2, 3]
+
+    def test_sklearn_with_dict_backward_compatible(self):
+        """sklearn should work with plain dict (backward compatibility)."""
+        from hyperactive.opt import RandomSearchSk
+
+        param_distributions = {"x": [1, 2, 3], "y": [4, 5, 6]}
+
+        def objective(params):
+            return float(params["x"] + params["y"])
+
+        opt = RandomSearchSk(
+            param_distributions=param_distributions,
+            n_iter=5,
+            experiment=objective,
+        )
+
+        result = opt.solve()
+        assert "x" in result
+        assert "y" in result

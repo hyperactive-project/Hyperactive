@@ -407,19 +407,18 @@ class TestOptunaAdvancedFeatures:
         assert isinstance(result["n_layers"], int)
 
 
-class TestNestedSpaceBugs:
-    """Tests for known bugs in nested space handling."""
+class TestNestedSpaceFeatures:
+    """Tests for nested space handling."""
 
-    def test_nested_space_missing_restructure_method(self):
-        """Bug: SearchSpace lacks restructure_result method.
+    def test_nested_space_wrap_params_provides_restructured_access(self):
+        """Test that wrap_params provides restructured access to nested params.
 
         When using nested spaces, results come back flat:
           {"estimator": RFC, "randomforestclassifier__n_estimators": 100}
 
-        They should be restructurable to nested format for easier use:
-          {"estimator": RFC, "n_estimators": 100}
-
-        This is documented in the plan but not implemented.
+        The wrap_params method provides restructured access via ParamsView:
+          params["estimator"]["n_estimators"]  # -> 100
+          params["estimator"]()  # -> instantiates with params
         """
         from sklearn.ensemble import RandomForestClassifier
         from sklearn.svm import SVC
@@ -435,35 +434,35 @@ class TestNestedSpaceBugs:
         assert space.has_nested_spaces
         assert "estimator" in space.nested_spaces
 
-        # But there's no method to restructure flat results back to nested
-        # This functionality is specified in the plan but not implemented
+        # wrap_params provides restructured access
         flat_result = {
             "estimator": RandomForestClassifier,
             "randomforestclassifier__n_estimators": 100,
         }
 
-        # Bug: restructure_result method does not exist
-        # This test passes now, will fail when the method is implemented
-        assert not hasattr(space, "restructure_result")
+        params = space.wrap_params(flat_result)
 
-        # When implemented, the method could work like this:
-        # structured = space.restructure_result(flat_result)
-        # assert structured == {
-        #     "estimator": RandomForestClassifier,
-        #     "n_estimators": 100,  # prefix stripped for active estimator
-        # }
+        # Access nested params via subscript
+        assert params["estimator"]["n_estimators"] == 100
+
+        # Comparison with class still works
+        assert params["estimator"] == RandomForestClassifier
+
+        # Can instantiate with all params
+        model = params["estimator"]()
+        assert model.n_estimators == 100
+
+        # to_nested_dict provides dict representation
+        nested_dict = params.to_nested_dict()
+        assert nested_dict["estimator"] == RandomForestClassifier
+        assert nested_dict["estimator_params"] == {"n_estimators": 100}
 
 
-class TestValidationBugs:
-    """Tests for missing validation functionality."""
+class TestValidationWarnings:
+    """Tests for validation warnings on unsupported features."""
 
     def test_validation_warns_for_unsupported_conditions(self):
-        """Bug: No validation warning when using conditions with GFO.
-
-        The plan specifies validate_space_for_optimizer() should warn
-        when using conditions with backends that don't support them natively.
-        This function is not implemented.
-        """
+        """Test warning when using conditions with optimizer that doesn't support them."""
         import warnings
 
         from hyperactive.opt import HillClimbing
@@ -477,28 +476,25 @@ class TestValidationBugs:
         def objective(params):
             return 1.0
 
-        # Should warn that GFO doesn't natively support conditions
-        # Currently no warning is emitted
+        optimizer = HillClimbing(
+            search_space=space,
+            n_iter=5,
+            experiment=objective,
+        )
+
+        # Warning should be emitted during solve() when configuring experiment
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
+            optimizer.solve()
 
-            optimizer = HillClimbing(
-                search_space=space,
-                n_iter=5,
-                experiment=objective,
-            )
-
-            # This assertion will fail until validation is implemented
-            # Uncomment when implementing the fix:
-            # assert len(w) >= 1
-            # assert "conditional" in str(w[0].message).lower()
+            # Check a warning about conditions was emitted
+            condition_warnings = [
+                x for x in w if "conditional" in str(x.message).lower()
+            ]
+            assert len(condition_warnings) >= 1
 
     def test_validation_warns_for_unsupported_constraints_optuna(self):
-        """Bug: No validation warning when using constraints with Optuna.
-
-        Optuna doesn't natively support constraints. The validation function
-        should warn users about this.
-        """
+        """Test warning when using constraints with Optuna."""
         pytest.importorskip("optuna")
 
         import warnings
@@ -514,20 +510,54 @@ class TestValidationBugs:
         def objective(params):
             return 1.0
 
-        # Should warn that Optuna doesn't natively support constraints
+        optimizer = TPEOptimizer(
+            param_space=space,
+            n_trials=5,
+            experiment=objective,
+        )
+
+        # Warning should be emitted during solve() when configuring experiment
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
+            optimizer.solve()
 
-            optimizer = TPEOptimizer(
-                param_space=space,
-                n_trials=5,
-                experiment=objective,
-            )
+            # Check a warning about constraints was emitted
+            constraint_warnings = [
+                x for x in w if "constraint" in str(x.message).lower()
+            ]
+            assert len(constraint_warnings) >= 1
 
-            # This assertion will fail until validation is implemented
-            # Uncomment when implementing the fix:
-            # assert len(w) >= 1
-            # assert "constraint" in str(w[0].message).lower()
+    def test_no_warning_when_features_supported(self):
+        """Test no warning when optimizer supports the features."""
+        import warnings
+
+        from hyperactive.opt import HillClimbing
+
+        space = SearchSpace(
+            x=(0.0, 10.0),
+            y=(0.0, 10.0),
+        )
+        # GFO supports constraints natively
+        space.add_constraint(lambda p: p["x"] + p["y"] < 15)
+
+        def objective(params):
+            return -(params["x"] ** 2 + params["y"] ** 2)
+
+        optimizer = HillClimbing(
+            search_space=space,
+            n_iter=5,
+            experiment=objective,
+        )
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            optimizer.solve()
+
+            # No constraint warning should be emitted (GFO supports constraints)
+            constraint_warnings = [
+                x for x in w if "constraint" in str(x.message).lower()
+            ]
+            assert len(constraint_warnings) == 0
 
 
 class TestBackwardCompatibility:
