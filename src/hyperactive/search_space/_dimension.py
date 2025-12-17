@@ -313,3 +313,36 @@ def _infer_list_dtype(values: list) -> type:
 
     # Mixed types or complex types (classes, functions) -> object
     return object
+
+
+def make_prefix(value: Any) -> str:
+    """Create a safe prefix string from a value (e.g., class name).
+
+    Used for creating prefixed parameter names in nested search spaces.
+    For example, RandomForestClassifier becomes "randomforestclassifier".
+
+    Parameters
+    ----------
+    value : Any
+        The value to create a prefix from. Typically a class or callable.
+
+    Returns
+    -------
+    str
+        A lowercase, underscore-separated prefix string.
+
+    Examples
+    --------
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> make_prefix(RandomForestClassifier)
+    'randomforestclassifier'
+    >>> make_prefix(lambda x: x)
+    '<lambda>'
+    >>> make_prefix("My Model")
+    'my_model'
+    """
+    if isinstance(value, type):
+        return value.__name__.lower()
+    elif callable(value):
+        return getattr(value, "__name__", str(value)).lower()
+    return str(value).lower().replace(" ", "_").replace("-", "_")

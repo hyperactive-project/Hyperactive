@@ -21,6 +21,8 @@ from typing import TYPE_CHECKING, Any, Protocol
 if TYPE_CHECKING:
     pass
 
+from ._dimension import make_prefix as _make_prefix
+
 __all__ = ["ParamsView", "NestedValue", "NestedSpaceConfig", "create_params_view"]
 
 
@@ -365,7 +367,7 @@ class ParamsView(Mapping[str, Any]):
     ):
         self._flat = flat_params
         self._nested_configs = nested_configs
-        self._prefix_maker = prefix_maker or _default_prefix_maker
+        self._prefix_maker = prefix_maker or _make_prefix
         self._nested_cache: dict[str, dict[str, Any]] = {}
         self._nested_value_cache: dict[str, NestedValue] = {}
 
@@ -622,15 +624,3 @@ def create_params_view(
     )
 
 
-# ---------------------------------------------------------------------------
-# Default prefix maker
-# ---------------------------------------------------------------------------
-
-
-def _default_prefix_maker(value: Any) -> str:
-    """Default prefix maker matching SearchSpace._make_prefix behavior."""
-    if isinstance(value, type):
-        return value.__name__.lower()
-    elif callable(value):
-        return getattr(value, "__name__", str(value)).lower()
-    return str(value).lower().replace(" ", "_").replace("-", "_")

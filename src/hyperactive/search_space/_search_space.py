@@ -14,7 +14,7 @@ import numpy as np
 
 from ._condition import Condition
 from ._constraint import Constraint
-from ._dimension import Dimension, DimensionType, infer_dimension
+from ._dimension import Dimension, DimensionType, infer_dimension, make_prefix
 
 __all__ = ["SearchSpace"]
 
@@ -244,7 +244,7 @@ class SearchSpace:
         """
         for parent_value, subspace in nested.items():
             # Create prefix for flattened parameter names
-            prefix = self._make_prefix(parent_value)
+            prefix = make_prefix(parent_value)
 
             for dim_name, dim in subspace.dimensions.items():
                 flat_name = f"{prefix}__{dim_name}"
@@ -269,28 +269,9 @@ class SearchSpace:
                         predicate=lambda p, pn=parent_name, pv=parent_value: p.get(pn)
                         == pv,
                         depends_on=[parent_name],
-                        name=f"{flat_name}_when_{parent_name}=={self._make_prefix(parent_value)}",
+                        name=f"{flat_name}_when_{parent_name}=={make_prefix(parent_value)}",
                     )
                 )
-
-    def _make_prefix(self, value: Any) -> str:
-        """Create a safe prefix from a value (e.g., class name).
-
-        Parameters
-        ----------
-        value : Any
-            The value to create a prefix from.
-
-        Returns
-        -------
-        str
-            A safe prefix string.
-        """
-        if isinstance(value, type):
-            return value.__name__.lower()
-        elif callable(value):
-            return getattr(value, "__name__", str(value)).lower()
-        return str(value).lower().replace(" ", "_").replace("-", "_")
 
     def add_condition(
         self,
@@ -681,7 +662,7 @@ class SearchSpace:
         >>> params["estimator"].value
         <class 'sklearn.ensemble.RandomForestClassifier'>
         """
-        from ._params_view import ParamsView, NestedSpaceConfig
+        from ._params_view import NestedSpaceConfig, ParamsView
 
         configs = tuple(
             NestedSpaceConfig(parent_name=name) for name in self.nested_spaces.keys()
@@ -690,7 +671,7 @@ class SearchSpace:
         return ParamsView(
             flat_params=flat_params,
             nested_configs=configs,
-            prefix_maker=self._make_prefix,
+            prefix_maker=make_prefix,
         )
 
     def __len__(self) -> int:
