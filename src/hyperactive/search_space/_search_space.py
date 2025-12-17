@@ -8,6 +8,7 @@ API for specifying search spaces across all Hyperactive optimizers.
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import Any, Callable
 
 import numpy as np
@@ -296,15 +297,8 @@ class SearchSpace:
                 flat_name = f"{prefix}__{dim_name}"
 
                 # Create a new dimension with the prefixed name
-                new_dim = Dimension(
-                    name=flat_name,
-                    values=dim.values,
-                    dim_type=dim.dim_type,
-                    dtype=dim.dtype,
-                    low=dim.low,
-                    high=dim.high,
-                    log_scale=dim.log_scale,
-                )
+                # Using dataclasses.replace() ensures all fields are copied
+                new_dim = replace(dim, name=flat_name)
                 self.dimensions[flat_name] = new_dim
 
                 # Add condition: only active when parent == this value
