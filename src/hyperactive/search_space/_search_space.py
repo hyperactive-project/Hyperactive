@@ -186,6 +186,44 @@ class SearchSpace:
         dimension = infer_dimension(name, value)
         self.dimensions[name] = dimension
 
+    def _validate_unique_prefixes(self, name: str, nested: dict[Any, dict]) -> None:
+        """Validate that all nested space keys produce unique prefixes.
+
+        Parameters
+        ----------
+        name : str
+            The parameter name (e.g., "estimator").
+        nested : dict
+            Dictionary mapping keys to parameter dicts.
+
+        Raises
+        ------
+        ValueError
+            If multiple keys produce the same prefix.
+        """
+        prefix_to_keys: dict[str, list] = {}
+        for key in nested.keys():
+            prefix = make_prefix(key)
+            if prefix not in prefix_to_keys:
+                prefix_to_keys[prefix] = []
+            prefix_to_keys[prefix].append(key)
+
+        # Check for collisions
+        collisions = {p: keys for p, keys in prefix_to_keys.items() if len(keys) > 1}
+        if collisions:
+            collision_details = []
+            for prefix, keys in collisions.items():
+                key_reprs = [repr(k) for k in keys]
+                collision_details.append(f"  prefix '{prefix}__': {', '.join(key_reprs)}")
+
+            raise ValueError(
+                f"Nested space '{name}' has keys that produce the same prefix, "
+                f"which would cause parameter name collisions:\n"
+                + "\n".join(collision_details)
+                + "\n\nUse named functions or classes instead of lambdas, "
+                "or ensure all keys have unique names."
+            )
+
     def _add_nested_space(self, name: str, nested: dict[Any, dict]) -> None:
         """Add a nested search space.
 
@@ -208,7 +246,15 @@ class SearchSpace:
             The parameter name (e.g., "estimator").
         nested : dict
             Dictionary mapping keys (classes/functions) to parameter dicts.
+
+        Raises
+        ------
+        ValueError
+            If multiple keys produce the same prefix (e.g., multiple lambdas).
         """
+        # Validate that all keys produce unique prefixes
+        self._validate_unique_prefixes(name, nested)
+
         # Convert nested dicts to SearchSpaces
         converted = {}
         for key, subspace_dict in nested.items():
