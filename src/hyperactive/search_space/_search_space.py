@@ -622,6 +622,77 @@ class SearchSpace:
         adapter = get_adapter(backend, self, **kwargs)
         return adapter.adapt(**kwargs)
 
+    def wrap_params(self, flat_params: dict) -> "ParamsView":
+        """Wrap flat optimizer params in a ParamsView.
+
+        ParamsView provides transparent access to nested parameter structures
+        through the Hybrid NestedValue pattern. Parent parameters in nested
+        spaces return NestedValue objects that support parameter access and
+        auto-instantiation.
+
+        Parameters
+        ----------
+        flat_params : dict[str, Any]
+            Flat parameters from the optimizer.
+
+        Returns
+        -------
+        ParamsView
+            Smart view providing transparent nested param access.
+
+        Examples
+        --------
+        >>> from sklearn.ensemble import RandomForestClassifier
+        >>> from sklearn.svm import SVC
+
+        >>> space = SearchSpace(
+        ...     estimator={
+        ...         RandomForestClassifier: {"n_estimators": [10, 50, 100]},
+        ...         SVC: {"C": (0.1, 10.0, "log")},
+        ...     },
+        ... )
+
+        >>> flat = {
+        ...     "estimator": RandomForestClassifier,
+        ...     "randomforestclassifier__n_estimators": 100,
+        ... }
+        >>> params = space.wrap_params(flat)
+
+        Access nested params:
+
+        >>> params["estimator"]["n_estimators"]
+        100
+
+        Auto-instantiate with all params:
+
+        >>> model = params["estimator"]()
+
+        Instantiate with overrides:
+
+        >>> model = params["estimator"](n_jobs=-1)
+
+        Comparison still works:
+
+        >>> params["estimator"] == RandomForestClassifier
+        True
+
+        Get raw class if needed:
+
+        >>> params["estimator"].value
+        <class 'sklearn.ensemble.RandomForestClassifier'>
+        """
+        from ._params_view import ParamsView, NestedSpaceConfig
+
+        configs = tuple(
+            NestedSpaceConfig(parent_name=name) for name in self.nested_spaces.keys()
+        )
+
+        return ParamsView(
+            flat_params=flat_params,
+            nested_configs=configs,
+            prefix_maker=self._make_prefix,
+        )
+
     def __len__(self) -> int:
         """Return the number of dimensions."""
         return len(self.dimensions)

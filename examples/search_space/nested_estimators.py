@@ -65,22 +65,20 @@ def main():
 
     print(f"\nAutomatic conditions created: {len(space.conditions)}")
 
-    # Define objective using real sklearn estimators
+    # Define objective - nested params access works automatically!
     def estimator_objective(params):
-        """Evaluate estimator with cross-validation."""
-        estimator_class = params["estimator"]
+        """Evaluate estimator with cross-validation.
 
-        # Get parameters for this specific estimator
-        est_params = {}
-        prefix = estimator_class.__name__.lower() + "__"
+        With nested search spaces, params automatically supports:
+        - params["estimator"]["n_estimators"] -> access individual param
+        - params["estimator"]() -> auto-instantiate with all params
+        - params["estimator"](n_jobs=-1) -> instantiate with override
+        - params["estimator"] == SomeClass -> comparison works
+        """
+        # One-liner model creation with all optimized parameters!
+        estimator = params["estimator"]()
 
-        for key, value in params.items():
-            if key.startswith(prefix):
-                param_name = key[len(prefix) :]
-                est_params[param_name] = value
-
-        # Create and evaluate estimator
-        estimator = estimator_class(**est_params)
+        # Evaluate with cross-validation
         scores = cross_val_score(estimator, X, y, cv=3, scoring="accuracy")
 
         return scores.mean()
@@ -96,14 +94,13 @@ def main():
 
     result = optimizer.solve()
 
-    print(f"\nBest estimator: {result['estimator'].__name__}")
-    print("Best parameters:")
+    # Wrap result for clean access
+    best = space.wrap_params(result)
 
-    prefix = result["estimator"].__name__.lower() + "__"
-    for key, value in result.items():
-        if key.startswith(prefix):
-            param_name = key[len(prefix) :]
-            print(f"  {param_name}: {value}")
+    print(f"\nBest estimator: {best['estimator'].value.__name__}")
+    print("Best parameters:")
+    for param_name, value in best["estimator"].items():
+        print(f"  {param_name}: {value}")
 
     print(f"Best CV accuracy: {estimator_objective(result):.4f}")
 

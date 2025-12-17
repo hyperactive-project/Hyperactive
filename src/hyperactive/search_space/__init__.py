@@ -51,6 +51,7 @@ Union of search spaces:
 from ._condition import Condition
 from ._constraint import Constraint
 from ._dimension import Dimension, DimensionType, infer_dimension
+from ._params_view import NestedValue, ParamsView
 from ._search_space import SearchSpace
 
 __all__ = [
@@ -59,5 +60,7 @@ __all__ = [
     "DimensionType",
     "Condition",
     "Constraint",
+    "ParamsView",
+    "NestedValue",
     "infer_dimension",
 ]

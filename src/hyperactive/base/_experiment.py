@@ -21,6 +21,27 @@ class BaseExperiment(BaseObject):
 
     def __init__(self):
         super().__init__()
+        self._search_space = None
+
+    def set_search_space(self, search_space):
+        """Set the search space for automatic param transformation.
+
+        When set, the experiment will automatically wrap flat params in a
+        ParamsView if the search space has nested spaces. This enables
+        transparent nested param access in the objective function.
+
+        Parameters
+        ----------
+        search_space : SearchSpace or None
+            The search space to use for param transformation.
+            Set to None to disable transformation.
+
+        Examples
+        --------
+        >>> experiment.set_search_space(space)
+        >>> # Now params are automatically wrapped in evaluate()
+        """
+        self._search_space = search_space
 
     def __call__(self, params):
         """Score parameters. Same as score call, returns only a first element."""
@@ -77,6 +98,11 @@ class BaseExperiment(BaseObject):
                 f"Parameters passed to {type(self)}.evaluate do not match: "
                 f"expected {paramnames}, got {list(params.keys())}."
             )
+
+        # Wrap params if search space has nested spaces
+        if self._search_space is not None and self._search_space.has_nested_spaces:
+            params = self._search_space.wrap_params(params)
+
         res, metadata = self._evaluate(params)
         res = np.float64(res)
         return res, metadata

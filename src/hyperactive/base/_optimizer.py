@@ -89,9 +89,30 @@ class BaseOptimizer(BaseObject):
         experiment = self.get_experiment()
         search_config = self.get_search_config()
 
+        self._configure_experiment(experiment, search_config)
+
         best_params = self._solve(experiment, **search_config)
         self.best_params_ = best_params
         return best_params
+
+    def _configure_experiment(self, experiment, search_config):
+        """Configure experiment with optimizer settings like search space.
+
+        Parameters
+        ----------
+        experiment : BaseExperiment
+            The experiment to configure.
+        search_config : dict
+            The search configuration containing search_space and other settings.
+        """
+        search_space = search_config.get("search_space")
+        if search_space is None or isinstance(search_space, dict):
+            return
+
+        from hyperactive.search_space import SearchSpace
+
+        if isinstance(search_space, SearchSpace):
+            experiment.set_search_space(search_space)
 
     def _solve(self, experiment, *args, **kwargs):
         """Run the optimization search process.
