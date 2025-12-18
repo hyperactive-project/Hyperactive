@@ -103,6 +103,37 @@ class TestSearchSpaceUnion:
         combined = s1 | s2
         assert len(combined.constraints) == 1
 
+    def test_union_type_change_raises_by_default(self):
+        """Test that type change raises ValueError by default."""
+        s1 = SearchSpace(x=[1, 2, 3])  # categorical
+        s2 = SearchSpace(x=(0.0, 10.0))  # continuous
+
+        # Raises by default
+        with pytest.raises(ValueError, match="conflicting types"):
+            s1 | s2
+
+        # Also raises with explicit union call
+        with pytest.raises(ValueError, match="categorical.*continuous"):
+            s1.union(s2)
+
+    def test_union_type_change_allowed_with_flag(self):
+        """Test that type change is allowed with allow_type_change=True."""
+        s1 = SearchSpace(x=[1, 2, 3])  # categorical
+        s2 = SearchSpace(x=(0.0, 10.0))  # continuous
+
+        # Allowed when explicitly permitted
+        combined = s1.union(s2, allow_type_change=True)
+        assert combined.dimensions["x"].dim_type == DimensionType.CONTINUOUS
+
+    def test_union_same_type_no_error(self):
+        """Test no error when parameter types are the same."""
+        s1 = SearchSpace(x=[1, 2, 3])  # categorical
+        s2 = SearchSpace(x=[4, 5, 6])  # categorical (same type, different values)
+
+        # Same type - no error
+        combined = s1 | s2
+        assert combined.dimensions["x"].values == [4, 5, 6]
+
 
 class TestSearchSpaceConditions:
     """Test conditional dimensions."""
@@ -320,6 +351,21 @@ class TestSearchSpaceNestedSpaces:
         assert svc_tol_dim.low == 1e-5
         assert svc_tol_dim.high == 1e-2
         assert svc_tol_dim.log_scale is False
+
+    def test_empty_nested_space_raises_error(self):
+        """Test that an empty dict raises a clear error message.
+
+        An empty dict like `estimator={}` is likely a user error - they probably
+        meant to define a nested space but forgot to add options.
+        """
+        with pytest.raises(ValueError, match="Empty dict provided"):
+            SearchSpace(estimator={})
+
+        # Error message should mention the parameter name
+        try:
+            SearchSpace(my_param={})
+        except ValueError as e:
+            assert "my_param" in str(e)
 
 
 class TestSearchSpaceDimensionTypes:
@@ -828,6 +874,66 @@ class TestConditionsComprehensive:
         assert len(combined.conditions) == 2
         targets = {c.target_param for c in combined.conditions}
         assert targets == {"gamma", "shrinking"}
+
+    def test_circular_dependency_direct_raises(self):
+        """Test that direct circular dependency (A->B, B->A) raises error."""
+        space = SearchSpace(
+            A=[1, 2, 3],
+            B=[4, 5, 6],
+        )
+        space.add_condition("A", when=lambda p: p["B"] > 4, depends_on="B")
+
+        with pytest.raises(ValueError, match="Circular dependency"):
+            space.add_condition("B", when=lambda p: p["A"] > 1, depends_on="A")
+
+    def test_circular_dependency_transitive_raises(self):
+        """Test that transitive circular dependency (A->B->C->A) raises error."""
+        space = SearchSpace(
+            A=[1, 2, 3],
+            B=[4, 5, 6],
+            C=[7, 8, 9],
+        )
+        space.add_condition("A", when=lambda p: p["B"] > 4, depends_on="B")
+        space.add_condition("B", when=lambda p: p["C"] > 7, depends_on="C")
+
+        with pytest.raises(ValueError, match="Circular dependency"):
+            space.add_condition("C", when=lambda p: p["A"] > 1, depends_on="A")
+
+    def test_no_circular_dependency_allowed(self):
+        """Test that non-circular dependencies are allowed."""
+        space = SearchSpace(
+            root=["a", "b"],
+            branch1=[1, 2],
+            branch2=[3, 4],
+            leaf=[5, 6],
+        )
+        # Create a diamond: root -> branch1 -> leaf
+        #                   root -> branch2 -> leaf
+        # This is NOT circular
+        space.add_condition("branch1", when=lambda p: p["root"] == "a", depends_on="root")
+        space.add_condition("branch2", when=lambda p: p["root"] == "b", depends_on="root")
+        space.add_condition(
+            "leaf",
+            when=lambda p: p.get("branch1", 0) > 1 or p.get("branch2", 0) > 3,
+            depends_on=["branch1", "branch2"],
+        )
+        # Should not raise
+        assert len(space.conditions) == 3
+
+    def test_circular_dependency_error_message_shows_cycle(self):
+        """Test that error message shows the cycle path."""
+        space = SearchSpace(A=[1, 2], B=[3, 4])
+        space.add_condition("A", when=lambda p: p["B"] > 3, depends_on="B")
+
+        try:
+            space.add_condition("B", when=lambda p: p["A"] > 1, depends_on="A")
+            assert False, "Should have raised ValueError"
+        except ValueError as e:
+            error_msg = str(e)
+            # Error should mention both A and B in the cycle
+            assert "A" in error_msg
+            assert "B" in error_msg
+            assert "->" in error_msg  # Shows cycle path
 
 
 class TestConstraintsComprehensive:
