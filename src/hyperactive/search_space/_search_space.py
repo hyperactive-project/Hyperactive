@@ -141,8 +141,19 @@ class SearchSpace:
         # Process keyword arguments
         for name, value in kwargs.items():
             # Check if this looks like a nested space (dict with class keys)
-            if isinstance(value, dict) and self._looks_like_nested_space(value):
-                self._add_nested_space(name, value)
+            if isinstance(value, dict):
+                if not value:
+                    # Empty dict is likely an error - user probably meant to define
+                    # a nested space but forgot to add options
+                    raise ValueError(
+                        f"Empty dict provided for parameter '{name}'. "
+                        f"If you intended to define a nested space, provide at least "
+                        f"one option. Example: {name}={{SomeClass: {{'param': [1, 2]}}}}"
+                    )
+                if self._looks_like_nested_space(value):
+                    self._add_nested_space(name, value)
+                else:
+                    self._add_dimension(name, value)
             else:
                 self._add_dimension(name, value)
 
@@ -342,7 +353,32 @@ class SearchSpace:
         Raises
         ------
         ValueError
-            If the parameter name is unknown.
+            If the parameter name is unknown, or if adding this condition
+            would create a circular dependency.
+
+        Notes
+        -----
+        **Circular dependencies are not allowed.** If parameter A depends on B,
+        then B cannot depend on A (directly or transitively). For example:
+
+        - Direct cycle: A depends on B, B depends on A
+        - Transitive cycle: A depends on B, B depends on C, C depends on A
+
+        Circular dependencies would make it impossible to determine which
+        parameters are active, since each would require the other to be
+        evaluated first. This is detected and raises a ValueError immediately.
+
+        Diamond-shaped dependencies ARE allowed (no cycle):
+
+        - root -> branch1 -> leaf
+        - root -> branch2 -> leaf
+
+        **Transitive conditions:** Each condition is evaluated independently.
+        If A conditions on B, and B conditions on C, the system does NOT
+        automatically make A inactive when C is inactive. To achieve this,
+        combine the checks in a single predicate:
+
+            space.add_condition("A", when=lambda p: p["C"] and p["B"])
 
         Examples
         --------
@@ -373,7 +409,72 @@ class SearchSpace:
             )
         )
 
+        # Check for circular dependencies
+        self._check_circular_dependencies()
+
         return self
+
+    def _check_circular_dependencies(self) -> None:
+        """Check for circular dependencies in conditions.
+
+        Builds a dependency graph from conditions and detects cycles using DFS.
+
+        Raises
+        ------
+        ValueError
+            If circular dependencies are detected.
+        """
+        # Build adjacency list: param -> list of params it depends on
+        # Note: A condition on param P with depends_on=[D1, D2] means
+        # P depends on D1 and D2 (edges: P->D1, P->D2)
+        graph: dict[str, set[str]] = {}
+
+        for condition in self.conditions:
+            target = condition.target_param
+            if target not in graph:
+                graph[target] = set()
+            for dep in condition.depends_on:
+                graph[target].add(dep)
+                # Ensure dependency nodes exist in graph
+                if dep not in graph:
+                    graph[dep] = set()
+
+        # DFS-based cycle detection
+        # States: 0 = unvisited, 1 = in current path, 2 = fully processed
+        state: dict[str, int] = {node: 0 for node in graph}
+        path: list[str] = []
+
+        def dfs(node: str) -> list[str] | None:
+            """Return cycle path if found, None otherwise."""
+            if state[node] == 1:
+                # Found cycle - return the cycle path
+                cycle_start = path.index(node)
+                return path[cycle_start:] + [node]
+            if state[node] == 2:
+                return None
+
+            state[node] = 1
+            path.append(node)
+
+            for neighbor in graph[node]:
+                if neighbor in graph:
+                    cycle = dfs(neighbor)
+                    if cycle:
+                        return cycle
+
+            path.pop()
+            state[node] = 2
+            return None
+
+        for node in graph:
+            if state[node] == 0:
+                cycle = dfs(node)
+                if cycle:
+                    cycle_str = " -> ".join(cycle)
+                    raise ValueError(
+                        f"Circular dependency detected in conditions: {cycle_str}\n"
+                        f"Parameter conditions cannot form cycles."
+                    )
 
     def add_constraint(
         self,
