@@ -74,13 +74,37 @@ class Constraint:
         -------
         bool
             True if the constraint is satisfied.
+
+        Raises
+        ------
+        KeyError
+            If a required parameter is missing from params.
+        TypeError
+            If parameters have incompatible types for the constraint.
+        RuntimeError
+            If the predicate raises an unexpected error.
         """
         try:
             return bool(self.predicate(params))
-        except (KeyError, TypeError):
-            # If a parameter is missing or there's a type error,
-            # we cannot evaluate the constraint
-            return False
+        except KeyError as e:
+            constraint_name = self.name or "unnamed constraint"
+            params_info = f" (declared params: {self.params})" if self.params else ""
+            raise KeyError(
+                f"Constraint '{constraint_name}' failed: missing parameter {e}. "
+                f"Available parameters: {list(params.keys())}{params_info}"
+            ) from e
+        except TypeError as e:
+            constraint_name = self.name or "unnamed constraint"
+            raise TypeError(
+                f"Constraint '{constraint_name}' failed with TypeError: {e}. "
+                f"Check that parameter types are compatible. Parameters: {params}"
+            ) from e
+        except Exception as e:
+            constraint_name = self.name or "unnamed constraint"
+            raise RuntimeError(
+                f"Constraint '{constraint_name}' raised {type(e).__name__}: {e}. "
+                f"Parameters: {params}"
+            ) from e
 
     def __call__(self, params: dict) -> bool:
         """Allow constraint to be called directly like a function.

@@ -80,12 +80,29 @@ class Condition:
         -------
         bool
             True if the target parameter should be sampled/active.
+
+        Raises
+        ------
+        KeyError
+            If a required parameter is missing from params.
+        RuntimeError
+            If the predicate raises an unexpected error.
         """
         try:
             return bool(self.predicate(params))
-        except KeyError:
-            # If a dependency is missing, consider the condition inactive
-            return False
+        except KeyError as e:
+            condition_name = self.name or f"condition for '{self.target_param}'"
+            raise KeyError(
+                f"Condition '{condition_name}' failed: missing parameter {e}. "
+                f"Available parameters: {list(params.keys())}. "
+                f"Declared dependencies: {self.depends_on}"
+            ) from e
+        except Exception as e:
+            condition_name = self.name or f"condition for '{self.target_param}'"
+            raise RuntimeError(
+                f"Condition '{condition_name}' raised {type(e).__name__}: {e}. "
+                f"Parameters: {params}"
+            ) from e
 
     def can_evaluate(self, params: dict) -> bool:
         """Check if all dependencies are available to evaluate this condition.
