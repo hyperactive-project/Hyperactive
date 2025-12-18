@@ -73,6 +73,16 @@ class ConstraintManager:
         """
         self._constraints.append(constraint)
 
+    def merge_constraints(self, constraints: list[Constraint]) -> None:
+        """Merge constraints from another source (e.g., during union).
+
+        Parameters
+        ----------
+        constraints : list[Constraint]
+            The constraints to merge.
+        """
+        self._constraints.extend(constraints)
+
     @property
     def constraints(self) -> list[Constraint]:
         """Get the list of constraints.

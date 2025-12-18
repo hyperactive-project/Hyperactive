@@ -589,31 +589,25 @@ class SearchSpace:
                 result._dim_registry.add_dimension(dim)
 
         # Merge conditions, excluding those targeting excluded dimensions
-        result._cond_manager._conditions = [
+        self_conditions = [
             c for c in self.conditions if not should_exclude_self(c.target_param)
-        ] + [c for c in other.conditions if not should_exclude_other(c.target_param)]
+        ]
+        other_conditions = [
+            c for c in other.conditions if not should_exclude_other(c.target_param)
+        ]
+        result._cond_manager.merge_conditions(self_conditions + other_conditions)
 
         # Merge constraints (constraints don't have target_param, keep all)
-        result._const_manager._constraints = (
-            self.constraints.copy() + other.constraints.copy()
-        )
+        result._const_manager.merge_constraints(self.constraints + other.constraints)
 
         # Merge nested spaces according to on_conflict strategy
         if on_conflict == "last":
-            result._nested_handler._nested_spaces = {
-                **self.nested_spaces,
-                **other.nested_spaces,
-            }
+            merged_nested = {**self.nested_spaces, **other.nested_spaces}
         elif on_conflict == "first":
-            result._nested_handler._nested_spaces = {
-                **other.nested_spaces,
-                **self.nested_spaces,
-            }
+            merged_nested = {**other.nested_spaces, **self.nested_spaces}
         else:  # "error" - conflicts already raised above
-            result._nested_handler._nested_spaces = {
-                **self.nested_spaces,
-                **other.nested_spaces,
-            }
+            merged_nested = {**self.nested_spaces, **other.nested_spaces}
+        result._nested_handler.merge_nested_spaces(merged_nested)
 
         return result
 

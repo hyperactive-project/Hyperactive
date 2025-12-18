@@ -225,6 +225,22 @@ class NestedSpaceHandler:
                     )
                 )
 
+    def merge_nested_spaces(
+        self, nested_spaces: dict[str, dict[Any, "SearchSpace"]]
+    ) -> None:
+        """Merge nested spaces from another source (e.g., during union).
+
+        This merges already-expanded nested spaces without triggering
+        re-expansion. Use this when combining SearchSpaces where the
+        dimensions and conditions have already been expanded separately.
+
+        Parameters
+        ----------
+        nested_spaces : dict[str, dict[Any, SearchSpace]]
+            The nested spaces to merge.
+        """
+        self._nested_spaces.update(nested_spaces)
+
     @property
     def nested_spaces(self) -> dict[str, dict[Any, "SearchSpace"]]:
         """Get the nested spaces dictionary.

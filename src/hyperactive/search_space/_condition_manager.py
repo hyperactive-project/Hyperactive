@@ -128,21 +128,18 @@ class ConditionManager:
         """
         self._conditions.append(condition)
 
-    def add_condition_with_validation(self, condition: Condition) -> None:
-        """Add a pre-constructed Condition with full validation.
+    def merge_conditions(self, conditions: list[Condition]) -> None:
+        """Merge conditions from another source (e.g., during union).
+
+        Adds all conditions without validation. Use this for merging
+        already-validated conditions from another SearchSpace.
 
         Parameters
         ----------
-        condition : Condition
-            The condition to add.
-
-        Raises
-        ------
-        ValueError
-            If circular dependency would be created.
+        conditions : list[Condition]
+            The conditions to merge.
         """
-        self._conditions.append(condition)
-        self._check_circular_dependencies()
+        self._conditions.extend(conditions)
 
     @property
     def conditions(self) -> list[Condition]:
