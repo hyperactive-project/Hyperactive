@@ -45,6 +45,17 @@ class PackageConfig:
         # experiments
         "property:randomness",
         "property:higher_or_lower_is_better",
+        # surfaces integration experiments
+        "property:function_family",
+        "property:domain",
+        "property:dimensionality",
+        "property:modality",
+        "property:convexity",
+        "property:differentiability",
+        "property:separability",
+        "property:global_optimum_known",
+        "property:task_type",
+        "property:model_family",
         # optimizers
         "info:name",  # str
         "info:local_vs_global",  # "local", "mixed", "global"

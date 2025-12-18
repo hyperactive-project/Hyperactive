@@ -68,6 +68,14 @@ sktime-integration = [
   "skpro",
   'sktime; python_version < "3.14"',
 ]
+surfaces-integration = [
+  "surfaces>=0.5.0",
+]
+integrations = [
+  "hyperactive[sklearn-integration]",
+  "hyperactive[sktime-integration]",
+  "hyperactive[surfaces-integration]",
+]
 build = [
   "setuptools",
   "build",
