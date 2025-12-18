@@ -392,18 +392,25 @@ class ParamsView(Mapping[str, Any]):
         """Compute the logical keys visible to users.
 
         Logical keys are non-prefixed keys from flat_params.
-        Prefixed keys (containing "__") are excluded from iteration
-        when nested spaces exist, but remain accessible directly.
+        Keys that belong to nested spaces (matching known prefixes) are
+        excluded from iteration, but remain accessible directly.
+
+        Only keys matching actual nested space prefixes are hidden.
+        Keys containing '__' that don't match a nested prefix are kept visible.
         """
         keys = []
 
-        # When we have nested spaces, hide ALL keys containing "__"
-        # This matches sklearn's convention where "__" is the nested separator
-        has_nested = bool(self._nested_configs)
+        # Compute the actual prefixes to hide based on nested parent values
+        hidden_prefixes: set[str] = set()
+        for parent_name in self._nested_parent_names:
+            if parent_name in self._flat:
+                parent_value = self._flat[parent_name]
+                prefix = self._prefix_maker(parent_value) + "__"
+                hidden_prefixes.add(prefix)
 
         for key in self._flat:
-            if has_nested and "__" in key:
-                # Hide prefixed keys from iteration
+            # Only hide keys that start with a known nested prefix
+            if any(key.startswith(prefix) for prefix in hidden_prefixes):
                 continue
             keys.append(key)
 
