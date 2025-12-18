@@ -311,23 +311,49 @@ class SearchSpace:
 
     @property
     def dimensions(self) -> dict[str, Dimension]:
-        """Dictionary mapping parameter names to Dimension objects."""
-        return self._dim_registry.dimensions
+        """Copy of dimensions for inspection.
+
+        Returns a copy of the internal dimensions dictionary.
+        Modifying the returned dict has no effect on the SearchSpace.
+
+        Dimensions are defined at construction time via ``__init__``.
+        """
+        return self._dim_registry.dimensions.copy()
 
     @property
     def conditions(self) -> list[Condition]:
-        """List of conditions that control when parameters are active."""
-        return self._cond_manager.conditions
+        """Copy of conditions for inspection.
+
+        Returns a copy of the internal conditions list.
+        Modifying the returned list has no effect on the SearchSpace.
+
+        Use :meth:`add_condition` to add new conditions.
+        """
+        return self._cond_manager.conditions.copy()
 
     @property
     def constraints(self) -> list[Constraint]:
-        """List of constraints that filter invalid parameter combinations."""
-        return self._const_manager.constraints
+        """Copy of constraints for inspection.
+
+        Returns a copy of the internal constraints list.
+        Modifying the returned list has no effect on the SearchSpace.
+
+        Use :meth:`add_constraint` to add new constraints.
+        """
+        return self._const_manager.constraints.copy()
 
     @property
     def nested_spaces(self) -> dict[str, dict[Any, "SearchSpace"]]:
-        """Nested search spaces for hierarchical parameter structures."""
-        return self._nested_handler.nested_spaces
+        """Copy of nested spaces for inspection.
+
+        Returns a copy of the nested spaces dictionary structure.
+        Modifying the returned dicts has no effect on the SearchSpace.
+
+        Nested spaces are defined at construction time via ``__init__``.
+        """
+        return {
+            k: v.copy() for k, v in self._nested_handler.nested_spaces.items()
+        }
 
     # =========================================================================
     # Condition Management
