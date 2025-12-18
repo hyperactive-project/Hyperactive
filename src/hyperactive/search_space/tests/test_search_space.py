@@ -803,15 +803,19 @@ class TestConditionsComprehensive:
         assert condition.is_active({"kernel": "linear"}) is False
         assert condition.is_active({"kernel": "poly"}) is False
 
-    def test_condition_is_active_with_missing_dependency(self):
-        """Test condition returns False when dependency is missing."""
+    def test_condition_is_active_with_missing_dependency_raises(self):
+        """Test condition raises KeyError when dependency is missing."""
         space = SearchSpace(kernel=["rbf", "linear"], gamma=(0.01, 10.0))
         space.add_condition("gamma", when=lambda p: p["kernel"] == "rbf")
 
         condition = space.conditions[0]
-        # Missing "kernel" key should return False (safe default)
-        assert condition.is_active({}) is False
-        assert condition.is_active({"other": "value"}) is False
+
+        # Missing "kernel" key should raise KeyError with helpful message
+        with pytest.raises(KeyError, match="missing parameter"):
+            condition.is_active({})
+
+        with pytest.raises(KeyError, match="missing parameter"):
+            condition.is_active({"other": "value"})
 
     def test_condition_can_evaluate(self):
         """Test can_evaluate checks for dependency presence."""
@@ -1156,19 +1160,22 @@ class TestConstraintsComprehensive:
         # mode=high, intensity=0.9 -> valid (constraint doesn't apply)
         assert space.check_constraints({"mode": "high", "intensity": 0.9}) is True
 
-    def test_constraint_with_missing_param(self):
-        """Test constraint returns False when param is missing."""
+    def test_constraint_with_missing_param_raises(self):
+        """Test constraint raises KeyError when param is missing."""
         space = SearchSpace(x=(0.0, 10.0), y=(0.0, 10.0))
         space.add_constraint(lambda p: p["x"] + p["y"] < 10)
 
-        # Missing x -> should return False (cannot evaluate)
-        assert space.check_constraints({"y": 5}) is False
+        # Missing x -> should raise KeyError with helpful message
+        with pytest.raises(KeyError, match="missing parameter"):
+            space.check_constraints({"y": 5})
 
-        # Missing y -> should return False
-        assert space.check_constraints({"x": 5}) is False
+        # Missing y -> should raise KeyError
+        with pytest.raises(KeyError, match="missing parameter"):
+            space.check_constraints({"x": 5})
 
-        # Both missing -> should return False
-        assert space.check_constraints({}) is False
+        # Both missing -> should raise KeyError
+        with pytest.raises(KeyError, match="missing parameter"):
+            space.check_constraints({})
 
     def test_constraint_name_auto_generated(self):
         """Test constraints get auto-generated names if not provided."""
