@@ -2,20 +2,27 @@
 
 This module provides the main SearchSpace class that enables a unified
 API for specifying search spaces across all Hyperactive optimizers.
+
+SearchSpace is implemented as a facade that coordinates specialized components:
+- DimensionRegistry: dimension storage and lookup
+- ConditionManager: conditions and circular dependency detection
+- ConstraintManager: constraint storage and evaluation
+- NestedSpaceHandler: nested search space detection and expansion
 """
 
 # copyright: hyperactive developers, MIT License (see LICENSE file)
 
 from __future__ import annotations
 
-from dataclasses import replace
 from typing import Any, Callable
 
-import numpy as np
-
 from ._condition import Condition
+from ._condition_manager import ConditionManager
 from ._constraint import Constraint
-from ._dimension import Dimension, DimensionType, infer_dimension, make_prefix
+from ._constraint_manager import ConstraintManager
+from ._dimension import Dimension, DimensionType, make_prefix
+from ._dimension_registry import DimensionRegistry
+from ._nested_space_handler import NestedSpaceHandler
 
 __all__ = ["SearchSpace"]
 
@@ -128,15 +135,18 @@ class SearchSpace:
         **kwargs
             Keyword arguments defining dimensions.
         """
-        self.dimensions: dict[str, Dimension] = {}
-        self.conditions: list[Condition] = []
-        self.constraints: list[Constraint] = []
-        self.nested_spaces: dict[str, dict[Any, "SearchSpace"]] = {}
+        # Initialize components
+        self._dim_registry = DimensionRegistry()
+        self._cond_manager = ConditionManager(self._dim_registry)
+        self._const_manager = ConstraintManager()
+        self._nested_handler = NestedSpaceHandler(
+            self._dim_registry, self._cond_manager
+        )
 
         # Process dict-based space
         if __dict_space is not None:
             for name, value in __dict_space.items():
-                self._add_dimension(name, value)
+                self._dim_registry.add(name, value)
 
         # Process keyword arguments
         for name, value in kwargs.items():
@@ -150,179 +160,40 @@ class SearchSpace:
                         f"If you intended to define a nested space, provide at least "
                         f"one option. Example: {name}={{SomeClass: {{'param': [1, 2]}}}}"
                     )
-                if self._looks_like_nested_space(value):
-                    self._add_nested_space(name, value)
+                if NestedSpaceHandler.looks_like_nested_space(value):
+                    self._nested_handler.add(name, value)
                 else:
-                    self._add_dimension(name, value)
+                    self._dim_registry.add(name, value)
             else:
-                self._add_dimension(name, value)
+                self._dim_registry.add(name, value)
 
-    def _looks_like_nested_space(self, value: dict) -> bool:
-        """Check if a dict looks like a nested search space.
+    # =========================================================================
+    # Compatibility Properties - provide direct access to internal data
+    # =========================================================================
 
-        A nested search space has keys that are classes or functions,
-        and values that are dicts (parameter specifications).
+    @property
+    def dimensions(self) -> dict[str, Dimension]:
+        """Dictionary mapping parameter names to Dimension objects."""
+        return self._dim_registry.dimensions
 
-        Parameters
-        ----------
-        value : dict
-            The dictionary to check.
+    @property
+    def conditions(self) -> list[Condition]:
+        """List of conditions that control when parameters are active."""
+        return self._cond_manager.conditions
 
-        Returns
-        -------
-        bool
-            True if this looks like a nested space specification.
-        """
-        if not value:
-            return False
+    @property
+    def constraints(self) -> list[Constraint]:
+        """List of constraints that filter invalid parameter combinations."""
+        return self._const_manager.constraints
 
-        for key, val in value.items():
-            # Keys should be classes or functions (hashable callables)
-            if not (isinstance(key, type) or callable(key)):
-                return False
-            # Values should be dicts (parameter specifications)
-            if not isinstance(val, dict):
-                return False
-        return True
+    @property
+    def nested_spaces(self) -> dict[str, dict[Any, "SearchSpace"]]:
+        """Nested search spaces for hierarchical parameter structures."""
+        return self._nested_handler.nested_spaces
 
-    def _add_dimension(self, name: str, value: Any) -> None:
-        """Add a dimension with automatic type inference.
-
-        Parameters
-        ----------
-        name : str
-            The parameter name.
-        value : Any
-            The value specification.
-        """
-        dimension = infer_dimension(name, value)
-        self.dimensions[name] = dimension
-
-    def _validate_unique_prefixes(self, name: str, nested: dict[Any, dict]) -> None:
-        """Validate that all nested space keys produce unique prefixes.
-
-        Parameters
-        ----------
-        name : str
-            The parameter name (e.g., "estimator").
-        nested : dict
-            Dictionary mapping keys to parameter dicts.
-
-        Raises
-        ------
-        ValueError
-            If multiple keys produce the same prefix.
-        """
-        prefix_to_keys: dict[str, list] = {}
-        for key in nested.keys():
-            prefix = make_prefix(key)
-            if prefix not in prefix_to_keys:
-                prefix_to_keys[prefix] = []
-            prefix_to_keys[prefix].append(key)
-
-        # Check for collisions
-        collisions = {p: keys for p, keys in prefix_to_keys.items() if len(keys) > 1}
-        if collisions:
-            collision_details = []
-            for prefix, keys in collisions.items():
-                key_reprs = [repr(k) for k in keys]
-                collision_details.append(f"  prefix '{prefix}__': {', '.join(key_reprs)}")
-
-            raise ValueError(
-                f"Nested space '{name}' has keys that produce the same prefix, "
-                f"which would cause parameter name collisions:\n"
-                + "\n".join(collision_details)
-                + "\n\nUse named functions or classes instead of lambdas, "
-                "or ensure all keys have unique names."
-            )
-
-    def _add_nested_space(self, name: str, nested: dict[Any, dict]) -> None:
-        """Add a nested search space.
-
-        Nested spaces are detected automatically when a dict has class/callable
-        keys mapping to parameter dicts. For example:
-
-            estimator={
-                RandomForestClassifier: {"n_estimators": [10, 50, 100]},
-                SVC: {"C": (0.01, 100.0, "log")},
-            }
-
-        This creates:
-        - A categorical dimension "estimator" with RFC and SVC as choices
-        - Flattened parameters like "randomforestclassifier__n_estimators"
-        - Automatic conditions so each param is only active for its estimator
-
-        Parameters
-        ----------
-        name : str
-            The parameter name (e.g., "estimator").
-        nested : dict
-            Dictionary mapping keys (classes/functions) to parameter dicts.
-
-        Raises
-        ------
-        ValueError
-            If multiple keys produce the same prefix (e.g., multiple lambdas).
-        """
-        # Validate that all keys produce unique prefixes
-        self._validate_unique_prefixes(name, nested)
-
-        # Convert nested dicts to SearchSpaces
-        converted = {}
-        for key, subspace_dict in nested.items():
-            converted[key] = SearchSpace(subspace_dict)
-
-        self.nested_spaces[name] = converted
-
-        # Create parent categorical dimension from keys
-        parent_values = list(nested.keys())
-        self.dimensions[name] = Dimension(
-            name=name,
-            values=parent_values,
-            dim_type=DimensionType.CATEGORICAL,
-            dtype=object,
-        )
-
-        # Expand nested space to flat dimensions with conditions
-        self._expand_nested_space(name, converted)
-
-    def _expand_nested_space(
-        self,
-        parent_name: str,
-        nested: dict[Any, "SearchSpace"],
-    ) -> None:
-        """Expand nested space to flat dimensions with auto-generated conditions.
-
-        Parameters
-        ----------
-        parent_name : str
-            The parent parameter name.
-        nested : dict
-            Dictionary mapping parent values to SearchSpace objects.
-        """
-        for parent_value, subspace in nested.items():
-            # Create prefix for flattened parameter names
-            prefix = make_prefix(parent_value)
-
-            for dim_name, dim in subspace.dimensions.items():
-                flat_name = f"{prefix}__{dim_name}"
-
-                # Create a new dimension with the prefixed name
-                # Using dataclasses.replace() ensures all fields are copied
-                new_dim = replace(dim, name=flat_name)
-                self.dimensions[flat_name] = new_dim
-
-                # Add condition: only active when parent == this value
-                # Use default argument to capture parent_value correctly in closure
-                self.conditions.append(
-                    Condition(
-                        target_param=flat_name,
-                        predicate=lambda p, pn=parent_name, pv=parent_value: p.get(pn)
-                        == pv,
-                        depends_on=[parent_name],
-                        name=f"{flat_name}_when_{parent_name}=={make_prefix(parent_value)}",
-                    )
-                )
+    # =========================================================================
+    # Condition Management
+    # =========================================================================
 
     def add_condition(
         self,
@@ -389,116 +260,12 @@ class SearchSpace:
         ...     depends_on="kernel",
         ... )
         """
-        if param not in self.dimensions:
-            raise ValueError(
-                f"Unknown parameter: {param}. "
-                f"Available parameters: {list(self.dimensions.keys())}"
-            )
-
-        if depends_on is None:
-            depends_on = []
-        elif isinstance(depends_on, str):
-            depends_on = [depends_on]
-
-        # Validate that all depends_on parameters exist in the search space.
-        # Without this check, typos in dependency names would silently cause
-        # conditions to never evaluate (can_evaluate() returns False).
-        unknown_deps = set(depends_on) - set(self.dimensions.keys())
-        if unknown_deps:
-            raise ValueError(
-                f"Unknown parameters in depends_on: {unknown_deps}. "
-                f"Available parameters: {list(self.dimensions.keys())}"
-            )
-
-        new_condition = Condition(
-            target_param=param,
-            predicate=when,
-            depends_on=depends_on,
-            name=name,
-        )
-
-        # Check for circular dependencies BEFORE adding the condition.
-        # This ensures the SearchSpace remains in a valid state if the check fails.
-        self._check_circular_dependencies(new_condition)
-
-        self.conditions.append(new_condition)
-
+        self._cond_manager.add(param, when, depends_on, name)
         return self
 
-    def _check_circular_dependencies(
-        self, new_condition: Condition | None = None
-    ) -> None:
-        """Check for circular dependencies in conditions.
-
-        Builds a dependency graph from conditions and detects cycles using DFS.
-
-        Parameters
-        ----------
-        new_condition : Condition, optional
-            A new condition to include in the check (not yet added to self.conditions).
-            This allows validating before adding to ensure consistent state.
-
-        Raises
-        ------
-        ValueError
-            If circular dependencies are detected.
-        """
-        # Build adjacency list: param -> list of params it depends on
-        # Note: A condition on param P with depends_on=[D1, D2] means
-        # P depends on D1 and D2 (edges: P->D1, P->D2)
-        graph: dict[str, set[str]] = {}
-
-        # Include the new condition in the check if provided
-        conditions_to_check = list(self.conditions)
-        if new_condition is not None:
-            conditions_to_check.append(new_condition)
-
-        for condition in conditions_to_check:
-            target = condition.target_param
-            if target not in graph:
-                graph[target] = set()
-            for dep in condition.depends_on:
-                graph[target].add(dep)
-                # Ensure dependency nodes exist in graph
-                if dep not in graph:
-                    graph[dep] = set()
-
-        # DFS-based cycle detection
-        # States: 0 = unvisited, 1 = in current path, 2 = fully processed
-        state: dict[str, int] = {node: 0 for node in graph}
-        path: list[str] = []
-
-        def dfs(node: str) -> list[str] | None:
-            """Return cycle path if found, None otherwise."""
-            if state[node] == 1:
-                # Found cycle - return the cycle path
-                cycle_start = path.index(node)
-                return path[cycle_start:] + [node]
-            if state[node] == 2:
-                return None
-
-            state[node] = 1
-            path.append(node)
-
-            for neighbor in graph[node]:
-                if neighbor in graph:
-                    cycle = dfs(neighbor)
-                    if cycle:
-                        return cycle
-
-            path.pop()
-            state[node] = 2
-            return None
-
-        for node in graph:
-            if state[node] == 0:
-                cycle = dfs(node)
-                if cycle:
-                    cycle_str = " -> ".join(cycle)
-                    raise ValueError(
-                        f"Circular dependency detected in conditions: {cycle_str}\n"
-                        f"Parameter conditions cannot form cycles."
-                    )
+    # =========================================================================
+    # Constraint Management
+    # =========================================================================
 
     def add_constraint(
         self,
@@ -531,18 +298,12 @@ class SearchSpace:
         ...     name="batch_lr_limit",
         ... )
         """
-        if name is None:
-            name = f"constraint_{len(self.constraints)}"
-
-        self.constraints.append(
-            Constraint(
-                predicate=constraint,
-                name=name,
-                params=params,
-            )
-        )
-
+        self._const_manager.add(constraint, name, params)
         return self
+
+    # =========================================================================
+    # Union Operations
+    # =========================================================================
 
     def __or__(self, other: "SearchSpace") -> "SearchSpace":
         """Union of two search spaces using | operator.
@@ -656,7 +417,7 @@ class SearchSpace:
         # Copy dimensions from self (excluding those from conflicting nested spaces)
         for name, dim in self.dimensions.items():
             if not should_exclude_self(name):
-                result.dimensions[name] = dim
+                result._dim_registry.add_dimension(dim)
 
         # Add/merge dimensions from other
         for name, dim in other.dimensions.items():
@@ -664,8 +425,8 @@ class SearchSpace:
             if should_exclude_other(name):
                 continue
 
-            if name in result.dimensions:
-                existing_dim = result.dimensions[name]
+            if name in result._dim_registry:
+                existing_dim = result._dim_registry[name]
 
                 # Check for type change - raise by default
                 if not allow_type_change and existing_dim.dim_type != dim.dim_type:
@@ -676,7 +437,7 @@ class SearchSpace:
                     )
 
                 if on_conflict == "last":
-                    result.dimensions[name] = dim
+                    result._dim_registry.add_dimension(dim)
                 elif on_conflict == "first":
                     pass  # Keep existing
                 elif on_conflict == "error":
@@ -687,25 +448,40 @@ class SearchSpace:
                         f"Expected 'last', 'first', or 'error'."
                     )
             else:
-                result.dimensions[name] = dim
+                result._dim_registry.add_dimension(dim)
 
         # Merge conditions, excluding those targeting excluded dimensions
-        result.conditions = [
+        result._cond_manager._conditions = [
             c for c in self.conditions if not should_exclude_self(c.target_param)
         ] + [c for c in other.conditions if not should_exclude_other(c.target_param)]
 
         # Merge constraints (constraints don't have target_param, keep all)
-        result.constraints = self.constraints.copy() + other.constraints.copy()
+        result._const_manager._constraints = (
+            self.constraints.copy() + other.constraints.copy()
+        )
 
         # Merge nested spaces according to on_conflict strategy
         if on_conflict == "last":
-            result.nested_spaces = {**self.nested_spaces, **other.nested_spaces}
+            result._nested_handler._nested_spaces = {
+                **self.nested_spaces,
+                **other.nested_spaces,
+            }
         elif on_conflict == "first":
-            result.nested_spaces = {**other.nested_spaces, **self.nested_spaces}
+            result._nested_handler._nested_spaces = {
+                **other.nested_spaces,
+                **self.nested_spaces,
+            }
         else:  # "error" - conflicts already raised above
-            result.nested_spaces = {**self.nested_spaces, **other.nested_spaces}
+            result._nested_handler._nested_spaces = {
+                **self.nested_spaces,
+                **other.nested_spaces,
+            }
 
         return result
+
+    # =========================================================================
+    # Query Properties
+    # =========================================================================
 
     @property
     def param_names(self) -> list[str]:
@@ -716,7 +492,7 @@ class SearchSpace:
         list[str]
             List of parameter names.
         """
-        return list(self.dimensions.keys())
+        return self._dim_registry.param_names()
 
     @property
     def has_conditions(self) -> bool:
@@ -727,7 +503,7 @@ class SearchSpace:
         bool
             True if there are conditions.
         """
-        return len(self.conditions) > 0
+        return self._cond_manager.has_conditions
 
     @property
     def has_constraints(self) -> bool:
@@ -738,7 +514,7 @@ class SearchSpace:
         bool
             True if there are constraints.
         """
-        return len(self.constraints) > 0
+        return self._const_manager.has_constraints
 
     @property
     def has_nested_spaces(self) -> bool:
@@ -749,7 +525,7 @@ class SearchSpace:
         bool
             True if there are nested spaces.
         """
-        return len(self.nested_spaces) > 0
+        return self._nested_handler.has_nested_spaces
 
     def get_dimension_types(self) -> dict[str, DimensionType]:
         """Get a mapping of parameter names to their dimension types.
@@ -759,7 +535,7 @@ class SearchSpace:
         dict[str, DimensionType]
             Dictionary mapping parameter names to dimension types.
         """
-        return {name: dim.dim_type for name, dim in self.dimensions.items()}
+        return self._dim_registry.get_dimension_types()
 
     def has_dimension_type(self, dim_type: DimensionType) -> bool:
         """Check if the search space has any dimension of the given type.
@@ -774,7 +550,11 @@ class SearchSpace:
         bool
             True if any dimension has the given type.
         """
-        return any(dim.dim_type == dim_type for dim in self.dimensions.values())
+        return self._dim_registry.has_dimension_type(dim_type)
+
+    # =========================================================================
+    # Runtime Evaluation
+    # =========================================================================
 
     def filter_active_params(self, params: dict) -> dict:
         """Filter parameters to only include active ones based on conditions.
@@ -789,26 +569,7 @@ class SearchSpace:
         dict
             Dictionary with only active parameters.
         """
-        active_params = {}
-
-        for name, value in params.items():
-            if name not in self.dimensions:
-                continue
-
-            # Check if any condition disables this parameter
-            is_active = True
-            for condition in self.conditions:
-                if condition.target_param == name:
-                    if condition.can_evaluate(params) and not condition.is_active(
-                        params
-                    ):
-                        is_active = False
-                        break
-
-            if is_active:
-                active_params[name] = value
-
-        return active_params
+        return self._cond_manager.filter_active(params)
 
     def check_constraints(self, params: dict) -> bool:
         """Check if all constraints are satisfied.
@@ -823,7 +584,11 @@ class SearchSpace:
         bool
             True if all constraints are satisfied.
         """
-        return all(c.is_satisfied(params) for c in self.constraints)
+        return self._const_manager.check_all(params)
+
+    # =========================================================================
+    # Backend Conversion
+    # =========================================================================
 
     def to_backend(self, backend: str, **kwargs):
         """Convert to backend-specific format.
@@ -850,6 +615,10 @@ class SearchSpace:
 
         adapter = get_adapter(backend, self, **kwargs)
         return adapter.adapt(**kwargs)
+
+    # =========================================================================
+    # Parameter Wrapping
+    # =========================================================================
 
     def wrap_params(self, flat_params: dict) -> "ParamsView":
         """Wrap flat optimizer params in a ParamsView.
@@ -913,7 +682,8 @@ class SearchSpace:
         from ._params_view import NestedSpaceConfig, ParamsView
 
         configs = tuple(
-            NestedSpaceConfig(parent_name=name) for name in self.nested_spaces.keys()
+            NestedSpaceConfig(parent_name=name)
+            for name in self._nested_handler.nested_spaces.keys()
         )
 
         return ParamsView(
@@ -922,30 +692,34 @@ class SearchSpace:
             prefix_maker=make_prefix,
         )
 
+    # =========================================================================
+    # Container Protocol
+    # =========================================================================
+
     def __len__(self) -> int:
         """Return the number of dimensions."""
-        return len(self.dimensions)
+        return len(self._dim_registry)
 
     def __contains__(self, name: str) -> bool:
         """Check if a parameter name is in the search space."""
-        return name in self.dimensions
+        return name in self._dim_registry
 
     def __iter__(self):
         """Iterate over parameter names."""
-        return iter(self.dimensions)
+        return iter(self._dim_registry)
 
     def __repr__(self) -> str:
         """Return string representation."""
         dims = ", ".join(
-            f"{k}={v.dim_type.value}" for k, v in self.dimensions.items()
+            f"{k}={v.dim_type.value}" for k, v in self._dim_registry.items()
         )
         extras = []
-        if self.conditions:
-            extras.append(f"{len(self.conditions)} conditions")
-        if self.constraints:
-            extras.append(f"{len(self.constraints)} constraints")
-        if self.nested_spaces:
-            extras.append(f"{len(self.nested_spaces)} nested spaces")
+        if self._cond_manager.has_conditions:
+            extras.append(f"{len(self._cond_manager)} conditions")
+        if self._const_manager.has_constraints:
+            extras.append(f"{len(self._const_manager)} constraints")
+        if self._nested_handler.has_nested_spaces:
+            extras.append(f"{len(self._nested_handler)} nested spaces")
 
         extra_str = f" [{', '.join(extras)}]" if extras else ""
         return f"SearchSpace({dims}){extra_str}"
