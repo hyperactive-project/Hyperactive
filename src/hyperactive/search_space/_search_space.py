@@ -539,6 +539,7 @@ class SearchSpace:
         self,
         other: "SearchSpace",
         on_conflict: str = "last",
+        allow_type_change: bool = False,
     ) -> "SearchSpace":
         """Merge parameters from another search space.
 
@@ -551,6 +552,10 @@ class SearchSpace:
             - "last": Use value from `other` (default)
             - "first": Keep value from `self`
             - "error": Raise ValueError
+        allow_type_change : bool, default=False
+            If False (default), raise ValueError when a parameter's dimension
+            type would change during the merge (e.g., categorical -> continuous).
+            Set to True to allow type changes (rarely needed).
 
         Returns
         -------
@@ -561,6 +566,7 @@ class SearchSpace:
         ------
         ValueError
             If on_conflict="error" and there are conflicting parameters.
+            If allow_type_change=False and a parameter's type would change.
 
         Examples
         --------
@@ -577,6 +583,16 @@ class SearchSpace:
         # Add/merge dimensions from other
         for name, dim in other.dimensions.items():
             if name in result.dimensions:
+                existing_dim = result.dimensions[name]
+
+                # Check for type change - raise by default
+                if not allow_type_change and existing_dim.dim_type != dim.dim_type:
+                    raise ValueError(
+                        f"Parameter '{name}' has conflicting types: "
+                        f"{existing_dim.dim_type.value} vs {dim.dim_type.value}. "
+                        f"Use allow_type_change=True to override."
+                    )
+
                 if on_conflict == "last":
                     result.dimensions[name] = dim
                 elif on_conflict == "first":
