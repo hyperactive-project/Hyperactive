@@ -361,6 +361,79 @@ class TestOptunaAdapterAdvanced:
         assert isinstance(params["n_layers"], int)
 
 
+class TestScipyToOptunaConversion:
+    """Tests for scipy distribution to Optuna conversion."""
+
+    @pytest.fixture
+    def skip_if_no_optuna(self):
+        """Skip test if optuna is not available."""
+        pytest.importorskip("optuna")
+
+    def test_scipy_uniform_two_positional_args(self, skip_if_no_optuna):
+        """Test scipy uniform(loc, scale) with two positional args."""
+        import optuna.distributions
+        import scipy.stats as st
+
+        from hyperactive.search_space.adapters import OptunaSearchSpaceAdapter
+
+        # uniform(0, 5) means range [0, 0+5] = [0, 5]
+        space = SearchSpace(x=st.uniform(0, 5))
+        adapter = OptunaSearchSpaceAdapter(space)
+        adapted = adapter.adapt()
+
+        assert isinstance(adapted["x"], optuna.distributions.FloatDistribution)
+        assert adapted["x"].low == 0.0
+        assert adapted["x"].high == 5.0
+
+    def test_scipy_uniform_one_positional_scale_kwarg(self, skip_if_no_optuna):
+        """Test scipy uniform(loc, scale=...) with mixed args."""
+        import optuna.distributions
+        import scipy.stats as st
+
+        from hyperactive.search_space.adapters import OptunaSearchSpaceAdapter
+
+        # uniform(2, scale=8) means range [2, 2+8] = [2, 10]
+        space = SearchSpace(x=st.uniform(2, scale=8))
+        adapter = OptunaSearchSpaceAdapter(space)
+        adapted = adapter.adapt()
+
+        assert isinstance(adapted["x"], optuna.distributions.FloatDistribution)
+        assert adapted["x"].low == 2.0
+        assert adapted["x"].high == 10.0
+
+    def test_scipy_uniform_all_kwargs(self, skip_if_no_optuna):
+        """Test scipy uniform(loc=..., scale=...) with keyword args."""
+        import optuna.distributions
+        import scipy.stats as st
+
+        from hyperactive.search_space.adapters import OptunaSearchSpaceAdapter
+
+        # uniform(loc=1, scale=9) means range [1, 1+9] = [1, 10]
+        space = SearchSpace(x=st.uniform(loc=1, scale=9))
+        adapter = OptunaSearchSpaceAdapter(space)
+        adapted = adapter.adapt()
+
+        assert isinstance(adapted["x"], optuna.distributions.FloatDistribution)
+        assert adapted["x"].low == 1.0
+        assert adapted["x"].high == 10.0
+
+    def test_scipy_uniform_defaults(self, skip_if_no_optuna):
+        """Test scipy uniform() with defaults (loc=0, scale=1)."""
+        import optuna.distributions
+        import scipy.stats as st
+
+        from hyperactive.search_space.adapters import OptunaSearchSpaceAdapter
+
+        # uniform() defaults to range [0, 1]
+        space = SearchSpace(x=st.uniform())
+        adapter = OptunaSearchSpaceAdapter(space)
+        adapted = adapter.adapt()
+
+        assert isinstance(adapted["x"], optuna.distributions.FloatDistribution)
+        assert adapted["x"].low == 0.0
+        assert adapted["x"].high == 1.0
+
+
 class TestAdapterEdgeCases:
     """Tests for edge cases in adapters."""
 
