@@ -56,77 +56,83 @@ class ConditionManager:
 
     def add(
         self,
-        param: str,
-        when: Callable[[dict], bool],
+        param: str | None = None,
+        when: Callable[[dict], bool] | None = None,
         depends_on: str | list[str] | None = None,
         name: str | None = None,
+        *,
+        condition: Condition | None = None,
+        skip_validation: bool = False,
     ) -> None:
         """Add a condition for when a parameter is active.
 
+        Can be called in two ways:
+
+        1. With individual parameters: ``add(param="x", when=lambda p: ...)``
+        2. With pre-built condition: ``add(condition=cond, skip_validation=True)``
+
         Parameters
         ----------
-        param : str
+        param : str, optional
             Name of the parameter this condition controls.
-        when : callable
+        when : callable, optional
             Function that takes params dict and returns True if param is active.
         depends_on : str or list[str], optional
             Parameter(s) this condition depends on (for optimization).
         name : str, optional
             Optional name for the condition.
+        condition : Condition, optional
+            Pre-constructed Condition object (alternative to individual params).
+        skip_validation : bool, default=False
+            If True, skips parameter existence and circular dependency checks.
+            Only use for internally-generated conditions (e.g., from nested spaces).
 
         Raises
         ------
         ValueError
-            If the parameter name is unknown, or if adding this condition
-            would create a circular dependency.
+            If validation fails (unknown param, circular dependency).
         """
-        if param not in self._dimension_registry:
-            raise ValueError(
-                f"Unknown parameter: {param}. "
-                f"Available parameters: {list(self._dimension_registry.keys())}"
+        # Build condition from params or use provided
+        if condition is not None:
+            new_condition = condition
+        else:
+            if param is None or when is None:
+                raise ValueError("Must provide either (param, when) or condition")
+
+            if depends_on is None:
+                depends_on = []
+            elif isinstance(depends_on, str):
+                depends_on = [depends_on]
+
+            new_condition = Condition(
+                target_param=param,
+                predicate=when,
+                depends_on=depends_on,
+                name=name,
             )
 
-        if depends_on is None:
-            depends_on = []
-        elif isinstance(depends_on, str):
-            depends_on = [depends_on]
+        # Validation (unless explicitly skipped)
+        if not skip_validation:
+            if new_condition.target_param not in self._dimension_registry:
+                raise ValueError(
+                    f"Unknown parameter: {new_condition.target_param}. "
+                    f"Available parameters: {list(self._dimension_registry.keys())}"
+                )
 
-        # Validate that all depends_on parameters exist in the search space.
-        # Without this check, typos in dependency names would silently cause
-        # conditions to never evaluate (can_evaluate() returns False).
-        unknown_deps = set(depends_on) - set(self._dimension_registry.keys())
-        if unknown_deps:
-            raise ValueError(
-                f"Unknown parameters in depends_on: {unknown_deps}. "
-                f"Available parameters: {list(self._dimension_registry.keys())}"
+            unknown_deps = (
+                set(new_condition.depends_on) - set(self._dimension_registry.keys())
             )
+            if unknown_deps:
+                raise ValueError(
+                    f"Unknown parameters in depends_on: {unknown_deps}. "
+                    f"Available parameters: {list(self._dimension_registry.keys())}"
+                )
 
-        new_condition = Condition(
-            target_param=param,
-            predicate=when,
-            depends_on=depends_on,
-            name=name,
-        )
-
-        # Check for circular dependencies BEFORE adding the condition.
-        # This ensures the manager remains in a valid state if the check fails.
-        self._check_circular_dependencies(new_condition)
+            # Check for circular dependencies BEFORE adding the condition.
+            # This ensures the manager remains in a valid state if the check fails.
+            self._check_circular_dependencies(new_condition)
 
         self._conditions.append(new_condition)
-
-    def add_condition(self, condition: Condition) -> None:
-        """Add a pre-constructed Condition object.
-
-        Used for nested space auto-generated conditions.
-        Does NOT validate parameter existence or check circular dependencies
-        since nested space expansion handles this separately.
-
-        Parameters
-        ----------
-        condition : Condition
-            The condition to add.
-        """
-        self._conditions.append(condition)
 
     def merge_conditions(self, conditions: list[Condition]) -> None:
         """Merge conditions from another source (e.g., during union).

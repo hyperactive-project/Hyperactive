@@ -215,14 +215,15 @@ class NestedSpaceHandler:
 
                 # Add condition: only active when parent == this value
                 # Use default argument to capture parent_value correctly in closure
-                self._condition_manager.add_condition(
-                    Condition(
+                self._condition_manager.add(
+                    condition=Condition(
                         target_param=flat_name,
                         predicate=lambda p, pn=parent_name, pv=parent_value: p.get(pn)
                         == pv,
                         depends_on=[parent_name],
                         name=f"{flat_name}_when_{parent_name}=={make_prefix(parent_value)}",
-                    )
+                    ),
+                    skip_validation=True,
                 )
 
     def merge_nested_spaces(

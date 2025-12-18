@@ -840,8 +840,14 @@ class SearchSpace:
         from ._params_view import NestedSpaceConfig, ParamsView
 
         configs = tuple(
-            NestedSpaceConfig(parent_name=name)
-            for name in self._nested_handler.nested_spaces.keys()
+            NestedSpaceConfig(
+                parent_name=name,
+                all_prefixes=frozenset(
+                    make_prefix(parent_value)
+                    for parent_value in nested_space.keys()
+                ),
+            )
+            for name, nested_space in self._nested_handler.nested_spaces.items()
         )
 
         return ParamsView(

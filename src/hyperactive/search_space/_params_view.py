@@ -52,9 +52,13 @@ class NestedSpaceConfig:
     ----------
     parent_name : str
         The name of the parent parameter (e.g., "estimator").
+    all_prefixes : frozenset[str]
+        All possible prefixes from any option in this nested space.
+        Used to hide prefixed keys from iteration regardless of selection.
     """
 
     parent_name: str
+    all_prefixes: frozenset[str] = frozenset()
 
 
 # ---------------------------------------------------------------------------
@@ -395,18 +399,18 @@ class ParamsView(Mapping[str, Any]):
         Keys that belong to nested spaces (matching known prefixes) are
         excluded from iteration, but remain accessible directly.
 
-        Only keys matching actual nested space prefixes are hidden.
-        Keys containing '__' that don't match a nested prefix are kept visible.
+        All prefixes from any nested space option are hidden, not just
+        the currently selected one. This ensures users only see logical
+        parameter names (like "estimator") rather than internal prefixed
+        names (like "randomforestclassifier__n_estimators").
         """
         keys = []
 
-        # Compute the actual prefixes to hide based on nested parent values
+        # Collect ALL prefixes from all nested space configs
         hidden_prefixes: set[str] = set()
-        for parent_name in self._nested_parent_names:
-            if parent_name in self._flat:
-                parent_value = self._flat[parent_name]
-                prefix = self._prefix_maker(parent_value) + "__"
-                hidden_prefixes.add(prefix)
+        for config in self._nested_configs:
+            for prefix in config.all_prefixes:
+                hidden_prefixes.add(prefix + "__")
 
         for key in self._flat:
             # Only hide keys that start with a known nested prefix
