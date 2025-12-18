@@ -39,13 +39,113 @@ class SearchSpace:
 
     Type Inference Rules
     --------------------
-    - list -> Categorical dimension
-    - tuple(low, high) with floats -> Continuous float dimension
-    - tuple(low, high) with ints -> Continuous integer dimension
-    - tuple(low, high, "log") -> Log-scale continuous dimension
-    - numpy.ndarray -> Discrete dimension
-    - scipy.stats distribution -> Distribution dimension
-    - scalar (int, float, str) -> Constant (not searched)
+    The dimension type is inferred from the Python type of each value:
+
+    **Categorical (list)**
+        Any Python list becomes a categorical dimension. Lists can contain
+        any hashable values: strings, numbers, booleans, None, classes, or
+        functions. The optimizer will sample from these discrete choices.
+
+        >>> kernel = ["rbf", "linear", "poly"]       # strings
+        >>> max_depth = [3, 5, 10, None]             # mixed with None
+        >>> estimator = [RandomForest, SVC]         # classes
+
+    **Continuous Integer (tuple of two ints)**
+        A tuple of two integers defines a continuous integer range.
+        The optimizer samples integers uniformly between low and high.
+
+        >>> n_layers = (1, 10)      # integers from 1 to 10
+        >>> batch_size = (16, 256)  # integers from 16 to 256
+
+    **Continuous Float (tuple of two floats)**
+        A tuple containing at least one float defines a continuous float range.
+        The optimizer samples floats uniformly between low and high.
+
+        >>> dropout = (0.0, 0.5)         # floats from 0.0 to 0.5
+        >>> weight_decay = (0.0, 0.1)    # floats from 0.0 to 0.1
+
+    **Log-scale Continuous (tuple with "log")**
+        Adding "log" as the third element enables logarithmic sampling.
+        Use this for parameters spanning multiple orders of magnitude.
+        Both bounds must be positive (log of zero/negative is undefined).
+
+        >>> lr = (1e-5, 1e-1, "log")     # log-uniform from 0.00001 to 0.1
+        >>> C = (0.01, 100.0, "log")     # log-uniform from 0.01 to 100
+
+    **Discrete (numpy.ndarray)**
+        Numpy arrays define a discrete set of pre-computed values.
+        The optimizer samples from this fixed set of values.
+
+        >>> x = np.arange(-10, 10, 0.5)           # fixed grid
+        >>> hidden = np.array([32, 64, 128, 256]) # specific values
+        >>> rates = np.logspace(-4, -1, 20)       # log-spaced grid
+
+    **Distribution (scipy.stats)**
+        Scipy frozen distributions are passed through for backends that
+        support them. For GFO, samples are drawn to create a discrete array.
+
+        >>> dropout = scipy.stats.beta(2, 5)      # beta distribution
+        >>> noise = scipy.stats.norm(0, 1)        # normal distribution
+
+    **Constant (scalar)**
+        Single values (int, float, str, bool, None) become constants that
+        are not searched. They are passed through to the objective function.
+
+        >>> seed = 42           # fixed integer
+        >>> verbose = False     # fixed boolean
+
+    Nested Search Spaces
+    --------------------
+    Nested spaces allow hierarchical parameter structures. A dict is
+    automatically detected as a nested space when:
+
+    1. ALL keys are classes or callables (not strings/numbers)
+    2. ALL values are dicts (parameter specifications)
+
+    This is unambiguous because categorical dimensions use lists, not dicts:
+
+    >>> # Categorical: use a LIST of choices
+    >>> transform = [np.log, np.sqrt, np.exp]
+
+    >>> # Nested space: use a DICT with class keys and dict values
+    >>> estimator = {
+    ...     RandomForest: {"n_estimators": [10, 50, 100]},
+    ...     SVC: {"C": (0.01, 100.0, "log")},
+    ... }
+
+    When a nested space is detected:
+
+    1. A categorical dimension is created from the dict keys
+    2. Child parameters are flattened with prefixes (e.g., "svc__C")
+    3. Conditions are auto-generated so child params activate only when
+       their parent value is selected
+
+    Conditions vs Constraints
+    -------------------------
+    **Conditions** control whether a parameter is active (exists in the
+    search). Use conditions when a parameter only makes sense for certain
+    values of another parameter.
+
+    >>> space.add_condition("gamma", when=lambda p: p["kernel"] != "linear")
+
+    **Constraints** filter out invalid parameter combinations. Use constraints
+    when parameters interact in ways that make certain combinations invalid.
+
+    >>> space.add_constraint(lambda p: p["x"] + p["y"] < 10)
+
+    Key difference: conditions affect which parameters appear in a sample,
+    while constraints reject entire samples that violate rules.
+
+    Backend Compatibility
+    ---------------------
+    SearchSpace automatically adapts to different optimizer backends:
+
+    - **GFO (Gradient-Free-Optimizers)**: Converts to numpy arrays. Continuous
+      ranges are discretized (default 100 points).
+    - **Optuna**: Converts to Optuna distributions with native suggest_* calls.
+    - **sklearn**: Converts to scipy distributions for RandomizedSearchCV.
+
+    Use ``to_backend(backend_name)`` to get the converted format.
 
     Parameters
     ----------
@@ -61,16 +161,27 @@ class SearchSpace:
     ----------
     dimensions : dict[str, Dimension]
         Dictionary mapping parameter names to Dimension objects.
+        Includes both regular dimensions and flattened nested dimensions.
     conditions : list[Condition]
         List of conditions that control when parameters are active.
+        Includes auto-generated conditions from nested spaces.
     constraints : list[Constraint]
         List of constraints that filter invalid parameter combinations.
     nested_spaces : dict[str, dict[Any, SearchSpace]]
         Nested search spaces for hierarchical parameter structures.
+        Maps parent parameter name to dict of {class/callable: SearchSpace}.
+
+    See Also
+    --------
+    add_condition : Add conditional activation for a parameter.
+    add_constraint : Add constraint filtering invalid combinations.
+    union : Merge two search spaces.
+    to_backend : Convert to backend-specific format.
+    wrap_params : Wrap flat params for nested access.
 
     Examples
     --------
-    Basic usage with type inference:
+    **Basic usage with type inference:**
 
     >>> import numpy as np
     >>> space = SearchSpace(
@@ -80,28 +191,41 @@ class SearchSpace:
     ...     seed=42,                          # constant
     ... )
 
-    With conditions (method chaining):
-
-    >>> space = SearchSpace(
-    ...     kernel=["rbf", "linear", "poly"],
-    ...     gamma=(1e-4, 10.0, "log"),
-    ...     degree=[2, 3, 4, 5],
-    ... )
-    >>> space.add_condition("gamma", when=lambda p: p["kernel"] != "linear")
-    >>> space.add_condition("degree", when=lambda p: p["kernel"] == "poly")
-
-    With constraints:
-
-    >>> space.add_constraint(lambda p: p["x"] + p["y"] < 10)
-
-    Union operation:
-
-    >>> combined = space1 | space2
-
-    Nested search spaces (estimator selection):
+    **Categorical with classes and functions:**
 
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sklearn.svm import SVC
+    >>> space = SearchSpace(
+    ...     estimator=[RandomForestClassifier, SVC],  # list = categorical
+    ...     activation=[torch.relu, torch.tanh],      # functions work too
+    ... )
+
+    **Conditions for conditional parameters (SVM example):**
+
+    >>> space = SearchSpace(
+    ...     kernel=["rbf", "linear", "poly"],
+    ...     C=(0.01, 100.0, "log"),
+    ...     gamma=(1e-4, 10.0, "log"),
+    ...     degree=[2, 3, 4, 5],
+    ... )
+    >>> # gamma is irrelevant for linear kernel
+    >>> space.add_condition("gamma", when=lambda p: p["kernel"] != "linear")
+    >>> # degree only applies to poly kernel
+    >>> space.add_condition("degree", when=lambda p: p["kernel"] == "poly")
+
+    **Constraints for parameter interactions:**
+
+    >>> space = SearchSpace(x=(0.0, 10.0), y=(0.0, 10.0))
+    >>> space.add_constraint(lambda p: p["x"] + p["y"] < 15)
+
+    **Union to combine spaces:**
+
+    >>> base = SearchSpace(lr=(1e-5, 1e-1, "log"))
+    >>> regularization = SearchSpace(dropout=(0.0, 0.5))
+    >>> combined = base | regularization
+
+    **Nested search spaces (model selection):**
+
     >>> space = SearchSpace(
     ...     estimator={
     ...         RandomForestClassifier: {
@@ -115,9 +239,23 @@ class SearchSpace:
     ...     },
     ... )
 
-    The nested space is detected automatically when a dict has class keys
-    mapping to parameter dicts. This creates a categorical "estimator"
-    dimension plus conditional parameters for each estimator type.
+    This automatically creates:
+
+    - ``estimator``: categorical dimension [RandomForestClassifier, SVC]
+    - ``randomforestclassifier__n_estimators``: active when estimator=RFC
+    - ``randomforestclassifier__max_depth``: active when estimator=RFC
+    - ``svc__C``: active when estimator=SVC
+    - ``svc__kernel``: active when estimator=SVC
+
+    **Accessing nested parameters in objective function:**
+
+    >>> def objective(params):
+    ...     wrapped = space.wrap_params(params)
+    ...     # Access nested params transparently
+    ...     n_est = wrapped["estimator"]["n_estimators"]
+    ...     # Or instantiate directly
+    ...     model = wrapped["estimator"]()
+    ...     return score
     """
 
     def __init__(
