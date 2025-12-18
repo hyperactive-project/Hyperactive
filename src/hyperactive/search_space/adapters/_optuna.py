@@ -133,15 +133,20 @@ class OptunaSearchSpaceAdapter(BaseSearchSpaceAdapter):
 
                 # Handle common scipy distributions
                 if name == "uniform":
-                    loc, scale = dist.args[0] if dist.args else 0, dist.kwds.get(
-                        "scale", 1
-                    )
-                    if not dist.args:
+                    # NOTE: scipy.stats.uniform uses (loc, scale), NOT (low, high).
+                    # It samples from [loc, loc + scale], not [loc, scale].
+                    # Example: uniform(2, 8) samples from [2, 10], not [2, 8].
+                    # We convert to Optuna's [low, high] format below.
+                    if dist.args:
+                        loc = dist.args[0]
+                        scale = (
+                            dist.args[1]
+                            if len(dist.args) > 1
+                            else dist.kwds.get("scale", 1)
+                        )
+                    else:
                         loc = dist.kwds.get("loc", 0)
                         scale = dist.kwds.get("scale", 1)
-                    else:
-                        loc = dist.args[0]
-                        scale = dist.args[1] if len(dist.args) > 1 else 1
                     return optuna.distributions.FloatDistribution(loc, loc + scale)
 
                 elif name == "loguniform":

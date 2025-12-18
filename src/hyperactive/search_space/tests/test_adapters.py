@@ -369,6 +369,8 @@ class TestScipyToOptunaConversion:
         """Skip test if optuna is not available."""
         pytest.importorskip("optuna")
 
+    # --- uniform distribution tests ---
+
     def test_scipy_uniform_two_positional_args(self, skip_if_no_optuna):
         """Test scipy uniform(loc, scale) with two positional args."""
         import optuna.distributions
@@ -432,6 +434,138 @@ class TestScipyToOptunaConversion:
         assert isinstance(adapted["x"], optuna.distributions.FloatDistribution)
         assert adapted["x"].low == 0.0
         assert adapted["x"].high == 1.0
+
+    # --- loguniform distribution tests ---
+
+    def test_scipy_loguniform_two_positional_args(self, skip_if_no_optuna):
+        """Test scipy loguniform(a, b) with two positional args."""
+        import optuna.distributions
+        import scipy.stats as st
+
+        from hyperactive.search_space.adapters import OptunaSearchSpaceAdapter
+
+        # loguniform(1e-5, 1e-1) samples from [1e-5, 1e-1] in log scale
+        space = SearchSpace(lr=st.loguniform(1e-5, 1e-1))
+        adapter = OptunaSearchSpaceAdapter(space)
+        adapted = adapter.adapt()
+
+        assert isinstance(adapted["lr"], optuna.distributions.FloatDistribution)
+        assert adapted["lr"].low == 1e-5
+        assert adapted["lr"].high == 1e-1
+        assert adapted["lr"].log is True
+
+    def test_scipy_loguniform_kwargs(self, skip_if_no_optuna):
+        """Test scipy loguniform(a=..., b=...) with keyword args."""
+        import optuna.distributions
+        import scipy.stats as st
+
+        from hyperactive.search_space.adapters import OptunaSearchSpaceAdapter
+
+        space = SearchSpace(lr=st.loguniform(a=1e-4, b=1e-2))
+        adapter = OptunaSearchSpaceAdapter(space)
+        adapted = adapter.adapt()
+
+        assert isinstance(adapted["lr"], optuna.distributions.FloatDistribution)
+        assert adapted["lr"].low == 1e-4
+        assert adapted["lr"].high == 1e-2
+        assert adapted["lr"].log is True
+
+    # --- randint distribution tests ---
+
+    def test_scipy_randint_two_positional_args(self, skip_if_no_optuna):
+        """Test scipy randint(low, high) with two positional args."""
+        import optuna.distributions
+        import scipy.stats as st
+
+        from hyperactive.search_space.adapters import OptunaSearchSpaceAdapter
+
+        # randint(0, 10) samples integers from [0, 10) -> Optuna [0, 9]
+        space = SearchSpace(n=st.randint(0, 10))
+        adapter = OptunaSearchSpaceAdapter(space)
+        adapted = adapter.adapt()
+
+        assert isinstance(adapted["n"], optuna.distributions.IntDistribution)
+        assert adapted["n"].low == 0
+        assert adapted["n"].high == 9  # high-1 because scipy is exclusive
+
+    def test_scipy_randint_kwargs(self, skip_if_no_optuna):
+        """Test scipy randint(low=..., high=...) with keyword args."""
+        import optuna.distributions
+        import scipy.stats as st
+
+        from hyperactive.search_space.adapters import OptunaSearchSpaceAdapter
+
+        space = SearchSpace(n=st.randint(low=5, high=15))
+        adapter = OptunaSearchSpaceAdapter(space)
+        adapted = adapter.adapt()
+
+        assert isinstance(adapted["n"], optuna.distributions.IntDistribution)
+        assert adapted["n"].low == 5
+        assert adapted["n"].high == 14
+
+    def test_scipy_randint_mixed_args(self, skip_if_no_optuna):
+        """Test scipy randint(low, high=...) with mixed args."""
+        import optuna.distributions
+        import scipy.stats as st
+
+        from hyperactive.search_space.adapters import OptunaSearchSpaceAdapter
+
+        space = SearchSpace(n=st.randint(1, high=100))
+        adapter = OptunaSearchSpaceAdapter(space)
+        adapted = adapter.adapt()
+
+        assert isinstance(adapted["n"], optuna.distributions.IntDistribution)
+        assert adapted["n"].low == 1
+        assert adapted["n"].high == 99
+
+    # --- fallback for unknown distributions ---
+
+    def test_scipy_norm_falls_back_to_sampling(self, skip_if_no_optuna):
+        """Test unknown distributions fall back to categorical sampling."""
+        import scipy.stats as st
+
+        from hyperactive.search_space.adapters import OptunaSearchSpaceAdapter
+
+        # norm is not explicitly handled, should fall back to sampling
+        space = SearchSpace(x=st.norm(0, 1))
+        adapter = OptunaSearchSpaceAdapter(space)
+        adapted = adapter.adapt()
+
+        # Fallback returns a list of sampled values
+        assert isinstance(adapted["x"], list)
+        assert len(adapted["x"]) > 0
+        # All values should be unique (it uses set)
+        assert len(adapted["x"]) == len(set(adapted["x"]))
+
+    def test_scipy_expon_falls_back_to_sampling(self, skip_if_no_optuna):
+        """Test exponential distribution falls back to sampling."""
+        import scipy.stats as st
+
+        from hyperactive.search_space.adapters import OptunaSearchSpaceAdapter
+
+        space = SearchSpace(x=st.expon(scale=2.0))
+        adapter = OptunaSearchSpaceAdapter(space)
+        adapted = adapter.adapt()
+
+        assert isinstance(adapted["x"], list)
+        assert len(adapted["x"]) > 0
+        # Exponential values should be positive
+        assert all(v >= 0 for v in adapted["x"])
+
+    def test_scipy_beta_falls_back_to_sampling(self, skip_if_no_optuna):
+        """Test beta distribution falls back to sampling."""
+        import scipy.stats as st
+
+        from hyperactive.search_space.adapters import OptunaSearchSpaceAdapter
+
+        space = SearchSpace(x=st.beta(2, 5))
+        adapter = OptunaSearchSpaceAdapter(space)
+        adapted = adapter.adapt()
+
+        assert isinstance(adapted["x"], list)
+        assert len(adapted["x"]) > 0
+        # Beta values should be in [0, 1]
+        assert all(0 <= v <= 1 for v in adapted["x"])
 
 
 class TestAdapterEdgeCases:
