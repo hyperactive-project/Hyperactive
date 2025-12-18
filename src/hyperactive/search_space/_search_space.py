@@ -545,6 +545,28 @@ class SearchSpace:
         """
         return self.union(other)
 
+    def _get_nested_space_prefixes(
+        self, parent_name: str, nested: dict[Any, "SearchSpace"]
+    ) -> set[str]:
+        """Get all prefixes used by a nested space's flattened dimensions.
+
+        Parameters
+        ----------
+        parent_name : str
+            The parent parameter name.
+        nested : dict
+            The nested space mapping parent values to SearchSpaces.
+
+        Returns
+        -------
+        set[str]
+            Set of prefixes (e.g., {"randomforestclassifier__", "svc__"}).
+        """
+        prefixes = set()
+        for parent_value in nested.keys():
+            prefixes.add(make_prefix(parent_value) + "__")
+        return prefixes
+
     def union(
         self,
         other: "SearchSpace",
@@ -586,12 +608,48 @@ class SearchSpace:
         """
         result = SearchSpace()
 
-        # Copy dimensions from self
+        # Identify conflicting nested spaces and determine which prefixes to exclude.
+        # When both spaces have the same nested space key (e.g., "estimator"),
+        # we must handle the flattened dimensions consistently with nested_spaces.
+        self_prefixes_to_exclude: set[str] = set()
+        other_prefixes_to_exclude: set[str] = set()
+
+        for parent_name in other.nested_spaces:
+            if parent_name in self.nested_spaces:
+                if on_conflict == "last":
+                    # Exclude self's flattened dimensions for this nested space
+                    self_prefixes_to_exclude.update(
+                        self._get_nested_space_prefixes(
+                            parent_name, self.nested_spaces[parent_name]
+                        )
+                    )
+                elif on_conflict == "first":
+                    # Exclude other's flattened dimensions for this nested space
+                    other_prefixes_to_exclude.update(
+                        self._get_nested_space_prefixes(
+                            parent_name, other.nested_spaces[parent_name]
+                        )
+                    )
+                elif on_conflict == "error":
+                    raise ValueError(f"Conflicting nested space: {parent_name}")
+
+        def should_exclude_self(name: str) -> bool:
+            return any(name.startswith(p) for p in self_prefixes_to_exclude)
+
+        def should_exclude_other(name: str) -> bool:
+            return any(name.startswith(p) for p in other_prefixes_to_exclude)
+
+        # Copy dimensions from self (excluding those from conflicting nested spaces)
         for name, dim in self.dimensions.items():
-            result.dimensions[name] = dim
+            if not should_exclude_self(name):
+                result.dimensions[name] = dim
 
         # Add/merge dimensions from other
         for name, dim in other.dimensions.items():
+            # Skip dimensions from nested spaces that should be excluded
+            if should_exclude_other(name):
+                continue
+
             if name in result.dimensions:
                 existing_dim = result.dimensions[name]
 
@@ -617,12 +675,21 @@ class SearchSpace:
             else:
                 result.dimensions[name] = dim
 
-        # Merge conditions and constraints
-        result.conditions = self.conditions.copy() + other.conditions.copy()
+        # Merge conditions, excluding those targeting excluded dimensions
+        result.conditions = [
+            c for c in self.conditions if not should_exclude_self(c.target_param)
+        ] + [c for c in other.conditions if not should_exclude_other(c.target_param)]
+
+        # Merge constraints (constraints don't have target_param, keep all)
         result.constraints = self.constraints.copy() + other.constraints.copy()
 
-        # Merge nested spaces
-        result.nested_spaces = {**self.nested_spaces, **other.nested_spaces}
+        # Merge nested spaces according to on_conflict strategy
+        if on_conflict == "last":
+            result.nested_spaces = {**self.nested_spaces, **other.nested_spaces}
+        elif on_conflict == "first":
+            result.nested_spaces = {**other.nested_spaces, **self.nested_spaces}
+        else:  # "error" - conflicts already raised above
+            result.nested_spaces = {**self.nested_spaces, **other.nested_spaces}
 
         return result
 

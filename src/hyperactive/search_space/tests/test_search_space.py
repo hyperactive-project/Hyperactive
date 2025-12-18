@@ -134,6 +134,126 @@ class TestSearchSpaceUnion:
         combined = s1 | s2
         assert combined.dimensions["x"].values == [4, 5, 6]
 
+    def test_union_nested_spaces_last_wins(self):
+        """Test union with conflicting nested spaces uses 'last' by default.
+
+        When both spaces have the same nested space key, the flattened dimensions
+        and conditions from the first space should be replaced by the second.
+        """
+        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.svm import SVC
+        from sklearn.tree import DecisionTreeClassifier
+
+        s1 = SearchSpace(
+            estimator={
+                RandomForestClassifier: {"n_estimators": [10, 50]},
+            }
+        )
+        s2 = SearchSpace(
+            estimator={
+                SVC: {"C": [0.1, 1.0]},
+                DecisionTreeClassifier: {"max_depth": [3, 5]},
+            }
+        )
+
+        combined = s1 | s2
+
+        # Should have other's nested space, not self's
+        assert "estimator" in combined.nested_spaces
+        assert SVC in combined.nested_spaces["estimator"]
+        assert DecisionTreeClassifier in combined.nested_spaces["estimator"]
+        assert RandomForestClassifier not in combined.nested_spaces["estimator"]
+
+        # Self's flattened dimensions should be removed
+        assert "randomforestclassifier__n_estimators" not in combined.dimensions
+
+        # Other's flattened dimensions should be present
+        assert "svc__C" in combined.dimensions
+        assert "decisiontreeclassifier__max_depth" in combined.dimensions
+
+        # Conditions should only be for other's nested params
+        condition_targets = {c.target_param for c in combined.conditions}
+        assert "randomforestclassifier__n_estimators" not in condition_targets
+        assert "svc__C" in condition_targets
+        assert "decisiontreeclassifier__max_depth" in condition_targets
+
+    def test_union_nested_spaces_first_wins(self):
+        """Test union with on_conflict='first' keeps first space's nested space."""
+        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.svm import SVC
+
+        s1 = SearchSpace(
+            estimator={
+                RandomForestClassifier: {"n_estimators": [10, 50]},
+            }
+        )
+        s2 = SearchSpace(
+            estimator={
+                SVC: {"C": [0.1, 1.0]},
+            }
+        )
+
+        combined = s1.union(s2, on_conflict="first")
+
+        # Should have self's nested space, not other's
+        assert RandomForestClassifier in combined.nested_spaces["estimator"]
+        assert SVC not in combined.nested_spaces["estimator"]
+
+        # Self's flattened dimensions should be present
+        assert "randomforestclassifier__n_estimators" in combined.dimensions
+
+        # Other's flattened dimensions should be excluded
+        assert "svc__C" not in combined.dimensions
+
+    def test_union_nested_spaces_error_on_conflict(self):
+        """Test union with on_conflict='error' raises for conflicting nested spaces."""
+        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.svm import SVC
+
+        s1 = SearchSpace(
+            estimator={
+                RandomForestClassifier: {"n_estimators": [10, 50]},
+            }
+        )
+        s2 = SearchSpace(
+            estimator={
+                SVC: {"C": [0.1, 1.0]},
+            }
+        )
+
+        with pytest.raises(ValueError, match="Conflicting nested space"):
+            s1.union(s2, on_conflict="error")
+
+    def test_union_different_nested_spaces_merged(self):
+        """Test union merges non-conflicting nested spaces from both."""
+        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.preprocessing import StandardScaler
+        from sklearn.svm import SVC
+
+        s1 = SearchSpace(
+            estimator={
+                RandomForestClassifier: {"n_estimators": [10, 50]},
+            }
+        )
+        s2 = SearchSpace(
+            scaler={
+                StandardScaler: {"with_mean": [True, False]},
+            }
+        )
+
+        combined = s1 | s2
+
+        # Both nested spaces should be present
+        assert "estimator" in combined.nested_spaces
+        assert "scaler" in combined.nested_spaces
+
+        # All flattened dimensions should be present
+        assert "randomforestclassifier__n_estimators" in combined.dimensions
+        assert "standardscaler__with_mean" in combined.dimensions
+
+        # All conditions should be present
+        assert len(combined.conditions) == 2
+
 
 class TestSearchSpaceConditions:
     """Test conditional dimensions."""
