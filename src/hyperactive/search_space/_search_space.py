@@ -400,6 +400,16 @@ class SearchSpace:
         elif isinstance(depends_on, str):
             depends_on = [depends_on]
 
+        # Validate that all depends_on parameters exist in the search space.
+        # Without this check, typos in dependency names would silently cause
+        # conditions to never evaluate (can_evaluate() returns False).
+        unknown_deps = set(depends_on) - set(self.dimensions.keys())
+        if unknown_deps:
+            raise ValueError(
+                f"Unknown parameters in depends_on: {unknown_deps}. "
+                f"Available parameters: {list(self.dimensions.keys())}"
+            )
+
         self.conditions.append(
             Condition(
                 target_param=param,

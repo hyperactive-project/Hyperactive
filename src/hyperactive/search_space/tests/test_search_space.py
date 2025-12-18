@@ -150,6 +150,24 @@ class TestSearchSpaceConditions:
         with pytest.raises(ValueError, match="Unknown parameter"):
             space.add_condition("unknown", when=lambda p: True)
 
+    def test_add_condition_unknown_depends_on_raises(self):
+        """Test add_condition raises for unknown depends_on parameter."""
+        space = SearchSpace(x=[1, 2], y=[3, 4])
+        with pytest.raises(ValueError, match="Unknown parameters in depends_on"):
+            space.add_condition(
+                "y",
+                when=lambda p: p["x"] == 1,
+                depends_on="nonexistent",
+            )
+
+        # Also test with list of dependencies where one is invalid
+        with pytest.raises(ValueError, match="Unknown parameters in depends_on"):
+            space.add_condition(
+                "y",
+                when=lambda p: p["x"] == 1,
+                depends_on=["x", "also_nonexistent"],
+            )
+
     def test_condition_stored(self):
         """Test condition is stored correctly."""
         space = SearchSpace(x=[1, 2], y=[3, 4])
