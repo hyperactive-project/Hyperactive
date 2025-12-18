@@ -1073,6 +1073,24 @@ class TestConditionsComprehensive:
             assert "B" in error_msg
             assert "->" in error_msg  # Shows cycle path
 
+    def test_circular_dependency_does_not_add_condition(self):
+        """Test that failed circular dependency check doesn't add the condition.
+
+        This ensures the SearchSpace remains in a valid state after a failed
+        add_condition call. The condition should be validated BEFORE being added.
+        """
+        space = SearchSpace(A=[1, 2], B=[3, 4])
+        space.add_condition("A", when=lambda p: p["B"] > 3, depends_on="B")
+
+        assert len(space.conditions) == 1  # Only one condition so far
+
+        with pytest.raises(ValueError, match="Circular dependency"):
+            space.add_condition("B", when=lambda p: p["A"] > 1, depends_on="A")
+
+        # The invalid condition should NOT have been added
+        assert len(space.conditions) == 1
+        assert space.conditions[0].target_param == "A"
+
 
 class TestConstraintsComprehensive:
     """Comprehensive tests for search space constraints."""

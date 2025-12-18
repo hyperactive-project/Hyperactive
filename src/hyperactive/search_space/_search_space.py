@@ -410,24 +410,33 @@ class SearchSpace:
                 f"Available parameters: {list(self.dimensions.keys())}"
             )
 
-        self.conditions.append(
-            Condition(
-                target_param=param,
-                predicate=when,
-                depends_on=depends_on,
-                name=name,
-            )
+        new_condition = Condition(
+            target_param=param,
+            predicate=when,
+            depends_on=depends_on,
+            name=name,
         )
 
-        # Check for circular dependencies
-        self._check_circular_dependencies()
+        # Check for circular dependencies BEFORE adding the condition.
+        # This ensures the SearchSpace remains in a valid state if the check fails.
+        self._check_circular_dependencies(new_condition)
+
+        self.conditions.append(new_condition)
 
         return self
 
-    def _check_circular_dependencies(self) -> None:
+    def _check_circular_dependencies(
+        self, new_condition: Condition | None = None
+    ) -> None:
         """Check for circular dependencies in conditions.
 
         Builds a dependency graph from conditions and detects cycles using DFS.
+
+        Parameters
+        ----------
+        new_condition : Condition, optional
+            A new condition to include in the check (not yet added to self.conditions).
+            This allows validating before adding to ensure consistent state.
 
         Raises
         ------
@@ -439,7 +448,12 @@ class SearchSpace:
         # P depends on D1 and D2 (edges: P->D1, P->D2)
         graph: dict[str, set[str]] = {}
 
-        for condition in self.conditions:
+        # Include the new condition in the check if provided
+        conditions_to_check = list(self.conditions)
+        if new_condition is not None:
+            conditions_to_check.append(new_condition)
+
+        for condition in conditions_to_check:
             target = condition.target_param
             if target not in graph:
                 graph[target] = set()
