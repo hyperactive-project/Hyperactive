@@ -407,13 +407,23 @@ class TestSearchSpaceNestedSpaces:
         # Should have conditions for each nested parameter
         assert len(space.conditions) >= 2
 
-    def test_lambda_collision_raises_error(self):
-        """Test that multiple lambdas as nested space keys raises ValueError.
+    def test_lambda_raises_error(self):
+        """Test that lambda functions as nested space keys raise ValueError.
 
         Lambda functions all have __name__ == '<lambda>', so they would produce
-        the same prefix and cause parameter name collisions.
+        non-unique prefixes. We reject them immediately with a helpful error
+        message instead of waiting for a collision.
         """
-        with pytest.raises(ValueError, match="same prefix"):
+        with pytest.raises(ValueError, match="Anonymous lambda"):
+            SearchSpace(
+                transform={
+                    lambda x: x**2: {"power": [2, 3]},
+                }
+            )
+
+    def test_multiple_lambdas_raises_error(self):
+        """Test that multiple lambdas also raise (caught at first lambda)."""
+        with pytest.raises(ValueError, match="Anonymous lambda"):
             SearchSpace(
                 transform={
                     lambda x: x**2: {"power": [2, 3]},

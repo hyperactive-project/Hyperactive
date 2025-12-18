@@ -331,18 +331,40 @@ def make_prefix(value: Any) -> str:
     str
         A lowercase, underscore-separated prefix string.
 
+    Raises
+    ------
+    ValueError
+        If the value is an anonymous lambda function, which would produce
+        a non-unique prefix '<lambda>'.
+
     Examples
     --------
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> make_prefix(RandomForestClassifier)
     'randomforestclassifier'
-    >>> make_prefix(lambda x: x)
-    '<lambda>'
+    >>> def my_transform(x):
+    ...     return x * 2
+    >>> make_prefix(my_transform)
+    'my_transform'
     >>> make_prefix("My Model")
     'my_model'
     """
     if isinstance(value, type):
         return value.__name__.lower()
     elif callable(value):
-        return getattr(value, "__name__", str(value)).lower()
+        name = getattr(value, "__name__", None)
+        if name is None or name == "<lambda>":
+            raise ValueError(
+                f"Anonymous lambda functions cannot be used as nested space keys "
+                f"because they produce non-unique prefixes ('<lambda>').\n\n"
+                f"Instead, use a named function:\n"
+                f"    def my_transform(x):\n"
+                f"        return x * 2\n\n"
+                f"    space = SearchSpace(\n"
+                f"        transform={{\n"
+                f"            my_transform: {{'param': [1, 2, 3]}},\n"
+                f"        }}\n"
+                f"    )"
+            )
+        return name.lower()
     return str(value).lower().replace(" ", "_").replace("-", "_")
