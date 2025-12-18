@@ -457,6 +457,82 @@ class TestNestedSpaceFeatures:
         assert nested_dict["estimator"] == RandomForestClassifier
         assert nested_dict["estimator_params"] == {"n_estimators": 100}
 
+    def test_params_view_does_not_hide_non_nested_dunder_keys(self):
+        """Test that keys with '__' that aren't nested prefixes remain visible.
+
+        This is a regression test for the bug where ALL keys containing '__'
+        were hidden when any nested space existed. Only keys matching actual
+        nested space prefixes should be hidden.
+        """
+        from sklearn.ensemble import RandomForestClassifier
+
+        space = SearchSpace(
+            estimator={
+                RandomForestClassifier: {"n_estimators": [10, 50, 100]},
+            },
+        )
+
+        # Flat params include:
+        # - estimator: the parent (visible)
+        # - randomforestclassifier__n_estimators: nested param (hidden from iteration)
+        # - some_other__param: NOT a nested prefix, should be visible!
+        flat_result = {
+            "estimator": RandomForestClassifier,
+            "randomforestclassifier__n_estimators": 100,
+            "some_other__param": "value",  # Contains __ but not a nested prefix
+        }
+
+        params = space.wrap_params(flat_result)
+
+        # Iterate to get visible keys
+        visible_keys = list(params)
+
+        # "estimator" should be visible (it's the parent)
+        assert "estimator" in visible_keys
+
+        # "some_other__param" should also be visible (not a nested prefix)
+        assert "some_other__param" in visible_keys
+
+        # "randomforestclassifier__n_estimators" should be hidden (it IS a nested prefix)
+        assert "randomforestclassifier__n_estimators" not in visible_keys
+
+        # But all keys should still be accessible directly
+        assert params["some_other__param"] == "value"
+        assert params["randomforestclassifier__n_estimators"] == 100
+
+    def test_nested_value_comparison_both_directions(self):
+        """Test that NestedValue comparison works in both directions.
+
+        For types/classes, Python falls back to NestedValue.__eq__ when
+        the type's __eq__ returns NotImplemented, so comparison works both ways.
+        """
+        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.svm import SVC
+
+        space = SearchSpace(
+            estimator={
+                RandomForestClassifier: {"n_estimators": [100]},
+                SVC: {"C": [1.0]},
+            },
+        )
+
+        flat_result = {
+            "estimator": RandomForestClassifier,
+            "randomforestclassifier__n_estimators": 100,
+        }
+        params = space.wrap_params(flat_result)
+
+        # Both directions work for type comparison
+        assert params["estimator"] == RandomForestClassifier
+        assert RandomForestClassifier == params["estimator"]
+
+        # Not equal comparisons also work both ways
+        assert params["estimator"] != SVC
+        assert SVC != params["estimator"]
+
+        # .value property provides explicit access to the wrapped class
+        assert params["estimator"].value is RandomForestClassifier
+
 
 class TestValidationWarnings:
     """Tests for validation warnings on unsupported features."""
