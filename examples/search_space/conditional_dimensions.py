@@ -43,15 +43,6 @@ def svm_objective(params):
     return score
 
 
-space = SearchSpace(
-    estimator={
-        RandomForestClassifier: {"n_estimators": [10, 50, 100]},
-        SVC: {"C": (0.01, 100.0, "log")},
-    },
-    lr=(1e-5, 1e-1, "log"),
-)
-
-
 def main():
     # SVM-style search space with conditional parameters
     space = SearchSpace(
