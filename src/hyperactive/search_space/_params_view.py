@@ -232,7 +232,18 @@ class NestedValue:
     # -------------------------------------------------------------------------
 
     def __eq__(self, other: Any) -> bool:
-        """Compare to wrapped value or another NestedValue."""
+        """Compare to wrapped value or another NestedValue.
+
+        For most types (classes, strings, built-ins), comparison works both ways:
+            nested == SomeClass  # True
+            SomeClass == nested  # True (Python falls back to NestedValue.__eq__)
+
+        Note: Asymmetry can occur with custom classes that define __eq__ to
+        return False (instead of NotImplemented) for unknown types. In such
+        cases, prefer putting NestedValue on the left side of comparisons,
+        or use the .value property for explicit comparison:
+            nested.value == custom_obj  # Always works
+        """
         if isinstance(other, NestedValue):
             return self._value == other._value and self._params == other._params
         return self._value == other
