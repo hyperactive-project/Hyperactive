@@ -95,8 +95,12 @@ docs = [
   "sphinx-design",
   "sphinx-issues",
 ]
+meta_learning = [
+  "meta-learn>=0.3.0",  # For algorithm selection feature extraction
+]
 all_extras = [
   "hyperactive[integrations]",
+  "hyperactive[meta_learning]",
   "optuna<5",
   "cmaes",  # Required for CmaEsOptimizer (optuna's CMA-ES sampler)
   "lightning",
