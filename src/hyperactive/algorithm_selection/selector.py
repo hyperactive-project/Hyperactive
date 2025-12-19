@@ -10,12 +10,21 @@ from typing import Callable, Optional, Type
 
 from hyperactive.base import BaseOptimizer
 
-from .ast_feature_engineering import (
-    ASTFeatures,
-    SearchSpaceFeatures,
-    extract_ast_features,
-    extract_search_space_features,
-)
+try:
+    from meta_learn.auto_opt.features import (
+        ASTFeatures,
+        SearchSpaceFeatures,
+        extract_ast_features,
+        extract_search_space_features,
+    )
+except ImportError:
+    # Fall back to local copy if meta_learn is not installed
+    from .ast_feature_engineering import (
+        ASTFeatures,
+        SearchSpaceFeatures,
+        extract_ast_features,
+        extract_search_space_features,
+    )
 
 
 class AlgorithmSelector:
@@ -25,13 +34,17 @@ class AlgorithmSelector:
     which optimization algorithm is likely to perform best. It returns a
     dictionary mapping optimizer classes to scores.
 
-    For MVP: Uses heuristic rules based on extracted features.
-    Future: Will use a pre-trained machine learning model.
+    The selector can use either:
+    - A pre-trained ML model (when available and use_ml_model=True)
+    - Heuristic rules (fallback or when use_ml_model=False)
 
     Parameters
     ----------
     expand_source : bool, default=True
         Whether to expand function source code to follow imports.
+    use_ml_model : bool, default=True
+        Whether to use the pre-trained ML model for scoring.
+        Falls back to heuristics if model is not available.
 
     Attributes
     ----------
@@ -39,6 +52,8 @@ class AlgorithmSelector:
         AST features extracted from the last rank() call.
     search_space_features_ : SearchSpaceFeatures
         Search space features from the last rank() call.
+    used_ml_model_ : bool
+        Whether ML model was used in the last rank() call.
 
     Examples
     --------
@@ -51,12 +66,14 @@ class AlgorithmSelector:
     >>> # rankings is a dict: {OptimizerClass: score, ...}
     """
 
-    def __init__(self, expand_source: bool = True):
+    def __init__(self, expand_source: bool = True, use_ml_model: bool = True):
         self.expand_source = expand_source
+        self.use_ml_model = use_ml_model
 
         # Attributes set after rank() call
         self.ast_features_: Optional[ASTFeatures] = None
         self.search_space_features_: Optional[SearchSpaceFeatures] = None
+        self.used_ml_model_: bool = False
 
     def rank(
         self,
@@ -91,26 +108,38 @@ class AlgorithmSelector:
         # Get available optimizers
         optimizers = self._get_available_optimizers()
 
-        # Score each optimizer
-        scores = {}
-        for opt_class in optimizers:
-            score = self._score_optimizer(
-                opt_class,
+        # Try ML model first if enabled
+        self.used_ml_model_ = False
+        if self.use_ml_model:
+            scores = self._score_with_ml_model(
                 self.ast_features_,
                 self.search_space_features_,
                 n_iter,
             )
-            scores[opt_class] = score
+            if scores is not None:
+                self.used_ml_model_ = True
 
-        # Normalize scores to 0-1 range
-        if scores:
-            max_score = max(scores.values())
-            min_score = min(scores.values())
-            range_score = max_score - min_score
-            if range_score > 0:
-                scores = {
-                    k: (v - min_score) / range_score for k, v in scores.items()
-                }
+        # Fall back to heuristics
+        if not self.used_ml_model_:
+            scores = {}
+            for opt_class in optimizers:
+                score = self._score_optimizer(
+                    opt_class,
+                    self.ast_features_,
+                    self.search_space_features_,
+                    n_iter,
+                )
+                scores[opt_class] = score
+
+            # Normalize scores to 0-1 range
+            if scores:
+                max_score = max(scores.values())
+                min_score = min(scores.values())
+                range_score = max_score - min_score
+                if range_score > 0:
+                    scores = {
+                        k: (v - min_score) / range_score for k, v in scores.items()
+                    }
 
         # Sort by score descending
         scores = dict(sorted(scores.items(), key=lambda x: x[1], reverse=True))
@@ -182,6 +211,67 @@ class AlgorithmSelector:
             DifferentialEvolution,
             BayesianOptimizer,
         ]
+
+    def _score_with_ml_model(
+        self,
+        ast_features: ASTFeatures,
+        ss_features: SearchSpaceFeatures,
+        n_iter: int,
+    ) -> Optional[dict[Type[BaseOptimizer], float]]:
+        """Score optimizers using the trained ML model.
+
+        Parameters
+        ----------
+        ast_features : ASTFeatures
+            Features extracted from objective function.
+        ss_features : SearchSpaceFeatures
+            Features extracted from search space.
+        n_iter : int
+            Planned number of iterations.
+
+        Returns
+        -------
+        dict or None
+            Dictionary mapping optimizer classes to scores, or None
+            if the model is not available.
+        """
+        try:
+            from .meta_learning.ranking_model import OptimizerRankingModel
+
+            if not OptimizerRankingModel.is_model_available():
+                return None
+
+            # Pass search space features as dict for proper feature alignment
+            ss_features_dict = ss_features.to_dict()
+
+            # Pass AST features as dict
+            ast_features_dict = ast_features.to_dict()
+
+            # Get rankings from ML model (returns optimizer names)
+            name_scores = OptimizerRankingModel.rank_optimizers(
+                problem_features=[],  # Not used when dicts provided
+                ss_features_dict=ss_features_dict,
+                ast_features_dict=ast_features_dict,
+                n_iter=n_iter,
+            )
+
+            if not name_scores:
+                return None
+
+            # Map names back to optimizer classes
+            optimizers = self._get_available_optimizers()
+            name_to_class = {opt.__name__: opt for opt in optimizers}
+
+            scores = {}
+            for name, score in name_scores.items():
+                if name in name_to_class:
+                    scores[name_to_class[name]] = score
+
+            return scores if scores else None
+
+        except Exception:
+            # Any error loading/using the model falls back to heuristics
+            return None
 
     def _score_optimizer(
         self,

@@ -39,7 +39,11 @@ Using AutoOptimizer as a drop-in replacement:
 from .auto_optimizer import AutoOptimizer
 from .selector import AlgorithmSelector
 
+# Meta-learning module for training custom models
+from . import meta_learning
+
 __all__ = [
     "AlgorithmSelector",
     "AutoOptimizer",
+    "meta_learning",
 ]
