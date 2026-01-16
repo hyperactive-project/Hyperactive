@@ -15,9 +15,11 @@ A unified interface for optimization algorithms and experiments in Python.
 </h3>
 
 <p align="center">
-  <a href="https://github.com/SimonBlanke/Hyperactive/actions"><img src="https://img.shields.io/github/actions/workflow/status/SimonBlanke/Hyperactive/test.yml?style=flat-square&label=tests" alt="Tests"></a>
-  <a href="https://codecov.io/gh/SimonBlanke/Hyperactive"><img src="https://img.shields.io/codecov/c/github/SimonBlanke/Hyperactive?style=flat-square" alt="Coverage"></a>
+  <a href="https://github.com/SimonBlanke/Hyperactive/actions"><img src="https://img.shields.io/github/actions/workflow/status/SimonBlanke/Hyperactive/test.yml?style=for-the-badge&logo=githubactions&logoColor=white&label=tests" alt="Tests"></a>
+  <a href="https://codecov.io/gh/SimonBlanke/Hyperactive"><img src="https://img.shields.io/codecov/c/github/SimonBlanke/Hyperactive?style=for-the-badge&logo=codecov&logoColor=white" alt="Coverage"></a>
 </p>
+
+<br>
 
 <table align="center">
   <tr>
@@ -57,10 +59,9 @@ Designed for hyperparameter tuning, model selection, and black-box optimization.
 <p>
   <a href="https://www.linkedin.com/company/german-center-for-open-source-ai"><img src="https://img.shields.io/badge/LinkedIn-Follow-0A66C2?style=flat-square&logo=linkedin" alt="LinkedIn"></a>
   <a href="https://discord.gg/7uKdHfdcJG"><img src="https://img.shields.io/badge/Discord-Chat-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
-  <a href="https://github.com/sponsors/SimonBlanke"><img src="https://img.shields.io/badge/Sponsor-EA4AAA?style=flat-square&logo=githubsponsors&logoColor=white" alt="Sponsor"></a>
 </p>
 
----
+<br>
 
 ## Installation
 
@@ -84,7 +85,7 @@ pip install hyperactive[all_extras]           # Everything including Optuna
 
 </details>
 
----
+<br>
 
 ## Key Features
 
@@ -119,7 +120,7 @@ pip install hyperactive[all_extras]           # Everything including Optuna
   </tr>
 </table>
 
----
+<br>
 
 ## Quick Start
 
@@ -154,24 +155,44 @@ print(f"Best params: {best_params}")
 Best params: {'x': 0.0, 'y': 0.0}
 ```
 
----
+<br>
 
 ## Core Concepts
 
-```
-                    EXPERIMENT-BASED ARCHITECTURE
+Hyperactive separates **what** you optimize from **how** you optimize. Define your experiment (objective function) and search space once, then swap optimizers freely without changing your code. The unified interface abstracts away backend differences, letting you focus on your optimization problem.
 
-    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
-    │   Optimizer  │───>│    Search    │───>│  Experiment  │
-    │  (Algorithm) │    │    Space     │    │  (Objective) │
-    └──────────────┘    └──────────────┘    └──────────────┘
-           │                   │                    │
-           │                   │                    │
-           v                   v                    v
-    ┌────────────────────────────────────────────────────┐
-    │                    Best Parameters                  │
-    │           optimizer.solve() -> best_params          │
-    └────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph USER["Your Code"]
+        direction LR
+        F["def objective(params):<br/>    return score"]
+        SP["search_space = {<br/>    'x': np.arange(...),<br/>    'y': [1, 2, 3]<br/>}"]
+    end
+
+    subgraph HYPER["Hyperactive"]
+        direction TB
+        OPT["Optimizer"]
+
+        subgraph BACKENDS["Backends"]
+            GFO["GFO<br/>21 algorithms"]
+            OPTUNA["Optuna<br/>8 algorithms"]
+            SKL["sklearn<br/>2 algorithms"]
+            MORE["...<br/>more to come"]
+        end
+
+        OPT --> GFO
+        OPT --> OPTUNA
+        OPT --> SKL
+        OPT --> MORE
+    end
+
+    subgraph OUT["Output"]
+        BEST["best_params"]
+    end
+
+    F --> OPT
+    SP --> OPT
+    HYPER --> OUT
 ```
 
 **Optimizer**: Implements the search strategy (Hill Climbing, Bayesian, Particle Swarm, etc.).
@@ -182,7 +203,7 @@ Best params: {'x': 0.0, 'y': 0.0}
 
 **Best Parameters**: The optimizer returns the parameters that maximize the objective.
 
----
+<br>
 
 ## Examples
 
@@ -374,21 +395,49 @@ print(f"Best params: {tuned_forecaster.best_params_}")
 <br>
 
 <details>
-<summary><b>PyTorch Hyperparameter Tuning</b></summary>
+<summary><b>PyTorch Neural Network Tuning</b></summary>
 
 ```python
 import numpy as np
+import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader, TensorDataset
 from hyperactive.opt.gfo import BayesianOptimizer
 
+# Example data
+X_train = torch.randn(1000, 10)
+y_train = torch.randint(0, 2, (1000,))
+
 def train_model(params):
-    # Your PyTorch model training here
     learning_rate = params["learning_rate"]
     batch_size = params["batch_size"]
     hidden_size = params["hidden_size"]
 
-    # ... training code ...
-    # return validation_accuracy
-    pass
+    model = nn.Sequential(
+        nn.Linear(10, hidden_size),
+        nn.ReLU(),
+        nn.Linear(hidden_size, 2),
+    )
+
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    criterion = nn.CrossEntropyLoss()
+    loader = DataLoader(TensorDataset(X_train, y_train), batch_size=batch_size)
+
+    model.train()
+    for epoch in range(10):
+        for X_batch, y_batch in loader:
+            optimizer.zero_grad()
+            loss = criterion(model(X_batch), y_batch)
+            loss.backward()
+            optimizer.step()
+
+    # Return validation accuracy
+    model.eval()
+    with torch.no_grad():
+        predictions = model(X_train).argmax(dim=1)
+        accuracy = (predictions == y_train).float().mean().item()
+
+    return accuracy
 
 search_space = {
     "learning_rate": np.logspace(-5, -1, 20),
@@ -406,7 +455,7 @@ best_params = optimizer.solve()
 
 </details>
 
----
+<br>
 
 ## Ecosystem
 
@@ -418,7 +467,8 @@ This library is part of a suite of optimization and machine learning tools. For 
 | [Gradient-Free-Optimizers](https://github.com/SimonBlanke/Gradient-Free-Optimizers) | Core optimization algorithms for black-box function optimization |
 | [Surfaces](https://github.com/SimonBlanke/Surfaces) | Test functions and benchmark surfaces for optimization algorithm evaluation |
 
----
+
+<br>
 
 ## Documentation
 
@@ -429,7 +479,7 @@ This library is part of a suite of optimization and machine learning tools. For 
 | [Examples](https://hyperactive.readthedocs.io/en/latest/examples.html) | Jupyter notebooks with use cases |
 | [FAQ](https://hyperactive.readthedocs.io/en/latest/faq.html) | Common questions and troubleshooting |
 
----
+<br>
 
 ## Contributing
 
@@ -439,7 +489,7 @@ Contributions welcome! See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 - **Feature requests**: [GitHub Discussions](https://github.com/SimonBlanke/Hyperactive/discussions)
 - **Questions**: [Discord](https://discord.gg/7uKdHfdcJG)
 
----
+<br>
 
 ## Citation
 
@@ -454,7 +504,7 @@ If you use this software in your research, please cite:
 }
 ```
 
----
+<br>
 
 ## License
 
