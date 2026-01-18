@@ -26,7 +26,7 @@ class _BaseGFOadapter(BaseOptimizer):
         # Search space capabilities
         "capability:discrete": True,
         "capability:continuous": True,
-        "capability:categorical": True,
+        "capability:categorical": False,  # GFO only supports numeric values
         "capability:constraints": True,
     }
 

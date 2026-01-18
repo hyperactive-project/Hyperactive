@@ -62,6 +62,9 @@ class CmaEsOptimizer(_BaseOptunaAdapter):
         "info:explore_vs_exploit": "mixed",
         "info:compute": "high",
         "python_dependencies": ["optuna", "cmaes"],
+        # CMA-ES only works with continuous parameters
+        "capability:categorical": False,
+        "capability:discrete": False,
     }
 
     def __init__(
