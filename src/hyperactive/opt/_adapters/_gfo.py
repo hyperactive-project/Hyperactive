@@ -25,7 +25,7 @@ class _BaseGFOadapter(BaseOptimizer):
         "python_dependencies": ["gradient-free-optimizers>=1.5.0"],
         # Search space capabilities
         "capability:discrete": True,
-        "capability:continuous": True,
+        "capability:continuous": False,  # GFO needs lists, not (low, high) tuples
         "capability:categorical": False,  # GFO only supports numeric values
         "capability:constraints": True,
     }
@@ -78,7 +78,9 @@ class _BaseGFOadapter(BaseOptimizer):
 
         search_config = self._handle_gfo_defaults(search_config)
 
-        search_config["search_space"] = self._to_dict_np(search_config["search_space"])
+        # Note: _to_dict_np is called in _solve(), after SearchSpaceAdapter processes
+        # continuous tuples. If we convert here, tuples like (1e-4, 1e-1, "log")
+        # would become numpy arrays with strings before the adapter can discretize them.
 
         return search_config
 
@@ -150,6 +152,10 @@ class _BaseGFOadapter(BaseOptimizer):
         """
         n_iter = search_config.pop("n_iter", 100)
         max_time = search_config.pop("max_time", None)
+
+        # Convert search_space lists to numpy arrays (GFO requirement)
+        # This must happen after SearchSpaceAdapter has processed continuous tuples
+        search_config["search_space"] = self._to_dict_np(search_config["search_space"])
 
         gfo_cls = self._get_gfo_class()
         gfopt = gfo_cls(**search_config)

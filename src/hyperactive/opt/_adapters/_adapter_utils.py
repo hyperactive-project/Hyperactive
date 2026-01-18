@@ -29,8 +29,11 @@ def adapt_search_space(experiment, search_config, capabilities):
     """Adapt search space and experiment for backend capabilities.
 
     If the backend doesn't support certain search space features
-    (e.g., categorical values), this function encodes the search space
-    and wraps the experiment to handle encoding/decoding transparently.
+    (e.g., categorical values, continuous ranges), this function:
+    - Validates the search space format
+    - Encodes categorical dimensions (strings to integers)
+    - Discretizes continuous dimensions (tuples to lists)
+    - Wraps the experiment to decode parameters during scoring
 
     Parameters
     ----------
@@ -46,9 +49,14 @@ def adapt_search_space(experiment, search_config, capabilities):
     experiment : BaseExperiment
         The experiment, possibly wrapped for decoding.
     search_config : dict
-        The search config, possibly with encoded search space.
+        The search config, possibly with encoded/discretized search space.
     adapter : SearchSpaceAdapter or None
-        The adapter if encoding was applied, None otherwise.
+        The adapter if adaptation was applied, None otherwise.
+
+    Raises
+    ------
+    ValueError, TypeError
+        If the search space format is invalid.
     """
     search_space_key = detect_search_space_key(search_config)
 
@@ -59,11 +67,14 @@ def adapt_search_space(experiment, search_config, capabilities):
     # Create adapter with backend capabilities
     adapter = SearchSpaceAdapter(search_config[search_space_key], capabilities)
 
+    # Validate search space format
+    adapter.validate()
+
     # Backend supports all features - pass through unchanged
-    if not adapter.needs_encoding:
+    if not adapter.needs_adaptation:
         return experiment, search_config, None
 
-    # Encoding needed - transform search space and wrap experiment
+    # Adaptation needed - transform search space and wrap experiment
     encoded_config = search_config.copy()
     encoded_config[search_space_key] = adapter.encode()
     wrapped_experiment = adapter.wrap_experiment(experiment)

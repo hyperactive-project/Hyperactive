@@ -117,19 +117,65 @@ class _BaseOptunaAdapter(BaseOptimizer):
         for key, space in param_space.items():
             if hasattr(space, "suggest"):  # optuna distribution object
                 params[key] = trial._suggest(space, key)
-            elif isinstance(space, tuple) and len(space) == 2:
-                # Tuples are treated as ranges (low, high)
-                low, high = space
-                if isinstance(low, int) and isinstance(high, int):
-                    params[key] = trial.suggest_int(key, low, high)
-                else:
-                    params[key] = trial.suggest_float(key, low, high, log=False)
+            elif isinstance(space, tuple):
+                # Tuples are continuous ranges in unified format
+                params[key] = self._suggest_continuous(trial, key, space)
             elif isinstance(space, list):
                 # Lists are treated as categorical choices
                 params[key] = trial.suggest_categorical(key, space)
             else:
                 raise ValueError(f"Invalid parameter space for key '{key}': {space}")
         return params
+
+    def _suggest_continuous(self, trial, key, space):
+        """Suggest a continuous parameter from a tuple specification.
+
+        Handles unified tuple formats:
+        - (low, high) - linear scale
+        - (low, high, "log") - log scale
+        - (low, high, n_points) - linear scale (n_points ignored for Optuna)
+        - (low, high, n_points, "log") - log scale (n_points ignored for Optuna)
+
+        Parameters
+        ----------
+        trial : optuna.Trial
+            The Optuna trial object
+        key : str
+            The parameter name
+        space : tuple
+            The continuous range specification
+
+        Returns
+        -------
+        float or int
+            The suggested value
+        """
+        if len(space) < 2:
+            raise ValueError(
+                f"Parameter '{key}': continuous range needs at least 2 values "
+                f"(low, high), got {len(space)}."
+            )
+
+        low, high = space[0], space[1]
+        log_scale = False
+
+        # Parse optional arguments
+        if len(space) == 3:
+            third = space[2]
+            if isinstance(third, str) and third.lower() == "log":
+                log_scale = True
+            # If third is int/float, it's n_points - ignore for Optuna
+        elif len(space) == 4:
+            # (low, high, n_points, "log")
+            fourth = space[3]
+            if isinstance(fourth, str) and fourth.lower() == "log":
+                log_scale = True
+
+        # Suggest based on type
+        if isinstance(low, int) and isinstance(high, int):
+            return trial.suggest_int(key, low, high, log=log_scale)
+        else:
+            return trial.suggest_float(key, low, high, log=log_scale)
 
     def _objective(self, trial):
         """Objective function for Optuna optimization.

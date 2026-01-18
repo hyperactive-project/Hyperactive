@@ -58,6 +58,8 @@ class GridOptimizer(_BaseOptunaAdapter):
         "info:explore_vs_exploit": "explore",
         "info:compute": "low",
         "python_dependencies": ["optuna"],
+        # Grid search needs discrete values, cannot sample from continuous ranges
+        "capability:continuous": False,
     }
 
     def __init__(

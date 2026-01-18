@@ -188,6 +188,200 @@ class TestSearchSpaceAdapter:
         assert decoded == {"kernel": "rbf", "solver": "adam"}
 
 
+class TestSearchSpaceValidation:
+    """Tests for search space validation."""
+
+    def test_validate_empty_space_raises(self):
+        """Empty search space raises ValueError."""
+        adapter = SearchSpaceAdapter({}, capabilities={})
+
+        with pytest.raises(ValueError, match="cannot be empty"):
+            adapter.validate()
+
+    def test_validate_non_dict_raises(self):
+        """Non-dict search space raises TypeError."""
+        adapter = SearchSpaceAdapter(["C", "gamma"], capabilities={})
+
+        with pytest.raises(TypeError, match="must be a dict"):
+            adapter.validate()
+
+    def test_validate_invalid_type_raises(self):
+        """Invalid dimension type raises TypeError."""
+        adapter = SearchSpaceAdapter({"C": 0.1}, capabilities={})
+
+        with pytest.raises(TypeError, match="expected list.*or tuple"):
+            adapter.validate()
+
+    def test_validate_empty_list_raises(self):
+        """Empty discrete list raises ValueError."""
+        adapter = SearchSpaceAdapter({"C": []}, capabilities={})
+
+        with pytest.raises(ValueError, match="cannot be empty"):
+            adapter.validate()
+
+    def test_validate_continuous_too_few_values_raises(self):
+        """Continuous tuple with < 2 values raises ValueError."""
+        adapter = SearchSpaceAdapter({"C": (0.1,)}, capabilities={})
+
+        with pytest.raises(ValueError, match="at least 2 values"):
+            adapter.validate()
+
+    def test_validate_continuous_too_many_values_raises(self):
+        """Continuous tuple with > 4 values raises ValueError."""
+        adapter = SearchSpaceAdapter({"C": (0.1, 10, 50, "log", "extra")}, capabilities={})
+
+        with pytest.raises(ValueError, match="too many values"):
+            adapter.validate()
+
+    def test_validate_continuous_low_ge_high_raises(self):
+        """Continuous with low >= high raises ValueError."""
+        adapter = SearchSpaceAdapter({"C": (10, 0.1)}, capabilities={})
+
+        with pytest.raises(ValueError, match="must be less than"):
+            adapter.validate()
+
+    def test_validate_continuous_log_non_positive_raises(self):
+        """Log scale with non-positive low raises ValueError."""
+        adapter = SearchSpaceAdapter({"C": (-1, 10, "log")}, capabilities={})
+
+        with pytest.raises(ValueError, match="log scale requires positive"):
+            adapter.validate()
+
+    def test_validate_continuous_n_points_too_small_raises(self):
+        """n_points < 2 raises ValueError."""
+        adapter = SearchSpaceAdapter({"C": (0.1, 10, 1)}, capabilities={})
+
+        with pytest.raises(ValueError, match="n_points must be at least 2"):
+            adapter.validate()
+
+    def test_validate_continuous_invalid_scale_raises(self):
+        """Invalid scale string raises ValueError."""
+        adapter = SearchSpaceAdapter({"C": (0.1, 10, "linear")}, capabilities={})
+
+        with pytest.raises(ValueError, match="unknown scale"):
+            adapter.validate()
+
+    def test_validate_valid_space_passes(self):
+        """Valid search space passes validation."""
+        space = {
+            "C": (0.1, 10),
+            "gamma": (1e-5, 1e-1, "log"),
+            "kernel": ["rbf", "linear"],
+            "n_estimators": [10, 50, 100],
+        }
+        adapter = SearchSpaceAdapter(space, capabilities={})
+
+        # Should not raise
+        adapter.validate()
+
+
+class TestContinuousDiscretization:
+    """Tests for continuous dimension discretization."""
+
+    def test_discretize_linear_default_points(self):
+        """Linear discretization with default 100 points."""
+        np = pytest.importorskip("numpy")
+
+        space = {"C": (0.1, 10.0)}
+        adapter = SearchSpaceAdapter(space, capabilities={"continuous": False})
+        adapter.validate()
+
+        encoded = adapter.encode()
+
+        assert "C" in encoded
+        assert len(encoded["C"]) == 100
+        assert encoded["C"][0] == pytest.approx(0.1)
+        assert encoded["C"][-1] == pytest.approx(10.0)
+
+    def test_discretize_log_scale(self):
+        """Log scale discretization."""
+        np = pytest.importorskip("numpy")
+
+        space = {"lr": (1e-5, 1e-1, "log")}
+        adapter = SearchSpaceAdapter(space, capabilities={"continuous": False})
+        adapter.validate()
+
+        encoded = adapter.encode()
+
+        assert len(encoded["lr"]) == 100
+        assert encoded["lr"][0] == pytest.approx(1e-5)
+        assert encoded["lr"][-1] == pytest.approx(1e-1)
+        # Log scale should have geometric progression
+        # Ratio between consecutive values should be constant
+        ratio1 = encoded["lr"][1] / encoded["lr"][0]
+        ratio50 = encoded["lr"][51] / encoded["lr"][50]
+        assert ratio1 == pytest.approx(ratio50, rel=1e-5)
+
+    def test_discretize_custom_n_points(self):
+        """Discretization with custom n_points."""
+        space = {"C": (0.1, 10.0, 10)}
+        adapter = SearchSpaceAdapter(space, capabilities={"continuous": False})
+        adapter.validate()
+
+        encoded = adapter.encode()
+
+        assert len(encoded["C"]) == 10
+
+    def test_discretize_custom_n_points_log(self):
+        """Discretization with custom n_points and log scale."""
+        space = {"lr": (1e-4, 1e-1, 20, "log")}
+        adapter = SearchSpaceAdapter(space, capabilities={"continuous": False})
+        adapter.validate()
+
+        encoded = adapter.encode()
+
+        assert len(encoded["lr"]) == 20
+        assert encoded["lr"][0] == pytest.approx(1e-4)
+        assert encoded["lr"][-1] == pytest.approx(1e-1)
+
+    def test_no_discretization_when_supported(self):
+        """No discretization when backend supports continuous."""
+        space = {"C": (0.1, 10.0)}
+        adapter = SearchSpaceAdapter(space, capabilities={"continuous": True})
+
+        assert adapter.needs_adaptation is False
+        assert adapter.encode() is space
+
+    def test_mixed_discrete_and_continuous(self):
+        """Mixed discrete and continuous dimensions."""
+        space = {
+            "C": (0.1, 10.0, 5),
+            "kernel": ["rbf", "linear"],
+            "n_estimators": [10, 50, 100],
+        }
+        adapter = SearchSpaceAdapter(
+            space, capabilities={"categorical": False, "continuous": False}
+        )
+        adapter.validate()
+
+        encoded = adapter.encode()
+
+        # Continuous discretized
+        assert len(encoded["C"]) == 5
+        # Categorical encoded
+        assert encoded["kernel"] == [0, 1]
+        # Numeric discrete unchanged
+        assert encoded["n_estimators"] == [10, 50, 100]
+
+    def test_needs_adaptation_continuous_only(self):
+        """needs_adaptation True when only continuous needs discretization."""
+        space = {"C": (0.1, 10.0), "gamma": [0.01, 0.1, 1]}
+        adapter = SearchSpaceAdapter(
+            space, capabilities={"categorical": True, "continuous": False}
+        )
+
+        assert adapter.needs_adaptation is True
+
+    def test_needs_adaptation_categorical_only(self):
+        """needs_adaptation True when only categorical needs encoding."""
+        space = {"kernel": ["rbf", "linear"], "C": [0.1, 1, 10]}
+        adapter = SearchSpaceAdapter(
+            space, capabilities={"categorical": False, "continuous": True}
+        )
+
+        assert adapter.needs_adaptation is True
+
+
 class TestCapabilityTags:
     """Tests for capability tags related to categorical encoding."""
 
