@@ -53,7 +53,6 @@ classifiers=[
 
 dependencies = [
   "numpy >=1.18.1, <3.0.0",
-  "tqdm >=4.48.0, <5.0.0",
   "pandas <3.0.0",
   "gradient-free-optimizers >=1.2.4, <2.0.0",
   "scikit-base <1.0.0",
