@@ -114,7 +114,7 @@ pip install hyperactive[all_extras]           # Everything including Optuna
       <sub>GFO algorithms, Optuna samplers, and sklearn search methods through one unified API.</sub>
     </td>
     <td width="33%">
-      <a href="https://hyperactive.readthedocs.io/en/latest/api_reference.html"><b>Production Ready</b></a><br>
+      <a href="https://hyperactive.readthedocs.io/en/latest/api_reference.html"><b>Stable & Tested</b></a><br>
       <sub>5+ years of development, comprehensive test coverage, and active maintenance since 2019.</sub>
     </td>
   </tr>
@@ -236,7 +236,7 @@ print(f"Test accuracy: {tuned_svc.score(X_test, y_test):.3f}")
 
 </details>
 
-<br>
+
 
 <details>
 <summary><b>Bayesian Optimization</b></summary>
@@ -268,7 +268,7 @@ best_params = optimizer.solve()
 
 </details>
 
-<br>
+
 
 <details>
 <summary><b>Particle Swarm Optimization</b></summary>
@@ -295,7 +295,7 @@ best_params = optimizer.solve()
 
 </details>
 
-<br>
+
 
 <details>
 <summary><b>Experiment Abstraction with SklearnCvExperiment</b></summary>
@@ -336,7 +336,7 @@ best_params = optimizer.solve()
 
 </details>
 
-<br>
+
 
 <details>
 <summary><b>Optuna Backend (TPE)</b></summary>
@@ -364,7 +364,7 @@ best_params = optimizer.solve()
 
 </details>
 
-<br>
+
 
 <details>
 <summary><b>Time Series Forecasting with sktime</b></summary>
@@ -392,7 +392,7 @@ print(f"Best params: {tuned_forecaster.best_params_}")
 
 </details>
 
-<br>
+
 
 <details>
 <summary><b>PyTorch Neural Network Tuning</b></summary>
