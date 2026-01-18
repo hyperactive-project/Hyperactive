@@ -86,9 +86,87 @@ class BaseOptimizer(BaseObject):
         experiment = self.get_experiment()
         search_config = self.get_search_config()
 
+        # Adapt search space for backend capabilities (e.g., categorical encoding)
+        experiment, search_config, adapter = self._adapt_search_space(
+            experiment, search_config
+        )
+
+        # Run optimization
         best_params = self._solve(experiment, **search_config)
+
+        # Decode results if adapter was used
+        if adapter is not None:
+            best_params = adapter.decode(best_params)
+
         self.best_params_ = best_params
         return best_params
+
+    def _adapt_search_space(self, experiment, search_config):
+        """Adapt search space and experiment for backend capabilities.
+
+        If the backend doesn't support certain search space features
+        (e.g., categorical values), this method encodes the search space
+        and wraps the experiment to handle encoding/decoding transparently.
+
+        Parameters
+        ----------
+        experiment : BaseExperiment
+            The experiment to optimize.
+        search_config : dict
+            The search configuration containing the search space.
+
+        Returns
+        -------
+        experiment : BaseExperiment
+            The experiment, possibly wrapped for decoding.
+        search_config : dict
+            The search config, possibly with encoded search space.
+        adapter : SearchSpaceAdapter or None
+            The adapter if encoding was applied, None otherwise.
+        """
+        from hyperactive.opt._adapters._search_space_adapter import SearchSpaceAdapter
+
+        search_space_key = self._detect_search_space_key(search_config)
+
+        # No search space found - pass through unchanged
+        if not search_space_key or not search_config.get(search_space_key):
+            return experiment, search_config, None
+
+        # Create adapter with backend capabilities
+        capabilities = {
+            "categorical": self.get_tag("capability:categorical"),
+            "continuous": self.get_tag("capability:continuous"),
+        }
+        adapter = SearchSpaceAdapter(search_config[search_space_key], capabilities)
+
+        # Backend supports all features - pass through unchanged
+        if not adapter.needs_encoding:
+            return experiment, search_config, None
+
+        # Encoding needed - transform search space and wrap experiment
+        encoded_config = search_config.copy()
+        encoded_config[search_space_key] = adapter.encode()
+        wrapped_experiment = adapter.wrap_experiment(experiment)
+
+        return wrapped_experiment, encoded_config, adapter
+
+    def _detect_search_space_key(self, search_config):
+        """Find which key holds the search space in the config.
+
+        Parameters
+        ----------
+        search_config : dict
+            The search configuration dictionary.
+
+        Returns
+        -------
+        str or None
+            The key name for search space, or None if not found.
+        """
+        for key in ["search_space", "param_space", "param_grid"]:
+            if key in search_config and search_config[key] is not None:
+                return key
+        return None
 
     def _solve(self, experiment, *args, **kwargs):
         """Run the optimization search process.
