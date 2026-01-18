@@ -74,6 +74,7 @@ class RandomSearch(_BaseGFOadapter):
 
     def __init__(
         self,
+        unified_space=None,
         search_space=None,
         initialize=None,
         constraints=None,
@@ -82,6 +83,7 @@ class RandomSearch(_BaseGFOadapter):
         verbose=False,
         experiment=None,
     ):
+        self.unified_space = unified_space
         self.random_state = random_state
         self.search_space = search_space
         self.initialize = initialize

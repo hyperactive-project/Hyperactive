@@ -12,10 +12,16 @@ class _BaseOptunaAdapter(BaseOptimizer):
     _tags = {
         "python_dependencies": ["optuna"],
         "info:name": "Optuna-based optimizer",
+        # Search space capabilities
+        "capability:discrete": True,
+        "capability:continuous": True,
+        "capability:categorical": True,
+        "capability:log_scale": True,
     }
 
     def __init__(
         self,
+        unified_space=None,
         param_space=None,
         n_trials=100,
         initialize=None,
@@ -25,6 +31,7 @@ class _BaseOptunaAdapter(BaseOptimizer):
         experiment=None,
         **optimizer_kwargs,
     ):
+        self.unified_space = unified_space
         self.param_space = param_space
         self.n_trials = n_trials
         self.initialize = initialize
@@ -34,6 +41,34 @@ class _BaseOptunaAdapter(BaseOptimizer):
         self.experiment = experiment
         self.optimizer_kwargs = optimizer_kwargs
         super().__init__()
+
+    def get_search_config(self):
+        """Get the search configuration.
+
+        Returns
+        -------
+        dict with str keys
+            The search configuration dictionary.
+        """
+        search_config = super().get_search_config()
+
+        # Resolve: unified_space is converted to param_space
+        unified_space = search_config.pop("unified_space", None)
+        param_space = search_config.get("param_space")
+
+        # Validate: only one should be set
+        if unified_space is not None and param_space is not None:
+            raise ValueError(
+                "Provide either 'unified_space' or 'param_space', not both. "
+                "Use 'unified_space' for simple dict[str, list] format, "
+                "or 'param_space' for native Optuna format with ranges/distributions."
+            )
+
+        # Use unified_space if param_space is not set
+        if unified_space is not None:
+            search_config["param_space"] = unified_space
+
+        return search_config
 
     def _get_optimizer(self):
         """Get the Optuna optimizer to use.
@@ -109,7 +144,7 @@ class _BaseOptunaAdapter(BaseOptimizer):
         float
             The objective value
         """
-        params = self._suggest_params(trial, self.param_space)
+        params = self._suggest_params(trial, self._resolved_param_space)
         score = self.experiment(params)
 
         # Handle early stopping based on max_score
@@ -156,6 +191,9 @@ class _BaseOptunaAdapter(BaseOptimizer):
             The best parameters found
         """
         import optuna
+
+        # Store resolved param_space for use in _objective
+        self._resolved_param_space = param_space
 
         # Create optimizer with random state if provided
         optimizer = self._get_optimizer()

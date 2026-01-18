@@ -23,6 +23,11 @@ class _BaseGFOadapter(BaseOptimizer):
     _tags = {
         "authors": "SimonBlanke",
         "python_dependencies": ["gradient-free-optimizers>=1.5.0"],
+        # Search space capabilities
+        "capability:discrete": True,
+        "capability:continuous": True,
+        "capability:categorical": True,
+        "capability:constraints": True,
     }
 
     def __init__(self):
@@ -54,6 +59,22 @@ class _BaseGFOadapter(BaseOptimizer):
         search_config = super().get_search_config()
         search_config["initialize"] = self._initialize
         del search_config["verbose"]
+
+        # Resolve: unified_space is converted to search_space
+        unified_space = search_config.pop("unified_space", None)
+        search_space = search_config.get("search_space")
+
+        # Validate: only one should be set
+        if unified_space is not None and search_space is not None:
+            raise ValueError(
+                "Provide either 'unified_space' or 'search_space', not both. "
+                "Use 'unified_space' for simple dict[str, list] format, "
+                "or 'search_space' for native GFO format."
+            )
+
+        # Use unified_space if search_space is not set
+        if unified_space is not None:
+            search_config["search_space"] = unified_space
 
         search_config = self._handle_gfo_defaults(search_config)
 

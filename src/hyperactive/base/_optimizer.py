@@ -18,6 +18,13 @@ class BaseOptimizer(BaseObject):
         "info:compute": "middle",  # "low", "middle", "high"
         # see here for explanation of the tags:
         # https://simonblanke.github.io/gradient-free-optimizers-documentation/1.5/optimizers/  # noqa: E501
+        # search space capabilities (conservative defaults)
+        "capability:discrete": True,  # supports discrete lists
+        "capability:continuous": False,  # supports continuous ranges
+        "capability:categorical": True,  # supports categorical choices
+        "capability:log_scale": False,  # supports log-scale sampling
+        "capability:conditions": False,  # supports conditional params
+        "capability:constraints": False,  # supports constraint functions
     }
 
     def __init__(self):
