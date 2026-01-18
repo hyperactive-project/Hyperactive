@@ -203,7 +203,7 @@ class TestCapabilityTags:
 
         assert opt.get_tag("capability:discrete") is True
         assert opt.get_tag("capability:continuous") is True
-        assert opt.get_tag("capability:categorical") is True
+        assert opt.get_tag("capability:categorical") is False  # GFO only numeric
         assert opt.get_tag("capability:constraints") is True
 
     def test_optuna_capability_tags(self):
