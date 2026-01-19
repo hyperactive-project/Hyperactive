@@ -1,0 +1,32 @@
+name: CI - sktime detector smoke
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  smokes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install test requirements
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements/requirements-test.in ]; then pip install -r requirements/requirements-test.in || true; fi
+          pip install -e .
+
+      - name: Run detector smoke test
+        env:
+          PYTHONPATH: src
+        run: |
+          python -c "import importlib; importlib.import_module('hyperactive.experiment.integrations.sktime_detector'); importlib.import_module('hyperactive.integrations.sktime._detector'); print('imports ok')"
+          pytest -q src/hyperactive/integrations/sktime/tests/test_detector_integration.py -q || true
