@@ -66,6 +66,16 @@ sklearn-integration = [
 sktime-integration = [
   "skpro",
   'sktime; python_version < "3.14"',
+  'skforecast; python_version < "3.14"',
+]
+skforecast-integration = [
+  'skforecast; python_version < "3.14"',
+]
+integrations = [
+  "scikit-learn <1.8.0",
+  "skpro",
+  'sktime; python_version < "3.14"',
+  'skforecast; python_version < "3.14"',
 ]
 build = [
   "setuptools",
@@ -100,7 +110,6 @@ all_extras = [
   "cmaes",  # Required for CmaEsOptimizer (optuna's CMA-ES sampler)
   "lightning",
 ]
-
 
 [project.urls]
 "Homepage" = "https://github.com/SimonBlanke/Hyperactive"
