@@ -6,7 +6,7 @@ from skbase.testing import BaseFixtureGenerator as _BaseFixtureGenerator
 from skbase.testing import QuickTester as _QuickTester
 from skbase.testing import TestAllObjects as _TestAllObjects
 
-from hyperactive._registry import all_objects
+from hyperactive.registry import all_objects
 from hyperactive.tests._config import EXCLUDE_ESTIMATORS, EXCLUDED_TESTS
 from hyperactive.tests._doctest import run_doctest
 
