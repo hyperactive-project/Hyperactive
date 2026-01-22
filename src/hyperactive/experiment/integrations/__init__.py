@@ -11,6 +11,9 @@ from hyperactive.experiment.integrations.sktime_classification import (
 from hyperactive.experiment.integrations.sktime_forecasting import (
     SktimeForecastingExperiment,
 )
+from hyperactive.experiment.integrations.sktime_regression import (
+    SktimeRegressionExperiment,
+)
 from hyperactive.experiment.integrations.torch_lightning_experiment import (
     TorchExperiment,
 )
@@ -20,5 +23,6 @@ __all__ = [
     "SkproProbaRegExperiment",
     "SktimeClassificationExperiment",
     "SktimeForecastingExperiment",
+    "SktimeRegressionExperiment",
     "TorchExperiment",
 ]
