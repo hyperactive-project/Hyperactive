@@ -37,6 +37,7 @@ python bayesian_optimization_example.py
 | [BayesianOptimizer](bayesian_optimization_example.py) | Probabilistic | Expensive evaluations | Gaussian Process |
 | [TreeStructuredParzenEstimators](tree_structured_parzen_estimators_example.py) | Bayesian | Mixed parameters | TPE algorithm |
 | [ForestOptimizer](forest_optimizer_example.py) | Surrogate-based | Non-linear problems | Random Forest surrogates |
+| [Union Grid Search Space Example](search_space_union_example.py) | Utility | Grid unions | Union grids + array-like values |
 
 ## Algorithm Categories
 
