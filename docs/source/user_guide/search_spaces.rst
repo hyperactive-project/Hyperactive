@@ -115,6 +115,29 @@ The spacing between values matters. Choose based on how the parameter affects yo
 
 ----
 
+Union Grids and Array-Like Inputs (GFO)
+---------------------------------------
+
+GFO optimizers accept array-like values (for example lists or tuples) and
+sklearn-style union grids.
+
+.. code-block:: python
+
+   from hyperactive.opt.gfo import GridSearch
+
+   # array-like values are coerced internally
+   search_space = {"x": [0, 1], "y": (0, 1)}
+
+   # union grids: list of dicts, each dict is a separate grid
+   search_space = [
+       {"x": [0], "y": [0]},
+       {"x": [1], "y": [2]},
+   ]
+
+   optimizer = GridSearch(search_space=search_space, n_iter=5, experiment=exp)
+
+----
+
 Granularity and Size
 --------------------
 
