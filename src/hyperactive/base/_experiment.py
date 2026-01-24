@@ -2,8 +2,14 @@
 
 # copyright: hyperactive developers, MIT License (see LICENSE file)
 
+from __future__ import annotations
+
+import time
+
 import numpy as np
 from skbase.base import BaseObject
+
+from hyperactive.base._history import SearchHistory
 
 
 class BaseExperiment(BaseObject):
@@ -21,6 +27,7 @@ class BaseExperiment(BaseObject):
 
     def __init__(self):
         super().__init__()
+        self._history = SearchHistory()
 
     def __call__(self, params):
         """Score parameters. Same as score call, returns only a first element."""
@@ -77,8 +84,20 @@ class BaseExperiment(BaseObject):
                 f"Parameters passed to {type(self)}.evaluate do not match: "
                 f"expected {paramnames}, got {list(params.keys())}."
             )
+
+        start_time = time.perf_counter()
         res, metadata = self._evaluate(params)
+        eval_time = time.perf_counter() - start_time
+
         res = np.float64(res)
+
+        self._history.record(
+            params=params,
+            score=res,
+            metadata=metadata,
+            eval_time=eval_time,
+        )
+
         return res, metadata
 
     def _evaluate(self, params):
@@ -141,3 +160,42 @@ class BaseExperiment(BaseObject):
         metadata = eval_res[1]
 
         return sign * value, metadata
+
+    @property
+    def data(self) -> SearchHistory:
+        """Access the collected data from optimization runs.
+
+        Tracks all evaluations during optimization. Data accumulates across
+        multiple optimization runs on the same experiment instance.
+
+        Returns
+        -------
+        SearchHistory
+            The data object with the following attributes and methods:
+
+            Attributes:
+            - ``history``: list[dict] - all recorded evaluations
+            - ``n_trials``: int - total number of trials
+            - ``n_runs``: int - number of optimization runs
+            - ``best_trial``: dict | None - trial with highest score
+            - ``best_score``: float | None - highest score
+            - ``best_params``: dict | None - parameters of best trial
+
+            Methods:
+            - ``get_run(run_id)``: get trials from specific run
+            - ``clear()``: reset all data
+            - ``new_run()``: signal start of new run (call before each run)
+
+        Examples
+        --------
+        >>> experiment.data.history  # all evaluations as list of dicts
+        >>> experiment.data.best_score  # highest score
+        >>> experiment.data.get_run(0)  # evaluations from first run
+        >>> experiment.data.clear()  # reset data
+
+        To convert to a pandas DataFrame::
+
+            import pandas as pd
+            df = pd.DataFrame(experiment.data.history)
+        """
+        return self._history
