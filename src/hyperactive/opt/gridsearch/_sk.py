@@ -105,6 +105,7 @@ class GridSearchSk(BaseOptimizer):
 
     def __init__(
         self,
+        unified_space=None,
         param_grid=None,
         error_score=np.nan,
         backend="None",
@@ -112,12 +113,41 @@ class GridSearchSk(BaseOptimizer):
         experiment=None,
     ):
         self.experiment = experiment
+        self.unified_space = unified_space
         self.param_grid = param_grid
         self.error_score = error_score
         self.backend = backend
         self.backend_params = backend_params
 
         super().__init__()
+
+    def get_search_config(self):
+        """Get the search configuration.
+
+        Returns
+        -------
+        dict with str keys
+            The search configuration dictionary.
+        """
+        search_config = super().get_search_config()
+
+        # Resolve: unified_space is converted to param_grid
+        unified_space = search_config.pop("unified_space", None)
+        param_grid = search_config.get("param_grid")
+
+        # Validate: only one should be set
+        if unified_space is not None and param_grid is not None:
+            raise ValueError(
+                "Provide either 'unified_space' or 'param_grid', not both. "
+                "Use 'unified_space' for simple dict[str, list] format, "
+                "or 'param_grid' for native sklearn format."
+            )
+
+        # Use unified_space if param_grid is not set
+        if unified_space is not None:
+            search_config["param_grid"] = unified_space
+
+        return search_config
 
     def _check_param_grid(self, param_grid):
         """_check_param_grid from sklearn 1.0.2, before it was removed."""

@@ -60,6 +60,7 @@ class RandomOptimizer(_BaseOptunaAdapter):
 
     def __init__(
         self,
+        unified_space=None,
         param_space=None,
         n_trials=100,
         initialize=None,
@@ -69,6 +70,7 @@ class RandomOptimizer(_BaseOptunaAdapter):
         experiment=None,
     ):
         super().__init__(
+            unified_space=unified_space,
             param_space=param_space,
             n_trials=n_trials,
             initialize=initialize,

@@ -23,6 +23,11 @@ class _BaseGFOadapter(BaseOptimizer):
     _tags = {
         "authors": "SimonBlanke",
         "python_dependencies": ["gradient-free-optimizers>=1.5.0"],
+        # Search space capabilities
+        "capability:discrete": True,
+        "capability:continuous": False,  # GFO needs lists, not (low, high) tuples
+        "capability:categorical": False,  # GFO only supports numeric values
+        "capability:constraints": True,
     }
 
     def __init__(self):
@@ -55,9 +60,27 @@ class _BaseGFOadapter(BaseOptimizer):
         search_config["initialize"] = self._initialize
         del search_config["verbose"]
 
+        # Resolve: unified_space is converted to search_space
+        unified_space = search_config.pop("unified_space", None)
+        search_space = search_config.get("search_space")
+
+        # Validate: only one should be set
+        if unified_space is not None and search_space is not None:
+            raise ValueError(
+                "Provide either 'unified_space' or 'search_space', not both. "
+                "Use 'unified_space' for simple dict[str, list] format, "
+                "or 'search_space' for native GFO format."
+            )
+
+        # Use unified_space if search_space is not set
+        if unified_space is not None:
+            search_config["search_space"] = unified_space
+
         search_config = self._handle_gfo_defaults(search_config)
 
-        search_config["search_space"] = self._to_dict_np(search_config["search_space"])
+        # Note: _to_dict_np is called in _solve(), after SearchSpaceAdapter processes
+        # continuous tuples. If we convert here, tuples like (1e-4, 1e-1, "log")
+        # would become numpy arrays with strings before the adapter can discretize them.
 
         return search_config
 
@@ -129,6 +152,10 @@ class _BaseGFOadapter(BaseOptimizer):
         """
         n_iter = search_config.pop("n_iter", 100)
         max_time = search_config.pop("max_time", None)
+
+        # Convert search_space lists to numpy arrays (GFO requirement)
+        # This must happen after SearchSpaceAdapter has processed continuous tuples
+        search_config["search_space"] = self._to_dict_np(search_config["search_space"])
 
         gfo_cls = self._get_gfo_class()
         gfopt = gfo_cls(**search_config)
