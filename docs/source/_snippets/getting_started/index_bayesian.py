@@ -22,7 +22,7 @@ search_space = {
 
 optimizer = BayesianOptimizer(
     search_space=search_space,
-    n_iter=50,
+    n_iter=5,
     experiment=complex_objective,
 )
 best_params = optimizer.solve()

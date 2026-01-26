@@ -110,7 +110,7 @@ from hyperactive.opt.gfo import HillClimbing
 
 optimizer = HillClimbing(
     search_space=search_space,
-    n_iter=100,           # Number of iterations
+    n_iter=5,           # Number of iterations
     experiment=experiment,
     random_state=42,      # For reproducibility
 )
@@ -130,7 +130,7 @@ warm_start = [
 
 optimizer = HillClimbing(
     search_space=search_space,
-    n_iter=50,
+    n_iter=5,
     experiment=experiment,
     initialize={"warm_start": warm_start},
 )
@@ -187,7 +187,7 @@ search_space = {
 # 4. Choose an optimizer (how to search)
 optimizer = BayesianOptimizer(
     search_space=search_space,
-    n_iter=50,
+    n_iter=5,
     experiment=experiment,
     random_state=42,
 )

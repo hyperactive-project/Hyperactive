@@ -17,7 +17,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y)
 
 # Define optimizer with search space
 search_space = {"kernel": ["linear", "rbf"], "C": [0.1, 1, 10]}
-optimizer = HillClimbing(search_space=search_space, n_iter=20)
+optimizer = HillClimbing(search_space=search_space, n_iter=5)
 
 # Create tuned estimator and fit
 tuned_svc = OptCV(SVC(), optimizer)

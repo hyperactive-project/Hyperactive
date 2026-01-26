@@ -33,7 +33,7 @@ warm_start_points = [
 
 optimizer = HillClimbing(
     search_space=search_space,
-    n_iter=40,
+    n_iter=5,
     experiment=experiment,
     initialize={"warm_start": warm_start_points},
 )
@@ -60,7 +60,7 @@ results = {}
 for name, OptClass in optimizers.items():
     optimizer = OptClass(
         search_space=search_space,
-        n_iter=50,
+        n_iter=5,
         experiment=experiment,
         random_state=42,
     )

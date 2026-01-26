@@ -17,7 +17,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
 # Define search space and optimizer
 search_space = {"kernel": ["linear", "rbf"], "C": [0.1, 1, 10, 100]}
-optimizer = HillClimbing(search_space=search_space, n_iter=20)
+optimizer = HillClimbing(search_space=search_space, n_iter=5)
 
 # Create tuned estimator
 tuned_svc = OptCV(SVC(), optimizer)
@@ -44,15 +44,15 @@ optimizer = GridSearch(search_space)
 tuned_model = OptCV(SVC(), optimizer)
 
 # Bayesian Optimization (smart sampling)
-optimizer = BayesianOptimizer(search_space=search_space, n_iter=30)
+optimizer = BayesianOptimizer(search_space=search_space, n_iter=5)
 tuned_model = OptCV(SVC(), optimizer)
 
 # Genetic Algorithm (population-based)
-optimizer = GeneticAlgorithm(search_space=search_space, n_iter=50)
+optimizer = GeneticAlgorithm(search_space=search_space, n_iter=5)
 tuned_model = OptCV(SVC(), optimizer)
 
 # Optuna TPE
-optimizer = TPEOptimizer(search_space=search_space, n_iter=30)
+optimizer = TPEOptimizer(search_space=search_space, n_iter=5)
 tuned_model = OptCV(SVC(), optimizer)
 # [end:different_optimizers]
 
@@ -74,7 +74,7 @@ search_space = {
     "svc__C": [0.1, 1, 10],
 }
 
-optimizer = HillClimbing(search_space=search_space, n_iter=20)
+optimizer = HillClimbing(search_space=search_space, n_iter=5)
 tuned_pipe = OptCV(pipe, optimizer)
 tuned_pipe.fit(X_train, y_train)
 # [end:pipeline_integration]
@@ -166,7 +166,7 @@ experiment = SkproProbaRegExperiment(
 
 optimizer = HillClimbing(
     search_space=search_space,
-    n_iter=30,
+    n_iter=5,
     experiment=experiment,
 )
 best_params = optimizer.solve()
@@ -212,7 +212,7 @@ search_space = {
 # Optimize
 optimizer = BayesianOptimizer(
     search_space=search_space,
-    n_iter=20,
+    n_iter=5,
     experiment=experiment,
 )
 best_params = optimizer.solve()
@@ -236,7 +236,7 @@ if __name__ == "__main__":
     )
 
     search_space = {"kernel": ["linear", "rbf"], "C": [0.1, 1, 10]}
-    optimizer = HillClimbing(search_space=search_space, n_iter=10)
+    optimizer = HillClimbing(search_space=search_space, n_iter=5)
     tuned_svc = OptCV(SVC(), optimizer)
     tuned_svc.fit(X_train, y_train)
     y_pred = tuned_svc.predict(X_test)

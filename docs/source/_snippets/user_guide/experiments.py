@@ -37,7 +37,7 @@ search_space = {
 
 optimizer = BayesianOptimizer(
     search_space=search_space,
-    n_iter=50,
+    n_iter=5,
     experiment=ackley,
 )
 best_params = optimizer.solve()
@@ -86,7 +86,7 @@ search_space = {
 
 optimizer = HillClimbing(
     search_space=search_space,
-    n_iter=30,
+    n_iter=5,
     experiment=experiment,
 )
 best_params = optimizer.solve()
@@ -113,7 +113,7 @@ search_space = {
 
 optimizer = RandomSearch(
     search_space=search_space,
-    n_iter=10,
+    n_iter=5,
     experiment=experiment,
 )
 best_params = optimizer.solve()
@@ -139,7 +139,7 @@ ackley = Ackley(dim=2)
 
 optimizer = BayesianOptimizer(
     search_space=ackley.search_space,
-    n_iter=50,
+    n_iter=5,
     experiment=ackley,
 )
 # [end:benchmark_experiments]

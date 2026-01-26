@@ -24,7 +24,7 @@ search_space = {
 
 optimizer = HillClimbing(
     search_space=search_space,
-    n_iter=100,
+    n_iter=5,
     experiment=objective,
 )
 best_params = optimizer.solve()
@@ -58,7 +58,7 @@ search_space = {
 # Optimize
 optimizer = HillClimbing(
     search_space=search_space,
-    n_iter=40,
+    n_iter=5,
     random_state=42,
     experiment=experiment,
 )
