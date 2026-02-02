@@ -10,6 +10,8 @@ from hyperactive.base import BaseExperiment
 from hyperactive.experiment.integrations._skl_cv import _coerce_cv
 from hyperactive.experiment.integrations._skl_metrics import _coerce_to_scorer_and_sign
 
+__all__ = ["SklearnCvExperiment", "XGBoostCvExperiment"]
+
 
 class SklearnCvExperiment(BaseExperiment):
     """Experiment adapter for sklearn cross-validation experiments.
@@ -254,3 +256,85 @@ class SklearnCvExperiment(BaseExperiment):
             score_params_defaults,
         ]
         return params
+
+
+class XGBoostCvExperiment(SklearnCvExperiment):
+    """Experiment adapter for XGBoost cross-validation.
+
+    Thin wrapper around SklearnCvExperiment for XGBoost estimators.
+    XGBoost classifiers and regressors are sklearn-compatible,
+    this class exists for discoverability.
+
+    Parameters
+    ----------
+    estimator : xgboost estimator
+        XGBClassifier, XGBRegressor, or XGBRanker instance.
+    X : array-like, shape (n_samples, n_features)
+        Input data for the model.
+    y : array-like, shape (n_samples,) or (n_samples, n_outputs)
+        Target values.
+    cv : int or cross-validation generator, default = KFold(n_splits=3, shuffle=True)
+        Number of folds or cross-validation strategy.
+        If int, uses KFold(n_splits=cv, shuffle=True).
+    scoring : callable or str, default = accuracy_score or mean_squared_error
+        Scoring function or metric. Default depends on estimator type.
+
+    Example
+    -------
+    >>> from hyperactive.experiment.integrations import XGBoostCvExperiment
+    >>> from sklearn.datasets import load_iris
+    >>> from xgboost import XGBClassifier  # doctest: +SKIP
+    >>>
+    >>> X, y = load_iris(return_X_y=True)
+    >>> xgb_exp = XGBoostCvExperiment(  # doctest: +SKIP
+    ...     estimator=XGBClassifier(verbosity=0),
+    ...     X=X,
+    ...     y=y,
+    ... )
+    >>> params = {"n_estimators": 100, "max_depth": 3}
+    >>> score, metadata = xgb_exp.score(params)  # doctest: +SKIP
+    """
+
+    _tags = {
+        "python_dependencies": "xgboost",
+    }
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator."""
+        from skbase.utils.dependencies import _check_soft_dependencies
+
+        if not _check_soft_dependencies("xgboost", severity="none"):
+            return []
+
+        from sklearn.datasets import load_diabetes, load_iris
+        from xgboost import XGBClassifier, XGBRegressor
+
+        X, y = load_iris(return_X_y=True)
+        params0 = {
+            "estimator": XGBClassifier(n_estimators=10, verbosity=0),
+            "X": X,
+            "y": y,
+            "cv": 2,
+        }
+
+        X, y = load_diabetes(return_X_y=True)
+        params1 = {
+            "estimator": XGBRegressor(n_estimators=10, verbosity=0),
+            "X": X,
+            "y": y,
+            "cv": 2,
+        }
+
+        return [params0, params1]
+
+    @classmethod
+    def _get_score_params(cls):
+        from skbase.utils.dependencies import _check_soft_dependencies
+
+        if not _check_soft_dependencies("xgboost", severity="none"):
+            return []
+
+        val0 = {"n_estimators": 5, "max_depth": 2}
+        val1 = {"n_estimators": 5, "max_depth": 2}
+        return [val0, val1]
