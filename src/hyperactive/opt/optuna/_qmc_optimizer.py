@@ -64,6 +64,7 @@ class QMCOptimizer(_BaseOptunaAdapter):
 
     def __init__(
         self,
+        unified_space=None,
         param_space=None,
         n_trials=100,
         initialize=None,
@@ -78,6 +79,7 @@ class QMCOptimizer(_BaseOptunaAdapter):
         self.scramble = scramble
 
         super().__init__(
+            unified_space=unified_space,
             param_space=param_space,
             n_trials=n_trials,
             initialize=initialize,

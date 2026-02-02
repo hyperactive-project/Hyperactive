@@ -17,7 +17,11 @@ class RandomSearchSk(BaseOptimizer):
 
     Parameters
     ----------
-    param_distributions : dict[str, list | scipy.stats.rv_frozen]
+    unified_space : dict[str, list], default=None
+        Unified search space format: dict mapping parameter names to lists.
+        Use this for portable search space definitions across backends.
+        Mutually exclusive with ``param_distributions``.
+    param_distributions : dict[str, list | scipy.stats.rv_frozen], default=None
         Search space specification. Discrete lists are sampled uniformly;
         scipy distribution objects are sampled via their ``rvs`` method.
 
@@ -107,6 +111,7 @@ class RandomSearchSk(BaseOptimizer):
 
     def __init__(
         self,
+        unified_space=None,
         param_distributions=None,
         n_iter=10,
         random_state=None,
@@ -116,6 +121,7 @@ class RandomSearchSk(BaseOptimizer):
         experiment=None,
     ):
         self.experiment = experiment
+        self.unified_space = unified_space
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
@@ -124,6 +130,34 @@ class RandomSearchSk(BaseOptimizer):
         self.backend_params = backend_params
 
         super().__init__()
+
+    def get_search_config(self):
+        """Get the search configuration.
+
+        Returns
+        -------
+        dict with str keys
+            The search configuration dictionary.
+        """
+        search_config = super().get_search_config()
+
+        # Resolve: unified_space is converted to param_distributions
+        unified_space = search_config.pop("unified_space", None)
+        param_distributions = search_config.get("param_distributions")
+
+        # Validate: only one should be set
+        if unified_space is not None and param_distributions is not None:
+            raise ValueError(
+                "Provide either 'unified_space' or 'param_distributions', not both. "
+                "Use 'unified_space' for simple dict[str, list] format, "
+                "or 'param_distributions' for native sklearn format with distributions."
+            )
+
+        # Use unified_space if param_distributions is not set
+        if unified_space is not None:
+            search_config["param_distributions"] = unified_space
+
+        return search_config
 
     @staticmethod
     def _is_distribution(obj) -> bool:
