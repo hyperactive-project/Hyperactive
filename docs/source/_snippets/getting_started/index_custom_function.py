@@ -6,6 +6,7 @@ shown on the landing page. It is included in index.rst.
 
 # [start:full_example]
 import numpy as np
+
 from hyperactive.opt.gfo import HillClimbing
 
 

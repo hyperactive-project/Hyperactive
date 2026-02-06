@@ -6,6 +6,7 @@ custom objectives, built-in experiments, and benchmarks.
 
 import numpy as np
 
+
 # [start:simple_objective]
 def objective(params):
     x = params["x"]
@@ -16,8 +17,8 @@ def objective(params):
 
 
 # [start:ackley_function]
-import numpy as np
 from hyperactive.opt.gfo import BayesianOptimizer
+
 
 # Ackley function (a common benchmark)
 def ackley(params):
@@ -47,6 +48,7 @@ best_params = optimizer.solve()
 # [start:external_simulation]
 import subprocess
 
+
 def run_simulation(params):
     # Run an external simulation with the given parameters
     result = subprocess.run(
@@ -61,10 +63,11 @@ def run_simulation(params):
 
 
 # [start:sklearn_cv_experiment]
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import load_iris
-from sklearn.model_selection import KFold
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
+from sklearn.model_selection import KFold
+
 from hyperactive.experiment.integrations import SklearnCvExperiment
 from hyperactive.opt.gfo import HillClimbing
 
@@ -94,8 +97,9 @@ best_params = optimizer.solve()
 
 
 # [start:sktime_forecasting]
-from sktime.forecasting.naive import NaiveForecaster
 from sktime.datasets import load_airline
+from sktime.forecasting.naive import NaiveForecaster
+
 from hyperactive.experiment.integrations import SktimeForecastingExperiment
 from hyperactive.opt.gfo import RandomSearch
 
@@ -132,7 +136,7 @@ experiment = TorchExperiment(
 
 
 # [start:benchmark_experiments]
-from hyperactive.experiment.bench import Ackley, Sphere, Parabola
+from hyperactive.experiment.bench import Ackley
 
 # Use benchmark as experiment
 ackley = Ackley(dim=2)
@@ -186,8 +190,9 @@ if __name__ == "__main__":
     assert abs(ackley_score) < 0.01, f"Expected ~0, got {ackley_score}"
 
     # Test sklearn CV experiment
-    from sklearn.ensemble import RandomForestClassifier
     from sklearn.datasets import load_iris
+    from sklearn.ensemble import RandomForestClassifier
+
     from hyperactive.experiment.integrations import SklearnCvExperiment
     from hyperactive.opt.gfo import HillClimbing
 
