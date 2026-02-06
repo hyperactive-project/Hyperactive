@@ -46,7 +46,8 @@ def create_badge_svg(label: str, value: str, color: str, label_width: int = None
         label_width: Override calculated label width
         value_width: Override calculated value width
 
-    Returns:
+    Returns
+    -------
         SVG string
     """
     # Approximate width calculation (7px per character + padding)
@@ -83,7 +84,8 @@ def create_simple_badge_svg(text: str, color: str, width: int = None, font_size:
         width: Override calculated width
         font_size: Font size in pixels
 
-    Returns:
+    Returns
+    -------
         SVG string
     """
     char_width = 7

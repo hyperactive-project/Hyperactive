@@ -5,9 +5,10 @@ for GridSearchCV. It is included in get_started.rst.
 """
 
 # [start:full_example]
-from sklearn.svm import SVC
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+
 from hyperactive.integrations.sklearn import OptCV
 from hyperactive.opt.gfo import HillClimbing
 

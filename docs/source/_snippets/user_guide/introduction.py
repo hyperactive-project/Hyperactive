@@ -16,6 +16,7 @@ y = y_train
 # [start:simplest_example]
 from hyperactive.opt.gfo import HillClimbing
 
+
 def score(p):
     return -(p["x"] ** 2)  # Find x that minimizes x²
 
@@ -34,8 +35,9 @@ def objective(params):
 
 
 # [start:sklearn_experiment_intro]
-from hyperactive.experiment.integrations import SklearnCvExperiment
 from sklearn.ensemble import RandomForestClassifier
+
+from hyperactive.experiment.integrations import SklearnCvExperiment
 
 experiment = SklearnCvExperiment(
     estimator=RandomForestClassifier(),
@@ -47,25 +49,23 @@ experiment = SklearnCvExperiment(
 
 
 # [start:sklearn_3_lines]
-from hyperactive.experiment.integrations import SklearnCvExperiment
 from sklearn.ensemble import GradientBoostingClassifier
+
+from hyperactive.experiment.integrations import SklearnCvExperiment
 
 experiment = SklearnCvExperiment(GradientBoostingClassifier(), X, y, cv=5)
 # [end:sklearn_3_lines]
 
 
 # [start:optimizer_imports]
-from hyperactive.opt.gfo import (
-    HillClimbing,           # Local search
-    RandomSearch,           # Global search
-    BayesianOptimizer,      # Sequential model-based
-    ParticleSwarmOptimizer, # Population-based
-)
 # [end:optimizer_imports]
-
-
 # [start:search_space_definition]
 import numpy as np
+
+from hyperactive.opt.gfo import (
+    BayesianOptimizer,  # Sequential model-based
+    HillClimbing,  # Local search
+)
 
 search_space = {
     # Discrete integer values
@@ -146,7 +146,6 @@ best = optimizer.solve()
 
 
 # [start:swap_bayesian]
-from hyperactive.opt.gfo import BayesianOptimizer
 
 optimizer = BayesianOptimizer(search_space, experiment=experiment)
 best = optimizer.solve()
@@ -165,6 +164,7 @@ best = optimizer.solve()
 import numpy as np
 from sklearn.datasets import load_iris
 from sklearn.ensemble import RandomForestClassifier
+
 from hyperactive.experiment.integrations import SklearnCvExperiment
 from hyperactive.opt.gfo import BayesianOptimizer
 

@@ -5,11 +5,11 @@ optimization problems. It is included in get_started.rst.
 """
 
 # [start:full_example]
-from hyperactive.opt.gfo import BayesianOptimizer
 # [end:full_example]
-
 # Need to define experiment and search_space for standalone execution
 import numpy as np
+
+from hyperactive.opt.gfo import BayesianOptimizer
 
 
 def experiment(params):

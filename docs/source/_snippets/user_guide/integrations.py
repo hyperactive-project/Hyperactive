@@ -5,9 +5,10 @@ sklearn, sktime, skpro, and PyTorch integrations.
 """
 
 # [start:optcv_basic]
-from sklearn.svm import SVC
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+
 from hyperactive.integrations.sklearn import OptCV
 from hyperactive.opt.gfo import HillClimbing
 
@@ -35,9 +36,9 @@ print(f"Best estimator: {tuned_svc.best_estimator_}")
 
 
 # [start:different_optimizers]
+from hyperactive.opt import GridSearchSk as GridSearch
 from hyperactive.opt.gfo import BayesianOptimizer, GeneticAlgorithm
 from hyperactive.opt.optuna import TPEOptimizer
-from hyperactive.opt import GridSearchSk as GridSearch
 
 # Grid Search (exhaustive)
 optimizer = GridSearch(search_space)
@@ -81,9 +82,10 @@ tuned_pipe.fit(X_train, y_train)
 
 
 # [start:forecasting_optcv]
-from sktime.forecasting.naive import NaiveForecaster
 from sktime.datasets import load_airline
-from sktime.split import temporal_train_test_split, ExpandingWindowSplitter
+from sktime.forecasting.naive import NaiveForecaster
+from sktime.split import ExpandingWindowSplitter, temporal_train_test_split
+
 from hyperactive.integrations.sktime import ForecastingOptCV
 from hyperactive.opt import GridSearchSk as GridSearch
 
@@ -116,9 +118,10 @@ print(f"Best forecaster: {tuned_forecaster.best_forecaster_}")
 
 
 # [start:tsc_optcv]
+from sklearn.model_selection import KFold
 from sktime.classification.dummy import DummyClassifier
 from sktime.datasets import load_unit_test
-from sklearn.model_selection import KFold
+
 from hyperactive.integrations.sktime import TSCOptCV
 from hyperactive.opt import GridSearchSk as GridSearch
 
@@ -174,9 +177,11 @@ best_params = optimizer.solve()
 
 
 # [start:pytorch_lightning]
+import lightning as L
+
 from hyperactive.experiment.integrations import TorchExperiment
 from hyperactive.opt.gfo import BayesianOptimizer
-import lightning as L
+
 
 # Define your Lightning module
 class MyModel(L.LightningModule):
@@ -221,11 +226,12 @@ best_params = optimizer.solve()
 
 # --- Runnable test code below ---
 if __name__ == "__main__":
-    from sklearn.svm import SVC
     from sklearn.datasets import load_iris
     from sklearn.model_selection import train_test_split
     from sklearn.pipeline import Pipeline
     from sklearn.preprocessing import StandardScaler
+    from sklearn.svm import SVC
+
     from hyperactive.integrations.sklearn import OptCV
     from hyperactive.opt.gfo import HillClimbing
 
