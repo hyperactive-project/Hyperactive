@@ -358,6 +358,7 @@ class TestAllOptimizers(OptimizerFixtureGenerator, _QuickTester):
         """
         # Import backend bases to check optimizer type
         from hyperactive.opt._adapters._base_optuna_adapter import _BaseOptunaAdapter
+        from hyperactive.opt._adapters._base_scipy_adapter import _BaseScipyAdapter
         from hyperactive.opt._adapters._gfo import _BaseGFOadapter
         from hyperactive.opt.gridsearch._sk import GridSearchSk
         from hyperactive.opt.random_search import RandomSearchSk
@@ -460,5 +461,55 @@ class TestAllOptimizers(OptimizerFixtureGenerator, _QuickTester):
             _assert_good(best_params)
             return None
 
+        # Scipy adapters: use continuous space (scipy doesn't support discrete)
+        if isinstance(object_instance, _BaseScipyAdapter):
+            # Scipy requires continuous bounds, so use a small search space
+            # around the known good point (0, 0)
+            continuous_space = {"x0": (-1.0, 1.0), "x1": (-1.0, 1.0)}
+            continuous_cfg = _cfg_with_space(object_instance, exp, continuous_space)
+            inst = object_instance.clone().set_params(
+                **{
+                    **continuous_cfg,
+                    "n_iter": 50,
+                    "random_state": 0,
+                }
+            )
+            best_params = inst.solve()
+            # Scipy should find params close to (0, 0) which is the optimum
+            # Allow some tolerance since scipy uses continuous optimization
+            assert isinstance(best_params, dict)
+            assert abs(best_params["x0"]) < 0.5, (
+                f"Scipy optimizer should find x0 close to 0, got {best_params['x0']}"
+            )
+            assert abs(best_params["x1"]) < 0.5, (
+                f"Scipy optimizer should find x1 close to 0, got {best_params['x1']}"
+            )
+            return None
+
         # For other backends, no-op here; targeted direction tests live elsewhere
         return None
+
+    def test_scipy_discrete_param_error(self, object_instance):
+        """Test that scipy optimizers raise clear error for discrete parameters."""
+        from hyperactive.opt._adapters._base_scipy_adapter import _BaseScipyAdapter
+
+        if not isinstance(object_instance, _BaseScipyAdapter):
+            return None
+
+        import pytest
+
+        from hyperactive.experiment.bench import Ackley
+
+        exp = Ackley(d=2)
+
+        # Try to use discrete space (list) which scipy doesn't support
+        discrete_space = {"x0": [0.0, 1.0, 2.0], "x1": [0.0, 1.0, 2.0]}
+
+        inst = object_instance.clone().set_params(
+            param_space=discrete_space,
+            n_iter=10,
+            experiment=exp,
+        )
+
+        with pytest.raises(ValueError, match="only support continuous"):
+            inst.solve()

@@ -4,7 +4,7 @@
 Optimizers
 ==========
 
-Hyperactive provides 31 algorithms across 5 categories and 3 backends.
+Hyperactive provides 38 algorithms across 5 categories and 4 backends.
 Optimizers navigate the search space to find optimal parameters. Each implements a
 different strategy for balancing exploration (trying diverse regions) and exploitation
 (refining promising solutions). Local search methods like Hill Climbing work well for
@@ -20,10 +20,10 @@ Algorithm Landscape
 
    <div class="theme-aware-diagram">
       <img src="../../_static/diagrams/optimizer_taxonomy_light.svg"
-           alt="Hyperactive optimizer taxonomy showing 31 algorithms across GFO, Optuna, and sklearn backends"
+           alt="Hyperactive optimizer taxonomy showing 38 algorithms across GFO, Optuna, Scipy, and sklearn backends"
            class="only-light" />
       <img src="../../_static/diagrams/optimizer_taxonomy_dark.svg"
-           alt="Hyperactive optimizer taxonomy showing 31 algorithms across GFO, Optuna, and sklearn backends"
+           alt="Hyperactive optimizer taxonomy showing 38 algorithms across GFO, Optuna, Scipy, and sklearn backends"
            class="only-dark" />
    </div>
 
@@ -133,6 +133,17 @@ Algorithm Categories
 
       *TPEOptimizer, CmaEsOptimizer, GPOptimizer, NSGAIIOptimizer, and more*
 
+   .. grid-item-card:: Scipy Backend
+      :link: scipy
+      :link-type: doc
+      :class-card: sd-border-secondary
+
+      **7 algorithms**
+      ^^^
+      Scipy.optimize algorithms for continuous parameter spaces.
+
+      *DifferentialEvolution, DualAnnealing, Basinhopping, SHGO, Direct, NelderMead, Powell*
+
 ----
 
 Scenario Reference
@@ -163,8 +174,11 @@ Detailed recommendations based on problem characteristics:
      - ``GridSearch``
      - Exhaustive coverage when feasible
    * - Continuous parameters
-     - ``BayesianOptimizer``, ``CmaEsOptimizer``
+     - ``BayesianOptimizer``, ``CmaEsOptimizer``, ``ScipyDifferentialEvolution``
      - Designed for smooth, continuous spaces
+   * - Continuous only (scipy)
+     - ``ScipyDualAnnealing``, ``ScipyBasinhopping``, ``ScipyNelderMead``
+     - Production-grade scipy.optimize implementations
    * - Mixed parameter types
      - ``TPEOptimizer``, ``RandomSearch``
      - Handle categorical + continuous well
@@ -191,4 +205,5 @@ All optimizers share common parameters and configuration options.
    population_based
    sequential_model_based
    optuna
+   scipy
    configuration
