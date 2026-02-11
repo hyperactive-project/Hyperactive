@@ -3,7 +3,7 @@
 # copyright: hyperactive developers, MIT License (see LICENSE file)
 
 from skbase.utils.stdout_mute import StdoutMute
-
+from collections.abc import Mapping, Sequence
 from hyperactive.base import BaseOptimizer
 
 __all__ = ["_BaseGFOadapter"]
@@ -102,14 +102,57 @@ class _BaseGFOadapter(BaseOptimizer):
         """
         import numpy as np
 
-        def coerce_to_numpy(arr):
-            """Coerce a list or tuple to a numpy array."""
-            if not isinstance(arr, np.ndarray):
-                return np.array(arr)
-            return arr
+        normalized = self._normalize_search_space(search_space)
 
-        coerced_search_space = {k: coerce_to_numpy(v) for k, v in search_space.items()}
-        return coerced_search_space
+        def coerce_to_numpy(values, param_name):
+            """Coerce a list or tuple to a numpy array."""
+            arr = np.asarray(values)
+            if arr.ndim != 1:
+                raise ValueError(
+                    "Search space values for parameter "
+                    f"'{param_name}' must be 1-dimensional array-like; got "
+                    f"shape {arr.shape}."
+                )
+            return arr
+        
+        def convert(grid):
+            return {key: coerce_to_numpy(val, key) for key, val in grid.items()}
+
+        if isinstance(normalized, list):
+            return [convert(grid) for grid in normalized]
+
+        return convert(normalized)
+
+    def _normalize_search_space(self, search_space):
+
+        if search_space is None:
+            return None
+
+        if isinstance(search_space, Mapping):
+            return dict(search_space)
+
+        from sklearn.model_selection import ParameterGrid as parameter_grid
+
+        if isinstance(search_space, parameter_grid):
+
+            grids = [dict(grid) for grid in search_space.param_grid]
+
+        elif isinstance(search_space, Sequence) and not isinstance(search_space, (str,bytes)):
+
+            grids = [dict(grid) for grid in search_space]
+        
+        else:
+
+            raise TypeError(
+                f"search space must be dict, list/tuple of dict, or sklearn.model_selection.ParameterGrid"
+                f"({type(search_space).__name__})."
+            )
+
+        if len(grids) == 1:
+            return grids[0]
+        else:
+            return grids
+
 
     def _solve(self, experiment, **search_config):
         """Run the optimization search process.
@@ -130,16 +173,40 @@ class _BaseGFOadapter(BaseOptimizer):
         n_iter = search_config.pop("n_iter", 100)
         max_time = search_config.pop("max_time", None)
 
-        gfo_cls = self._get_gfo_class()
-        gfopt = gfo_cls(**search_config)
+        search_space = search_config.pop("search_space", None)
 
-        with StdoutMute(active=not self.verbose):
-            gfopt.search(
-                objective_function=experiment.score,
-                n_iter=n_iter,
-                max_time=max_time,
-            )
-        best_params = gfopt.best_para
+        if isinstance(search_space, list):
+            search_spaces = search_space
+        else:
+            search_spaces = [search_space]
+
+        gfo_cls = self._get_gfo_class()
+
+        best_score = None
+        best_params = None
+
+        for grid in search_spaces:
+            grid_config = dict(search_config)
+            grid_config["search_space"] = grid
+
+            gfopt = gfo_cls(**grid_config)
+
+            with StdoutMute(active=not self.verbose):
+                gfopt.search(
+                    objective_function=experiment.score,
+                    n_iter=n_iter,
+                    max_time=max_time,
+                )
+
+            grid_params = gfopt.best_para
+            grid_score = getattr(gfopt, "best_score", None)
+            if grid_score is None and grid_params is not None:
+                grid_score = experiment.score(grid_params)[0]
+
+            if best_params is None or (grid_score is not None and grid_score > best_score):
+                best_params = grid_params
+                best_score = grid_score
+                
         return best_params
 
     @classmethod
