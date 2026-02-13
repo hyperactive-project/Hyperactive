@@ -5,9 +5,9 @@ import pytest
 from skbase.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("sktime", severity="none"):
-    from hyperactive.integrations.sktime import ForecastingOptCV, TSCOptCV
+    from hyperactive.integrations.sktime import ForecastingOptCV, TSCOptCV, TSROptCV
 
-    EST_TO_TEST = [ForecastingOptCV, TSCOptCV]
+    EST_TO_TEST = [ForecastingOptCV, TSCOptCV, TSROptCV]
 else:
     EST_TO_TEST = []
 
