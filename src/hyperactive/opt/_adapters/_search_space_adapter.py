@@ -86,7 +86,8 @@ class SearchSpaceAdapter:
         """
         if not isinstance(self._original_space, dict):
             raise TypeError(
-                f"Search space must be a dict, got {type(self._original_space).__name__}"
+                "Search space must be a dict, "
+                f"got {type(self._original_space).__name__}"
             )
 
         if not self._original_space:
@@ -99,13 +100,14 @@ class SearchSpaceAdapter:
         """Validate a single dimension."""
         if isinstance(values, tuple):
             self._validate_continuous(name, values)
-        elif isinstance(values, (list, np.ndarray)):
+        elif isinstance(values, list | np.ndarray):
             self._validate_discrete(name, values)
         else:
             raise TypeError(
                 f"Parameter '{name}': expected list (discrete) or tuple (continuous), "
                 f"got {type(values).__name__}. "
-                f"Use [a, b, c] for discrete values or (low, high) for continuous ranges."
+                "Use [a, b, c] for discrete values "
+                "or (low, high) for continuous ranges."
             )
 
     def _validate_continuous(self, name: str, values: tuple):
@@ -130,7 +132,7 @@ class SearchSpaceAdapter:
         low, high = values[0], values[1]
 
         # Check low and high are numeric
-        if not isinstance(low, (int, float)) or not isinstance(high, (int, float)):
+        if not isinstance(low, int | float) or not isinstance(high, int | float):
             raise TypeError(
                 f"Parameter '{name}': low and high must be numeric, "
                 f"got low={type(low).__name__}, high={type(high).__name__}"
@@ -190,7 +192,7 @@ class SearchSpaceAdapter:
                         f"Use 'log' for logarithmic scale."
                     )
                 log_scale = True
-            elif isinstance(third, (int, float)):
+            elif isinstance(third, int | float):
                 n_points = int(third)
             else:
                 raise TypeError(
@@ -200,7 +202,7 @@ class SearchSpaceAdapter:
         elif len(values) == 4:
             # (low, high, n_points, "log")
             third, fourth = values[2], values[3]
-            if not isinstance(third, (int, float)):
+            if not isinstance(third, int | float):
                 raise TypeError(
                     f"Parameter '{name}': n_points must be numeric, "
                     f"got {type(third).__name__}"

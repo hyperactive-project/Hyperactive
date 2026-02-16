@@ -159,7 +159,7 @@ class GridSearchSk(BaseOptimizer):
                 if isinstance(v, np.ndarray) and v.ndim > 1:
                     raise ValueError("Parameter array should be one-dimensional.")
 
-                if isinstance(v, str) or not isinstance(v, (np.ndarray, Sequence)):
+                if isinstance(v, str) or not isinstance(v, np.ndarray | Sequence):
                     raise ValueError(
                         f"Parameter grid for parameter ({name}) needs to"
                         f" be a list or numpy array, but got ({type(v)})."

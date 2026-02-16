@@ -178,7 +178,7 @@ class RandomSearchSk(BaseOptimizer):
                 if isinstance(v, np.ndarray) and v.ndim > 1:
                     raise ValueError("Parameter array should be one-dimensional.")
 
-                if isinstance(v, str) or not isinstance(v, (np.ndarray, Sequence)):
+                if isinstance(v, str) or not isinstance(v, np.ndarray | Sequence):
                     raise ValueError(
                         f"Parameter distribution for ({name}) must be a list, numpy "
                         f"array, or scipy.stats ``rv_frozen``, but got ({type(v)})."

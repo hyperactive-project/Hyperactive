@@ -1,7 +1,6 @@
 """opt_cv module for Hyperactive optimization."""
 
 from collections.abc import Callable
-from typing import Union
 
 from sklearn.base import BaseEstimator, clone
 
@@ -107,7 +106,7 @@ class OptCV(BaseEstimator, _BestEstimator_, Checks):
         estimator,
         optimizer,
         *,
-        scoring: Union[Callable, str, None] = None,
+        scoring: Callable | str | None = None,
         refit: bool = True,
         cv=None,
     ):

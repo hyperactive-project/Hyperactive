@@ -17,7 +17,7 @@ def sklearn_experiment():
 
 @pytest.fixture
 def simple_search_space():
-    """Simple unified search space format: dict[str, list]."""
+    """Provide unified search space format: dict[str, list]."""
     return {"C": [0.1, 1, 10], "gamma": [0.01, 0.1, 1]}
 
 
@@ -202,7 +202,9 @@ class TestCapabilityTags:
         opt = RandomSearch.create_test_instance()
 
         assert opt.get_tag("capability:discrete") is True
-        assert opt.get_tag("capability:continuous") is False  # GFO needs lists, not tuples
+        assert (
+            opt.get_tag("capability:continuous") is False
+        )  # GFO needs lists, not tuples
         assert opt.get_tag("capability:categorical") is False  # GFO only numeric
         assert opt.get_tag("capability:constraints") is True
 
@@ -272,7 +274,7 @@ class TestAllOptimizersWithCategoricalSearchSpace:
 
     @pytest.fixture
     def function_experiment(self):
-        """Simple function experiment for fast testing."""
+        """Create function experiment for fast testing."""
         from hyperactive.experiment.func import FunctionExperiment
 
         def objective(params):
@@ -388,20 +390,20 @@ class TestAllOptimizersWithContinuousSearchSpace:
 
     @pytest.fixture
     def continuous_function_experiment(self):
-        """Simple function experiment for continuous optimization."""
+        """Create function experiment for continuous optimization."""
         from hyperactive.experiment.func import FunctionExperiment
 
         def objective(params):
             # Simple objective: maximize when x and y are in middle of range
             x = params["x"]
             y = params["y"]
-            return -(x - 5.0) ** 2 - (y - 0.01) ** 2
+            return -((x - 5.0) ** 2) - (y - 0.01) ** 2
 
         return FunctionExperiment(objective)
 
     @pytest.fixture
     def mixed_function_experiment(self):
-        """Function experiment for mixed search space."""
+        """Create function experiment for mixed search space."""
         from hyperactive.experiment.func import FunctionExperiment
 
         def objective(params):

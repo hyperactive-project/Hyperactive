@@ -182,7 +182,11 @@ class TestSearchSpaceAdapter:
 
         assert encoded == {"kernel": [0, 1], "solver": [0, 1, 2]}
         assert adapter.categorical_mapping["kernel"] == {0: "rbf", 1: "linear"}
-        assert adapter.categorical_mapping["solver"] == {0: "lbfgs", 1: "sgd", 2: "adam"}
+        assert adapter.categorical_mapping["solver"] == {
+            0: "lbfgs",
+            1: "sgd",
+            2: "adam",
+        }
 
         decoded = adapter.decode({"kernel": 0, "solver": 2})
         assert decoded == {"kernel": "rbf", "solver": "adam"}
@@ -228,7 +232,9 @@ class TestSearchSpaceValidation:
 
     def test_validate_continuous_too_many_values_raises(self):
         """Continuous tuple with > 4 values raises ValueError."""
-        adapter = SearchSpaceAdapter({"C": (0.1, 10, 50, "log", "extra")}, capabilities={})
+        adapter = SearchSpaceAdapter(
+            {"C": (0.1, 10, 50, "log", "extra")}, capabilities={}
+        )
 
         with pytest.raises(ValueError, match="too many values"):
             adapter.validate()
@@ -280,7 +286,7 @@ class TestContinuousDiscretization:
 
     def test_discretize_linear_default_points(self):
         """Linear discretization with default 100 points."""
-        np = pytest.importorskip("numpy")
+        pytest.importorskip("numpy")
 
         space = {"C": (0.1, 10.0)}
         adapter = SearchSpaceAdapter(space, capabilities={"continuous": False})
@@ -295,7 +301,7 @@ class TestContinuousDiscretization:
 
     def test_discretize_log_scale(self):
         """Log scale discretization."""
-        np = pytest.importorskip("numpy")
+        pytest.importorskip("numpy")
 
         space = {"lr": (1e-5, 1e-1, "log")}
         adapter = SearchSpaceAdapter(space, capabilities={"continuous": False})
