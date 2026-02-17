@@ -91,7 +91,7 @@ Guide Contents
     Includes custom functions and built-in ML experiments.
 
 :ref:`user_guide_integrations`
-    Framework integrations for scikit-learn, sktime, skpro, and PyTorch.
+    Framework integrations for scikit-learn, sktime, skforecast, skpro, and PyTorch.
     Drop-in replacements for GridSearchCV and similar tools.
 
 :ref:`user_guide_migration`

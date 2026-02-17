@@ -19,6 +19,7 @@ on GitHub.
    examples/sequential_model_based
    examples/optuna_backend
    examples/sklearn_backend
+    examples/skforecast_integration
    examples/integrations
    examples/other
    examples/interactive_tutorial
@@ -71,6 +72,10 @@ Integration Examples
 
 :ref:`examples_integrations`
     Time series optimization with sktime and other framework integrations.
+
+:ref:`examples_skforecast_integration`
+    Forecasting hyperparameter tuning with ``SkforecastOptCV`` and
+    ``ForecasterRecursive``.
 
 
 Advanced Topics

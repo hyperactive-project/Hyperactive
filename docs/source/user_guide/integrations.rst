@@ -78,6 +78,23 @@ Use ``TSCOptCV`` for time series classification:
    :end-before: # [end:tsc_optcv]
 
 
+Time Series with Skforecast
+---------------------------
+
+Hyperactive also integrates with ``skforecast`` for recursive forecasting
+workflows.
+
+.. note::
+
+   Requires ``pip install hyperactive[skforecast-integration]``
+
+The following example shows ``SkforecastOptCV`` with
+``ForecasterRecursive``:
+
+.. literalinclude:: ../../../examples/skforecast/skforecast_example.py
+   :language: python
+
+
 Probabilistic Prediction with Skpro
 -----------------------------------
 
@@ -123,6 +140,9 @@ Choosing the Right Integration
    * - sktime
      - ``TSCOptCV``
      - Time series classification
+    * - skforecast
+       - ``SkforecastOptCV``
+       - Recursive time series forecasting
    * - skpro
      - ``SkproProbaRegExperiment``
      - Probabilistic regression
