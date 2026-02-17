@@ -16,8 +16,10 @@ y = y_train
 # [start:simplest_example]
 from hyperactive.opt.gfo import HillClimbing
 
+
 def score(p):
     return -(p["x"] ** 2)  # Find x that minimizes x²
+
 
 opt = HillClimbing({"x": range(-10, 11)}, experiment=score)
 best = opt.solve()  # {"x": 0}
@@ -30,12 +32,15 @@ def objective(params):
     y = params["y"]
     # Return a score to maximize
     return -(x**2 + y**2)
+
+
 # [end:simple_objective]
 
 
 # [start:sklearn_experiment_intro]
-from hyperactive.experiment.integrations import SklearnCvExperiment
 from sklearn.ensemble import RandomForestClassifier
+
+from hyperactive.experiment.integrations import SklearnCvExperiment
 
 experiment = SklearnCvExperiment(
     estimator=RandomForestClassifier(),
@@ -47,33 +52,29 @@ experiment = SklearnCvExperiment(
 
 
 # [start:sklearn_3_lines]
-from hyperactive.experiment.integrations import SklearnCvExperiment
 from sklearn.ensemble import GradientBoostingClassifier
+
+from hyperactive.experiment.integrations import SklearnCvExperiment
 
 experiment = SklearnCvExperiment(GradientBoostingClassifier(), X, y, cv=5)
 # [end:sklearn_3_lines]
 
 
 # [start:optimizer_imports]
-from hyperactive.opt.gfo import (
-    HillClimbing,           # Local search
-    RandomSearch,           # Global search
-    BayesianOptimizer,      # Sequential model-based
-    ParticleSwarmOptimizer, # Population-based
-)
 # [end:optimizer_imports]
-
-
 # [start:search_space_definition]
 import numpy as np
+
+from hyperactive.opt.gfo import (
+    BayesianOptimizer,  # Sequential model-based
+    HillClimbing,  # Local search
+)
 
 search_space = {
     # Discrete integer values
     "n_estimators": list(range(10, 200, 10)),
-
     # Continuous values (discretized)
     "learning_rate": np.logspace(-4, 0, 20),
-
     # Categorical values
     "kernel": ["linear", "rbf", "poly"],
 }
@@ -86,12 +87,15 @@ def my_objective(params):
     # Your evaluation logic here
     return score
 
+
 # Option B: Built-in sklearn experiment
 from hyperactive.experiment.integrations import SklearnCvExperiment
 
 experiment = SklearnCvExperiment(
-    estimator=YourEstimator(),
-    X=X, y=y, cv=5,
+    estimator=YourEstimator(),  # noqa: F821
+    X=X,
+    y=y,
+    cv=5,
 )
 # [end:workflow_experiment_options]
 
@@ -110,9 +114,9 @@ from hyperactive.opt.gfo import HillClimbing
 
 optimizer = HillClimbing(
     search_space=search_space,
-    n_iter=100,           # Number of iterations
+    n_iter=5,  # Number of iterations
     experiment=experiment,
-    random_state=42,      # For reproducibility
+    random_state=42,  # For reproducibility
 )
 # [end:workflow_optimizer]
 
@@ -130,7 +134,7 @@ warm_start = [
 
 optimizer = HillClimbing(
     search_space=search_space,
-    n_iter=50,
+    n_iter=5,
     experiment=experiment,
     initialize={"warm_start": warm_start},
 )
@@ -146,7 +150,6 @@ best = optimizer.solve()
 
 
 # [start:swap_bayesian]
-from hyperactive.opt.gfo import BayesianOptimizer
 
 optimizer = BayesianOptimizer(search_space, experiment=experiment)
 best = optimizer.solve()
@@ -165,6 +168,7 @@ best = optimizer.solve()
 import numpy as np
 from sklearn.datasets import load_iris
 from sklearn.ensemble import RandomForestClassifier
+
 from hyperactive.experiment.integrations import SklearnCvExperiment
 from hyperactive.opt.gfo import BayesianOptimizer
 
@@ -174,7 +178,9 @@ X, y = load_iris(return_X_y=True)
 # 2. Define the experiment (what to optimize)
 experiment = SklearnCvExperiment(
     estimator=RandomForestClassifier(),
-    X=X, y=y, cv=5,
+    X=X,
+    y=y,
+    cv=5,
 )
 
 # 3. Define the search space (where to search)
@@ -187,7 +193,7 @@ search_space = {
 # 4. Choose an optimizer (how to search)
 optimizer = BayesianOptimizer(
     search_space=search_space,
-    n_iter=50,
+    n_iter=5,
     experiment=experiment,
     random_state=42,
 )

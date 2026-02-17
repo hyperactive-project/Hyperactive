@@ -6,6 +6,7 @@ objective function shown on the landing page. It is included in index.rst.
 
 # [start:full_example]
 import numpy as np
+
 from hyperactive.opt.gfo import BayesianOptimizer
 
 
@@ -22,7 +23,7 @@ search_space = {
 
 optimizer = BayesianOptimizer(
     search_space=search_space,
-    n_iter=50,
+    n_iter=5,
     experiment=complex_objective,
 )
 best_params = optimizer.solve()
