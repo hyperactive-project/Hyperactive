@@ -68,9 +68,7 @@ def _snippet_id(path):
     return str(path.relative_to(SNIPPETS_DIR))
 
 
-@pytest.mark.parametrize(
-    "snippet_file", get_testable_snippet_files(), ids=_snippet_id
-)
+@pytest.mark.parametrize("snippet_file", get_testable_snippet_files(), ids=_snippet_id)
 def test_snippet_executes(snippet_file):
     """Test that each runnable snippet file executes without errors.
 
@@ -82,7 +80,7 @@ def test_snippet_executes(snippet_file):
     snippet_file : Path
         Path to the snippet file to test.
     """
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603
         [sys.executable, str(snippet_file)],
         capture_output=True,
         text=True,
@@ -98,9 +96,7 @@ def test_snippet_executes(snippet_file):
         pytest.fail(error_msg)
 
 
-@pytest.mark.parametrize(
-    "snippet_file", get_testable_snippet_files(), ids=_snippet_id
-)
+@pytest.mark.parametrize("snippet_file", get_testable_snippet_files(), ids=_snippet_id)
 def test_snippet_imports(snippet_file):
     """Test that each runnable snippet file can be imported as a module.
 
@@ -195,9 +191,7 @@ def extract_github_file_links(content: str) -> list[tuple[str, str]]:
         List of (full_url, relative_path) tuples.
     """
     # Pattern matches GitHub blob URLs to this repo
-    pattern = (
-        r"https://github\.com/SimonBlanke/Hyperactive/blob/master/([^\s>`\"\']+)"
-    )
+    pattern = r"https://github\.com/SimonBlanke/Hyperactive/blob/master/([^\s>`\"\']+)"
     matches = re.findall(pattern, content)
     return [
         (f"https://github.com/SimonBlanke/Hyperactive/blob/master/{path}", path)
@@ -220,9 +214,7 @@ def test_github_example_links_exist():
         for full_url, rel_path in links:
             local_path = REPO_ROOT / rel_path
             if not local_path.exists():
-                broken_links.append(
-                    f"{rst_file.name}: {rel_path} (file not found)"
-                )
+                broken_links.append(f"{rst_file.name}: {rel_path} (file not found)")
 
     if broken_links:
         msg = f"Found {len(broken_links)} broken GitHub file link(s):\n"

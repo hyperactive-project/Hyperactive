@@ -100,7 +100,7 @@ class GridOptimizer(_BaseOptunaAdapter):
             for key, space in self.param_space.items():
                 if isinstance(space, list):
                     search_space[key] = space
-                elif isinstance(space, (tuple,)) and len(space) == 2:
+                elif isinstance(space, tuple) and len(space) == 2:
                     # Convert range to discrete list for grid search
                     low, high = space
                     if isinstance(low, int) and isinstance(high, int):
