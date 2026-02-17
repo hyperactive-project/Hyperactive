@@ -4,9 +4,9 @@ This snippet file contains runnable examples demonstrating Hyperactive's
 advanced functionality like warm starting and optimizer comparison.
 """
 
-import numpy as np
 from sklearn.datasets import load_wine
 from sklearn.ensemble import RandomForestClassifier
+
 from hyperactive.experiment.integrations import SklearnCvExperiment
 from hyperactive.opt.gfo import HillClimbing
 
@@ -14,7 +14,9 @@ from hyperactive.opt.gfo import HillClimbing
 X, y = load_wine(return_X_y=True)
 experiment = SklearnCvExperiment(
     estimator=RandomForestClassifier(random_state=42),
-    X=X, y=y, cv=3,
+    X=X,
+    y=y,
+    cv=3,
 )
 search_space = {
     "n_estimators": list(range(10, 101, 10)),
@@ -24,7 +26,6 @@ search_space = {
 
 
 # [start:warm_starting]
-from hyperactive.opt.gfo import HillClimbing
 
 # Previous best parameters
 warm_start_points = [
@@ -43,10 +44,10 @@ best_params = optimizer.solve()
 
 # [start:comparing_optimizers]
 from hyperactive.opt.gfo import (
-    HillClimbing,
-    RandomSearch,
     BayesianOptimizer,
+    HillClimbing,
     ParticleSwarmOptimizer,
+    RandomSearch,
 )
 
 optimizers = {

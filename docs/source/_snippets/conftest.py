@@ -10,7 +10,7 @@ import pytest
 
 @pytest.fixture
 def simple_search_space():
-    """Simple search space for basic examples."""
+    """Provide simple search space for basic examples."""
     return {
         "x": np.arange(-5, 5, 0.1),
         "y": np.arange(-5, 5, 0.1),
@@ -19,7 +19,7 @@ def simple_search_space():
 
 @pytest.fixture
 def simple_objective():
-    """Simple objective function for basic examples."""
+    """Provide simple objective function for basic examples."""
 
     def objective(params):
         x = params["x"]

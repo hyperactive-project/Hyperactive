@@ -7,7 +7,6 @@ basic functionality including custom function and sklearn optimization.
 import numpy as np
 
 # [start:custom_function]
-import numpy as np
 from hyperactive.opt.gfo import HillClimbing
 
 
@@ -35,6 +34,7 @@ print(f"Best parameters: {best_params}")
 # [start:sklearn_tuning]
 from sklearn.datasets import load_wine
 from sklearn.ensemble import RandomForestClassifier
+
 from hyperactive.experiment.integrations import SklearnCvExperiment
 from hyperactive.opt.gfo import HillClimbing
 
@@ -44,7 +44,9 @@ X, y = load_wine(return_X_y=True)
 # Create experiment
 experiment = SklearnCvExperiment(
     estimator=RandomForestClassifier(random_state=42),
-    X=X, y=y, cv=3,
+    X=X,
+    y=y,
+    cv=3,
 )
 
 # Define search space

@@ -6,18 +6,21 @@ custom objectives, built-in experiments, and benchmarks.
 
 import numpy as np
 
+
 # [start:simple_objective]
 def objective(params):
     x = params["x"]
     y = params["y"]
     # Hyperactive MAXIMIZES this score
     return -(x**2 + y**2)
+
+
 # [end:simple_objective]
 
 
 # [start:ackley_function]
-import numpy as np
 from hyperactive.opt.gfo import BayesianOptimizer
+
 
 # Ackley function (a common benchmark)
 def ackley(params):
@@ -29,6 +32,7 @@ def ackley(params):
     result = term1 + term2 + np.e + 20
 
     return -result  # Negate to maximize (minimize the Ackley function)
+
 
 search_space = {
     "x": np.linspace(-5, 5, 100),
@@ -47,9 +51,10 @@ best_params = optimizer.solve()
 # [start:external_simulation]
 import subprocess
 
+
 def run_simulation(params):
     # Run an external simulation with the given parameters
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603
         ["./my_simulation", str(params["param1"]), str(params["param2"])],
         capture_output=True,
         text=True,
@@ -57,14 +62,17 @@ def run_simulation(params):
     # Parse the output and return the score
     score = float(result.stdout.strip())
     return score
+
+
 # [end:external_simulation]
 
 
 # [start:sklearn_cv_experiment]
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import load_iris
-from sklearn.model_selection import KFold
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
+from sklearn.model_selection import KFold
+
 from hyperactive.experiment.integrations import SklearnCvExperiment
 from hyperactive.opt.gfo import HillClimbing
 
@@ -94,8 +102,9 @@ best_params = optimizer.solve()
 
 
 # [start:sktime_forecasting]
-from sktime.forecasting.naive import NaiveForecaster
 from sktime.datasets import load_airline
+from sktime.forecasting.naive import NaiveForecaster
+
 from hyperactive.experiment.integrations import SktimeForecastingExperiment
 from hyperactive.opt.gfo import RandomSearch
 
@@ -124,15 +133,15 @@ best_params = optimizer.solve()
 from hyperactive.experiment.integrations import TorchExperiment
 
 experiment = TorchExperiment(
-    model_class=MyLightningModel,
-    datamodule=my_datamodule,
+    model_class=MyLightningModel,  # noqa: F821
+    datamodule=my_datamodule,  # noqa: F821
     trainer_kwargs={"max_epochs": 10},
 )
 # [end:torch_experiment]
 
 
 # [start:benchmark_experiments]
-from hyperactive.experiment.bench import Ackley, Sphere, Parabola
+from hyperactive.experiment.bench import Ackley
 
 # Use benchmark as experiment
 ackley = Ackley(dim=2)
@@ -150,7 +159,9 @@ from hyperactive.experiment.integrations import SklearnCvExperiment
 
 experiment = SklearnCvExperiment(
     estimator=RandomForestClassifier(),
-    X=X, y=y, cv=5,
+    X=X,
+    y=y,
+    cv=5,
 )
 
 # Evaluate specific parameters
@@ -165,10 +176,12 @@ print(f"Additional info: {additional_info}")
 # [start:robust_objective]
 def robust_objective(params):
     try:
-        score = compute_score(params)
+        score = compute_score(params)  # noqa: F821
         return score
     except Exception:
         return -np.inf  # Return bad score on failure
+
+
 # [end:robust_objective]
 
 
@@ -186,8 +199,9 @@ if __name__ == "__main__":
     assert abs(ackley_score) < 0.01, f"Expected ~0, got {ackley_score}"
 
     # Test sklearn CV experiment
-    from sklearn.ensemble import RandomForestClassifier
     from sklearn.datasets import load_iris
+    from sklearn.ensemble import RandomForestClassifier
+
     from hyperactive.experiment.integrations import SklearnCvExperiment
     from hyperactive.opt.gfo import HillClimbing
 

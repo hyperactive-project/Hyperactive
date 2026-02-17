@@ -6,6 +6,7 @@ a custom objective function. It is included in get_started.rst.
 
 # [start:full_example]
 import numpy as np
+
 from hyperactive.opt.gfo import HillClimbing
 
 

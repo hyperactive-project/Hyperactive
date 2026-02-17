@@ -116,7 +116,6 @@ optimizer = RandomRestartHillClimbing(
 
 
 # [start:powells_pattern]
-from hyperactive.opt.gfo import PowellsMethod, PatternSearch
 # [end:powells_pattern]
 
 
@@ -147,22 +146,18 @@ optimizer = GeneticAlgorithm(
 
 
 # [start:evolution_strategy]
-from hyperactive.opt.gfo import EvolutionStrategy
 # [end:evolution_strategy]
 
 
 # [start:differential_evolution]
-from hyperactive.opt.gfo import DifferentialEvolution
 # [end:differential_evolution]
 
 
 # [start:parallel_tempering]
-from hyperactive.opt.gfo import ParallelTempering
 # [end:parallel_tempering]
 
 
 # [start:spiral_optimization]
-from hyperactive.opt.gfo import SpiralOptimization
 # [end:spiral_optimization]
 
 
@@ -182,17 +177,14 @@ optimizer = BayesianOptimizer(
 
 
 # [start:tpe]
-from hyperactive.opt.gfo import TreeStructuredParzenEstimators
 # [end:tpe]
 
 
 # [start:forest_optimizer]
-from hyperactive.opt.gfo import ForestOptimizer
 # [end:forest_optimizer]
 
 
 # [start:lipschitz_direct]
-from hyperactive.opt.gfo import LipschitzOptimizer, DirectAlgorithm
 # [end:lipschitz_direct]
 
 
@@ -202,20 +194,13 @@ from hyperactive.opt.gfo import LipschitzOptimizer, DirectAlgorithm
 
 # [start:optuna_imports]
 from hyperactive.opt.optuna import (
-    TPEOptimizer,       # Tree-Parzen Estimators
-    CmaEsOptimizer,     # CMA-ES evolution strategy
-    GPOptimizer,        # Gaussian Process
-    NSGAIIOptimizer,    # Multi-objective (NSGA-II)
-    NSGAIIIOptimizer,   # Multi-objective (NSGA-III)
-    QMCOptimizer,       # Quasi-Monte Carlo
-    RandomOptimizer,    # Random sampling
-    GridOptimizer,      # Grid search
+    TPEOptimizer,  # Tree-Parzen Estimators
 )
+
 # [end:optuna_imports]
 
 
 # [start:optuna_tpe]
-from hyperactive.opt.optuna import TPEOptimizer
 
 optimizer = TPEOptimizer(
     search_space=search_space,
@@ -230,16 +215,16 @@ optimizer = TPEOptimizer(
 # ============================================================================
 
 # [start:common_parameters]
-optimizer = SomeOptimizer(
+optimizer = SomeOptimizer(  # noqa: F821
     search_space=search_space,  # Required: parameter ranges
-    n_iter=5,                  # Required: number of iterations
-    experiment=objective,        # Required: objective function
-    random_state=42,             # Optional: for reproducibility
-    initialize={                 # Optional: initialization settings
-        "warm_start": [...],     # Starting points
-        "grid": 4,               # Grid initialization points
-        "random": 2,             # Random initialization points
-        "vertices": 4,           # Vertex initialization points
+    n_iter=5,  # Required: number of iterations
+    experiment=objective,  # Required: objective function
+    random_state=42,  # Optional: for reproducibility
+    initialize={  # Optional: initialization settings
+        "warm_start": [...],  # Starting points
+        "grid": 4,  # Grid initialization points
+        "random": 2,  # Random initialization points
+        "vertices": 4,  # Vertex initialization points
     },
 )
 # [end:common_parameters]
@@ -268,8 +253,8 @@ optimizer = ParticleSwarmOptimizer(
     n_iter=5,
     experiment=objective,
     initialize={
-        "grid": 4,      # 4 points on a grid
-        "random": 6,    # 6 random points
+        "grid": 4,  # 4 points on a grid
+        "random": 6,  # 6 random points
         "vertices": 4,  # 4 corner points
     },
 )
@@ -292,12 +277,12 @@ optimizer = SimulatedAnnealing(
 # --- Runnable test code below ---
 if __name__ == "__main__":
     from hyperactive.opt.gfo import (
-        HillClimbing,
-        SimulatedAnnealing,
-        RandomSearch,
         BayesianOptimizer,
-        ParticleSwarmOptimizer,
         GeneticAlgorithm,
+        HillClimbing,
+        ParticleSwarmOptimizer,
+        RandomSearch,
+        SimulatedAnnealing,
     )
 
     search_space = {
