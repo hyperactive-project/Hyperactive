@@ -25,8 +25,6 @@ class BestEstimator:
         Only available if ``refit=True`` and the underlying estimator supports
         ``score_samples``.
 
-        .. versionadded:: 0.24
-
         Parameters
         ----------
         X : iterable
@@ -36,7 +34,8 @@ class BestEstimator:
         Returns
         -------
         y_score : ndarray of shape (n_samples,)
-            The ``best_estimator_.score_samples`` method.
+            Score per sample for `X` based on the estimator with the best found
+            parameters (e.g. log-likelihood, anomaly score).
         """
         check_is_fitted(self)
         return self.best_estimator_.score_samples(X)
@@ -164,8 +163,11 @@ class BestEstimator:
         Parameters
         ----------
         X : indexable, length n_samples
-            Must fulfill the input assumptions of the
-            underlying estimator.
+            Data in the transformed space. Must fulfill the input assumptions
+            of the underlying estimator.
+        Xt : array-like of shape (n_samples, n_features), optional
+            Deprecated in scikit-learn 1.2 and removed in 1.7. Use ``X``
+            instead. The former parameter name for the transformed data.
 
         Returns
         -------
