@@ -1,9 +1,13 @@
 # copyright: hyperactive developers, MIT License (see LICENSE file)
 
+import time
+
 import numpy as np
 from skbase.utils.dependencies import _check_soft_dependencies
 
-if _check_soft_dependencies("sktime", severity="none"):
+_HAS_SKTIME = _check_soft_dependencies("sktime", severity="none")
+
+if _HAS_SKTIME:
     from sktime.forecasting.base._delegate import _DelegatedForecaster
 else:
     from skbase.base import BaseEstimator as _DelegatedForecaster
@@ -151,6 +155,15 @@ class ForecastingOptCV(_DelegatedForecaster):
             - "logger_name": str, default="ray"; name of the logger to use.
             - "mute_warnings": bool, default=False; if True, suppresses warnings
 
+    tune_by_instance : bool, optional (default=False)
+        Whether to tune parameters separately for each time series instance when
+        panel or hierarchical data is passed. Mirrors ``ForecastingGridSearchCV``
+        semantics by delegating broadcasting to sktime's vectorization logic.
+    tune_by_variable : bool, optional (default=False)
+        Whether to tune parameters per variable for strictly multivariate series.
+        When enabled, only univariate targets are accepted and internal
+        broadcasting is handled by sktime.
+
     Example
     -------
     Any available tuning engine from hyperactive can be used, for example:
@@ -189,6 +202,27 @@ class ForecastingOptCV(_DelegatedForecaster):
     3. obtaining best parameters and best forecaster
     >>> best_params = tuned_naive.best_params_
     >>> best_forecaster = tuned_naive.best_forecaster_
+
+    Attributes
+    ----------
+    best_params_ : dict
+        Best parameter values returned by the optimizer.
+    best_forecaster_ : estimator
+        Fitted estimator with the best parameters.
+    best_score_ : float
+        Score of the best model (according to ``scoring``, after hyperactive's
+        "higher-is-better" normalization).
+    best_index_ : int or None
+        Index of the best parameter combination if the optimizer exposes it.
+    scorer_ : BaseMetric
+        The scoring object resolved by ``check_scoring``.
+    n_splits_ : int or None
+        Number of splits produced by ``cv`` (if the splitter exposes it).
+    cv_results_ : pd.DataFrame or None
+        Evaluation table returned by ``sktime.evaluate`` for the winning parameters.
+        (Full per-candidate traces require the optimizer to provide detailed metadata.)
+    refit_time_ : float
+        Time in seconds to refit the best forecaster when ``refit=True``.
     """
 
     _tags = {
@@ -215,6 +249,8 @@ class ForecastingOptCV(_DelegatedForecaster):
         cv_X=None,
         backend=None,
         backend_params=None,
+        tune_by_instance=False,
+        tune_by_variable=False,
     ):
         self.forecaster = forecaster
         self.optimizer = optimizer
@@ -227,7 +263,19 @@ class ForecastingOptCV(_DelegatedForecaster):
         self.cv_X = cv_X
         self.backend = backend
         self.backend_params = backend_params
+        self.tune_by_instance = tune_by_instance
+        self.tune_by_variable = tune_by_variable
         super().__init__()
+
+        if _HAS_SKTIME:
+            self._set_delegated_tags(delegate=self.forecaster)
+            tags_to_clone = ["y_inner_mtype", "X_inner_mtype"]
+            self.clone_tags(self.forecaster, tags_to_clone)
+            self._extend_to_all_scitypes("y_inner_mtype")
+            self._extend_to_all_scitypes("X_inner_mtype")
+
+            if self.tune_by_variable:
+                self.set_tags(**{"scitype:y": "univariate"})
 
     def _fit(self, y, X, fh):
         """Fit to training data.
@@ -250,6 +298,16 @@ class ForecastingOptCV(_DelegatedForecaster):
         forecaster = self.forecaster.clone()
 
         scoring = check_scoring(self.scoring, obj=self)
+        self.scorer_ = scoring
+        get_n_splits = getattr(self.cv, "get_n_splits", None)
+        if callable(get_n_splits):
+            try:
+                self.n_splits_ = get_n_splits(y)
+            except TypeError:
+                # fallback for splitters that expect no args
+                self.n_splits_ = get_n_splits()
+        else:
+            self.n_splits_ = None
         # scoring_name = f"test_{scoring.name}"
 
         experiment = SktimeForecastingExperiment(
@@ -270,13 +328,52 @@ class ForecastingOptCV(_DelegatedForecaster):
         best_params = optimizer.solve()
 
         self.best_params_ = best_params
+        self.best_index_ = getattr(optimizer, "best_index_", None)
+        raw_best_score, best_metadata = experiment.evaluate(best_params)
+        self.best_score_ = float(raw_best_score)
+        results_table = best_metadata.get("results") if best_metadata else None
+        if results_table is not None:
+            try:
+                self.cv_results_ = results_table.copy()
+            except AttributeError:
+                self.cv_results_ = results_table
+        else:
+            self.cv_results_ = None
         self.best_forecaster_ = forecaster.set_params(**best_params)
 
         # Refit model with best parameters.
         if self.refit:
+            refit_start = time.perf_counter()
             self.best_forecaster_.fit(y=y, X=X, fh=fh)
+            self.refit_time_ = time.perf_counter() - refit_start
+        else:
+            self.refit_time_ = 0.0
 
         return self
+
+    def _extend_to_all_scitypes(self, tagname):
+        """Ensure mtypes for all scitypes are present in tag ``tagname``."""
+        from sktime.datatypes import mtype_to_scitype
+
+        tagval = self.get_tag(tagname)
+        if not isinstance(tagval, list):
+            tagval = [tagval]
+        scitypes = mtype_to_scitype(tagval, return_unique=True)
+
+        if "Series" not in scitypes:
+            tagval = tagval + ["pd.DataFrame"]
+        elif "pd.Series" in tagval and "pd.DataFrame" not in tagval:
+            tagval = ["pd.DataFrame"] + tagval
+
+        if "Panel" not in scitypes:
+            tagval = tagval + ["pd-multiindex"]
+        if "Hierarchical" not in scitypes:
+            tagval = tagval + ["pd_multiindex_hier"]
+
+        if self.tune_by_instance:
+            tagval = [x for x in tagval if mtype_to_scitype(x) == "Series"]
+
+        self.set_tags(**{tagname: tagval})
 
     def _predict(self, fh, X):
         """Forecast time series at future horizon.
