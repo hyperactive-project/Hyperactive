@@ -49,33 +49,21 @@
       </a>
    </div>
 
+   <p align="center">
+   <a href="https://github.com/SimonBlanke/Hyperactive/actions"><img src="https://img.shields.io/github/actions/workflow/status/SimonBlanke/Hyperactive/test.yml?style=for-the-badge&logo=githubactions&logoColor=white&label=tests" alt="Tests"></a>
+   <a href="https://app.codecov.io/gh/SimonBlanke/Hyperactive"><img src="https://img.shields.io/codecov/c/github/SimonBlanke/Hyperactive?style=for-the-badge&logo=codecov&logoColor=white" alt="Coverage"></a>
+   </p>
 
-Hyperactive provides a collection of optimization algorithms, accessible through a unified
-experiment-based interface that separates optimization problems from algorithms. The library
-provides native implementations of algorithms from the Gradient-Free-Optimizers package
-alongside direct interfaces to Optuna and scikit-learn optimizers.
+   <hr style="border-radius: 0; border-top: 3px solid var(--pst-color-border); margin: 2.5rem 0 0.5rem 0;">
 
-.. raw:: html
+   <p style="text-align: center; max-width: 700px; margin: 1.5rem auto; line-height: 1.6;">
+   Hyperactive provides a collection of optimization algorithms, accessible through a unified
+   experiment-based interface that separates optimization problems from algorithms. The library
+   provides native implementations of algorithms from the Gradient-Free-Optimizers package
+   alongside direct interfaces to Optuna and scikit-learn optimizers.
+   </p>
 
-   <div class="badge-banner">
-      <div class="badge-items">
-         <a href="https://pypi.org/project/hyperactive/" target="_blank">
-            <img src="_static/images/badges/version.svg" alt="PyPI Version" />
-         </a>
-         <a href="https://pypi.org/project/hyperactive/" target="_blank">
-            <img src="_static/images/badges/python.svg" alt="Python Versions" />
-         </a>
-         <a href="https://github.com/SimonBlanke/Hyperactive/blob/master/LICENSE" target="_blank">
-            <img src="_static/images/badges/license.svg" alt="License" />
-         </a>
-         <a href="https://gc-os-ai.github.io/" target="_blank">
-            <img src="_static/images/badges/sponsor.svg" alt="GC.OS Sponsored" />
-         </a>
-      </div>
-   </div>
-
-
-----
+   <div style="margin-bottom: 7rem;"></div>
 
 .. _features:
 
@@ -271,6 +259,14 @@ Hyperactive works seamlessly with popular machine learning frameworks.
 
 Quick Install
 =============
+
+.. raw:: html
+
+   <p align="center">
+   <a href="https://pypi.org/project/hyperactive/" target="_blank"><img src="https://img.shields.io/pypi/v/hyperactive?style=flat-square" alt="PyPI Version"></a>
+   <a href="https://pypi.org/project/hyperactive/" target="_blank"><img src="https://img.shields.io/pypi/pyversions/hyperactive?style=flat-square" alt="Python Versions"></a>
+   <a href="https://github.com/SimonBlanke/Hyperactive/blob/master/LICENSE" target="_blank"><img src="https://img.shields.io/github/license/SimonBlanke/Hyperactive?style=flat-square" alt="License"></a>
+   </p>
 
 .. raw:: html
 

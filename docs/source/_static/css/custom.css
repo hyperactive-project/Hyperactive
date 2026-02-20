@@ -202,7 +202,7 @@ html[data-theme="dark"] {
 .hero-tagline {
     font-size: 1.25rem;
     font-weight: 400;
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(210, 215, 225, 0.95);
     margin: 0 0 0.5rem 0;
     letter-spacing: 0.05em;
     font-style: italic;
