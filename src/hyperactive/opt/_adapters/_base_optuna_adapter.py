@@ -12,10 +12,16 @@ class _BaseOptunaAdapter(BaseOptimizer):
     _tags = {
         "python_dependencies": ["optuna"],
         "info:name": "Optuna-based optimizer",
+        # Search space capabilities
+        "capability:discrete": True,
+        "capability:continuous": True,
+        "capability:categorical": True,
+        "capability:log_scale": True,
     }
 
     def __init__(
         self,
+        unified_space=None,
         param_space=None,
         n_trials=100,
         initialize=None,
@@ -25,6 +31,7 @@ class _BaseOptunaAdapter(BaseOptimizer):
         experiment=None,
         **optimizer_kwargs,
     ):
+        self.unified_space = unified_space
         self.param_space = param_space
         self.n_trials = n_trials
         self.initialize = initialize
@@ -34,6 +41,34 @@ class _BaseOptunaAdapter(BaseOptimizer):
         self.experiment = experiment
         self.optimizer_kwargs = optimizer_kwargs
         super().__init__()
+
+    def get_search_config(self):
+        """Get the search configuration.
+
+        Returns
+        -------
+        dict with str keys
+            The search configuration dictionary.
+        """
+        search_config = super().get_search_config()
+
+        # Resolve: unified_space is converted to param_space
+        unified_space = search_config.pop("unified_space", None)
+        param_space = search_config.get("param_space")
+
+        # Validate: only one should be set
+        if unified_space is not None and param_space is not None:
+            raise ValueError(
+                "Provide either 'unified_space' or 'param_space', not both. "
+                "Use 'unified_space' for simple dict[str, list] format, "
+                "or 'param_space' for native Optuna format with ranges/distributions."
+            )
+
+        # Use unified_space if param_space is not set
+        if unified_space is not None:
+            search_config["param_space"] = unified_space
+
+        return search_config
 
     def _get_optimizer(self):
         """Get the Optuna optimizer to use.
@@ -82,19 +117,65 @@ class _BaseOptunaAdapter(BaseOptimizer):
         for key, space in param_space.items():
             if hasattr(space, "suggest"):  # optuna distribution object
                 params[key] = trial._suggest(space, key)
-            elif isinstance(space, tuple) and len(space) == 2:
-                # Tuples are treated as ranges (low, high)
-                low, high = space
-                if isinstance(low, int) and isinstance(high, int):
-                    params[key] = trial.suggest_int(key, low, high)
-                else:
-                    params[key] = trial.suggest_float(key, low, high, log=False)
+            elif isinstance(space, tuple):
+                # Tuples are continuous ranges in unified format
+                params[key] = self._suggest_continuous(trial, key, space)
             elif isinstance(space, list):
                 # Lists are treated as categorical choices
                 params[key] = trial.suggest_categorical(key, space)
             else:
                 raise ValueError(f"Invalid parameter space for key '{key}': {space}")
         return params
+
+    def _suggest_continuous(self, trial, key, space):
+        """Suggest a continuous parameter from a tuple specification.
+
+        Handles unified tuple formats:
+        - (low, high) - linear scale
+        - (low, high, "log") - log scale
+        - (low, high, n_points) - linear scale (n_points ignored for Optuna)
+        - (low, high, n_points, "log") - log scale (n_points ignored for Optuna)
+
+        Parameters
+        ----------
+        trial : optuna.Trial
+            The Optuna trial object
+        key : str
+            The parameter name
+        space : tuple
+            The continuous range specification
+
+        Returns
+        -------
+        float or int
+            The suggested value
+        """
+        if len(space) < 2:
+            raise ValueError(
+                f"Parameter '{key}': continuous range needs at least 2 values "
+                f"(low, high), got {len(space)}."
+            )
+
+        low, high = space[0], space[1]
+        log_scale = False
+
+        # Parse optional arguments
+        if len(space) == 3:
+            third = space[2]
+            if isinstance(third, str) and third.lower() == "log":
+                log_scale = True
+            # If third is int/float, it's n_points - ignore for Optuna
+        elif len(space) == 4:
+            # (low, high, n_points, "log")
+            fourth = space[3]
+            if isinstance(fourth, str) and fourth.lower() == "log":
+                log_scale = True
+
+        # Suggest based on type
+        if isinstance(low, int) and isinstance(high, int):
+            return trial.suggest_int(key, low, high, log=log_scale)
+        else:
+            return trial.suggest_float(key, low, high, log=log_scale)
 
     def _objective(self, trial):
         """Objective function for Optuna optimization.
@@ -109,7 +190,7 @@ class _BaseOptunaAdapter(BaseOptimizer):
         float
             The objective value
         """
-        params = self._suggest_params(trial, self.param_space)
+        params = self._suggest_params(trial, self._resolved_param_space)
         score = self.experiment(params)
 
         # Handle early stopping based on max_score
@@ -156,6 +237,9 @@ class _BaseOptunaAdapter(BaseOptimizer):
             The best parameters found
         """
         import optuna
+
+        # Store resolved param_space for use in _objective
+        self._resolved_param_space = param_space
 
         # Create optimizer with random state if provided
         optimizer = self._get_optimizer()

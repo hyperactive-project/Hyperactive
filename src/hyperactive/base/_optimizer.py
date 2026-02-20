@@ -18,6 +18,13 @@ class BaseOptimizer(BaseObject):
         "info:compute": "middle",  # "low", "middle", "high"
         # see here for explanation of the tags:
         # https://simonblanke.github.io/gradient-free-optimizers-documentation/1.5/optimizers/  # noqa: E501
+        # search space capabilities (conservative defaults)
+        "capability:discrete": True,  # supports discrete lists
+        "capability:continuous": False,  # supports continuous ranges
+        "capability:categorical": True,  # supports categorical choices
+        "capability:log_scale": False,  # supports log-scale sampling
+        "capability:conditions": False,  # supports conditional params
+        "capability:constraints": False,  # supports constraint functions
     }
 
     def __init__(self):
@@ -76,10 +83,27 @@ class BaseOptimizer(BaseObject):
             The dict ``best_params`` can be used in ``experiment.score`` or
             ``experiment.evaluate`` directly.
         """
+        from hyperactive.opt._adapters._adapter_utils import adapt_search_space
+
         experiment = self.get_experiment()
         search_config = self.get_search_config()
 
+        # Adapt search space for backend capabilities (e.g., categorical encoding)
+        capabilities = {
+            "categorical": self.get_tag("capability:categorical"),
+            "continuous": self.get_tag("capability:continuous"),
+        }
+        experiment, search_config, adapter = adapt_search_space(
+            experiment, search_config, capabilities
+        )
+
+        # Run optimization
         best_params = self._solve(experiment, **search_config)
+
+        # Decode results if adapter was used
+        if adapter is not None:
+            best_params = adapter.decode(best_params)
+
         self.best_params_ = best_params
         return best_params
 

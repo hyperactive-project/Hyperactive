@@ -58,22 +58,23 @@ class GridOptimizer(_BaseOptunaAdapter):
         "info:explore_vs_exploit": "explore",
         "info:compute": "low",
         "python_dependencies": ["optuna"],
+        # Grid search needs discrete values, cannot sample from continuous ranges
+        "capability:continuous": False,
     }
 
     def __init__(
         self,
+        unified_space=None,
         param_space=None,
         n_trials=100,
         initialize=None,
         random_state=None,
         early_stopping=None,
         max_score=None,
-        search_space=None,
         experiment=None,
     ):
-        self.search_space = search_space
-
         super().__init__(
+            unified_space=unified_space,
             param_space=param_space,
             n_trials=n_trials,
             initialize=initialize,
@@ -93,11 +94,13 @@ class GridOptimizer(_BaseOptunaAdapter):
         """
         import optuna
 
-        # Convert param_space to Optuna search space format if needed
-        search_space = self.search_space
-        if search_space is None and self.param_space is not None:
-            search_space = {}
-            for key, space in self.param_space.items():
+        # Convert param_space to Optuna grid search space format
+        # Use _resolved_param_space which is set in _solve before this is called
+        search_space = {}
+        param_space = getattr(self, "_resolved_param_space", self.param_space)
+
+        if param_space is not None:
+            for key, space in param_space.items():
                 if isinstance(space, list):
                     search_space[key] = space
                 elif isinstance(space, tuple) and len(space) == 2:
