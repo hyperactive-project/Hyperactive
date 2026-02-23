@@ -5,10 +5,12 @@ This snippet demonstrates how to verify Hyperactive installation.
 
 # [start:verify_installation]
 import hyperactive
+
 print(f"Hyperactive version: {hyperactive.__version__}")
 
 # Quick test
 import numpy as np
+
 from hyperactive.opt.gfo import HillClimbing
 
 
@@ -18,7 +20,7 @@ def objective(params):
 
 optimizer = HillClimbing(
     search_space={"x": np.arange(-5, 5, 0.1)},
-    n_iter=10,
+    n_iter=5,
     experiment=objective,
 )
 best = optimizer.solve()

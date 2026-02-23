@@ -1,85 +1,318 @@
-
-## Welcome to hyperactive
-
 <p align="center">
-  <a href="https://github.com/SimonBlanke/Hyperactive"><img src="./docs/images/logo.png" width="300" align="right"></a>
+  <a href="https://github.com/SimonBlanke/Hyperactive">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="./docs/images/hyperactive_logo_ink_dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="./docs/images/hyperactive_logo_ink.svg">
+      <img src="./docs/images/hyperactive_logo_ink.svg" width="400" alt="Hyperactive Logo">
+    </picture>
+  </a>
 </p>
 
-**A unified interface for optimization algorithms and problems.**
+---
 
-Hyperactive implements a collection of optimization algorithms, accessible through a unified experiment-based
-interface that separates optimization problems from algorithms. The library provides native implementations of algorithms from the Gradient-Free-Optimizers
-package alongside direct interfaces to Optuna and scikit-learn optimizers, supporting discrete, continuous, and mixed parameter spaces.
+<h3 align="center">
+A unified interface for optimization algorithms and experiments in Python.
+</h3>
 
+<p align="center">
+  <a href="https://github.com/SimonBlanke/Hyperactive/actions"><img src="https://img.shields.io/github/actions/workflow/status/SimonBlanke/Hyperactive/test.yml?style=for-the-badge&logo=githubactions&logoColor=white&label=tests" alt="Tests"></a>
+  <a href="https://codecov.io/gh/SimonBlanke/Hyperactive"><img src="https://img.shields.io/codecov/c/github/SimonBlanke/Hyperactive?style=for-the-badge&logo=codecov&logoColor=white" alt="Coverage"></a>
+</p>
+
+<br>
+
+<table align="center">
+  <tr>
+    <td align="right"><b>Documentation</b></td>
+    <td align="center">&#9656;</td>
+    <td>
+      <a href="https://hyperactive.readthedocs.io/en/latest/">Homepage</a> &#183;
+      <a href="https://hyperactive.readthedocs.io/en/latest/user_guide.html">User Guide</a> &#183;
+      <a href="https://hyperactive.readthedocs.io/en/latest/api_reference.html">API Reference</a> &#183;
+      <a href="https://hyperactive.readthedocs.io/en/latest/examples.html">Examples</a>
+    </td>
+  </tr>
+  <tr>
+    <td align="right"><b>On this page</b></td>
+    <td align="center">&#9656;</td>
+    <td>
+      <a href="#key-features">Features</a> &#183;
+      <a href="#examples">Examples</a> &#183;
+      <a href="#core-concepts">Concepts</a> &#183;
+      <a href="#citation">Citation</a>
+    </td>
+  </tr>
+</table>
 
 <br>
 
 ---
 
-| | [Overview](https://github.com/SimonBlanke/Hyperactive#overview) • [Installation](https://github.com/SimonBlanke/Hyperactive#installation) • [Tutorial](https://nbviewer.org/github/SimonBlanke/hyperactive-tutorial/blob/main/notebooks/hyperactive_tutorial.ipynb) • [API reference](https://hyperactive.readthedocs.io/en/latest/#) • [Citation](https://github.com/SimonBlanke/Hyperactive#citing-hyperactive) |
-|---|---|
-| **Open&#160;Source** | [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![GC.OS Sponsored](https://img.shields.io/badge/GC.OS-Sponsored%20Project-orange.svg?style=flat&colorA=0eac92&colorB=2077b4)](https://gc-os-ai.github.io/) |
-| **Community** | [![Discord](https://img.shields.io/static/v1?logo=discord&label=Discord&message=chat&color=lightgreen)](https://discord.gg/7uKdHfdcJG) [![LinkedIn](https://img.shields.io/static/v1?logo=linkedin&label=LinkedIn&message=news&color=lightblue)](https://www.linkedin.com/company/german-center-for-open-source-ai)  |
-| **CI/CD** | [![github-actions](https://img.shields.io/github/actions/workflow/status/SimonBlanke/hyperactive/test.yml?logo=github)](https://github.com/SimonBlanke/hyperactive/actions/workflows/test.yml) [![readthedocs](https://img.shields.io/readthedocs/hyperactive?logo=readthedocs)](https://www.hyperactive.net/en/latest/?badge=latest)
-| **Code** |  [![!pypi](https://img.shields.io/pypi/v/hyperactive?color=orange)](https://pypi.org/project/hyperactive/) [![!python-versions](https://img.shields.io/pypi/pyversions/hyperactive)](https://www.python.org/) [![!black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)  |
+<a href="https://github.com/SimonBlanke/Hyperactive">
+  <img src="./docs/images/bayes_ackley.gif" width="240" align="right" alt="Bayesian Optimization on Ackley Function">
+</a>
+
+**Hyperactive** provides 31 optimization algorithms across 3 backends (GFO, Optuna, scikit-learn), accessible through a unified experiment-based interface. The library separates optimization problems from algorithms, enabling you to swap optimizers without changing your experiment code.
+
+Designed for hyperparameter tuning, model selection, and black-box optimization. Native integrations with scikit-learn, sktime, skpro, and PyTorch allow tuning ML models with minimal setup. Define your objective, specify a search space, and run.
+
+<p>
+  <a href="https://www.linkedin.com/company/german-center-for-open-source-ai"><img src="https://img.shields.io/badge/LinkedIn-Follow-0A66C2?style=flat-square&logo=linkedin" alt="LinkedIn"></a>
+  <a href="https://discord.gg/7uKdHfdcJG"><img src="https://img.shields.io/badge/Discord-Chat-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
+</p>
+
+<br>
 
 ## Installation
 
-```console
+```bash
 pip install hyperactive
 ```
 
-## :zap: Quickstart
+<p>
+  <a href="https://pypi.org/project/hyperactive/"><img src="https://img.shields.io/pypi/v/hyperactive?style=flat-square&color=blue" alt="PyPI"></a>
+  <a href="https://pypi.org/project/hyperactive/"><img src="https://img.shields.io/pypi/pyversions/hyperactive?style=flat-square" alt="Python"></a>
+</p>
 
-### Maximizing a custom function
+<details>
+<summary>Optional dependencies</summary>
 
-```python
-import numpy as np
-
-# function to be maximized
-def problem(params):
-    x = params["x"]
-    y = params["y"]
-
-    return -(x**2 + y**2)
-
-# discrete search space: dict of iterable, scikit-learn like grid space
-# (valid search space types depends on optimizer)
-search_space = {
-    "x": np.arange(-1, 1, 0.01),
-    "y": np.arange(-1, 2, 0.1),
-}
-
-from hyperactive.opt.gfo import HillClimbing
-
-hillclimbing = HillClimbing(
-    search_space=search_space,
-    n_iter=100,
-    experiment=problem,
-)
-
-# running the hill climbing search:
-best_params = hillclimbing.solve()
+```bash
+pip install hyperactive[sklearn-integration]  # scikit-learn integration
+pip install hyperactive[sktime-integration]   # sktime/skpro integration
+pip install hyperactive[all_extras]           # Everything including Optuna
 ```
 
-### experiment abstraction - example: scikit-learn CV experiment
+</details>
 
-"experiment" abstraction = parametrized optimization problem
+<br>
 
-`hyperactive` provides a number of common experiments, e.g.,
-`scikit-learn` cross-validation experiments:
+## Key Features
+
+<table>
+  <tr>
+    <td width="33%">
+      <a href="https://hyperactive.readthedocs.io/en/latest/user_guide/optimizers/index.html"><b>31 Optimization Algorithms</b></a><br>
+      <sub>Local, global, population-based, and model-based methods across 3 backends (GFO, Optuna, sklearn).</sub>
+    </td>
+    <td width="33%">
+      <a href="https://hyperactive.readthedocs.io/en/latest/user_guide/experiments.html"><b>Experiment Abstraction</b></a><br>
+      <sub>Clean separation between what to optimize (experiments) and how to optimize (algorithms).</sub>
+    </td>
+    <td width="33%">
+      <a href="https://hyperactive.readthedocs.io/en/latest/user_guide/search_spaces.html"><b>Flexible Search Spaces</b></a><br>
+      <sub>Discrete, continuous, and mixed parameter types. Define spaces with NumPy arrays or lists.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="33%">
+      <a href="https://hyperactive.readthedocs.io/en/latest/user_guide/integrations.html"><b>ML Framework Integrations</b></a><br>
+      <sub>Native support for scikit-learn, sktime, skpro, and PyTorch with minimal code changes.</sub>
+    </td>
+    <td width="33%">
+      <a href="https://hyperactive.readthedocs.io/en/latest/user_guide/optimizers/optuna.html"><b>Multiple Backends</b></a><br>
+      <sub>GFO algorithms, Optuna samplers, and sklearn search methods through one unified API.</sub>
+    </td>
+    <td width="33%">
+      <a href="https://hyperactive.readthedocs.io/en/latest/api_reference.html"><b>Stable & Tested</b></a><br>
+      <sub>5+ years of development, comprehensive test coverage, and active maintenance since 2019.</sub>
+    </td>
+  </tr>
+</table>
+
+<br>
+
+## Quick Start
 
 ```python
 import numpy as np
-from hyperactive.experiment.integrations import SklearnCvExperiment
-from sklearn.datasets import load_iris
+from hyperactive.opt.gfo import HillClimbing
+
+# Define objective function (maximize)
+def objective(params):
+    x, y = params["x"], params["y"]
+    return -(x**2 + y**2)  # Negative paraboloid, optimum at (0, 0)
+
+# Define search space
+search_space = {
+    "x": np.arange(-5, 5, 0.1),
+    "y": np.arange(-5, 5, 0.1),
+}
+
+# Run optimization
+optimizer = HillClimbing(
+    search_space=search_space,
+    n_iter=100,
+    experiment=objective,
+)
+best_params = optimizer.solve()
+
+print(f"Best params: {best_params}")
+```
+
+**Output:**
+```
+Best params: {'x': 0.0, 'y': 0.0}
+```
+
+<br>
+
+## Core Concepts
+
+Hyperactive separates **what** you optimize from **how** you optimize. Define your experiment (objective function) and search space once, then swap optimizers freely without changing your code. The unified interface abstracts away backend differences, letting you focus on your optimization problem.
+
+```mermaid
+flowchart TB
+    subgraph USER["Your Code"]
+        direction LR
+        F["def objective(params):<br/>    return score"]
+        SP["search_space = {<br/>    'x': np.arange(...),<br/>    'y': [1, 2, 3]<br/>}"]
+    end
+
+    subgraph HYPER["Hyperactive"]
+        direction TB
+        OPT["Optimizer"]
+
+        subgraph BACKENDS["Backends"]
+            GFO["GFO<br/>21 algorithms"]
+            OPTUNA["Optuna<br/>8 algorithms"]
+            SKL["sklearn<br/>2 algorithms"]
+            MORE["...<br/>more to come"]
+        end
+
+        OPT --> GFO
+        OPT --> OPTUNA
+        OPT --> SKL
+        OPT --> MORE
+    end
+
+    subgraph OUT["Output"]
+        BEST["best_params"]
+    end
+
+    F --> OPT
+    SP --> OPT
+    HYPER --> OUT
+```
+
+**Optimizer**: Implements the search strategy (Hill Climbing, Bayesian, Particle Swarm, etc.).
+
+**Search Space**: Defines valid parameter combinations as NumPy arrays or lists.
+
+**Experiment**: Your objective function or a built-in experiment (SklearnCvExperiment, etc.).
+
+**Best Parameters**: The optimizer returns the parameters that maximize the objective.
+
+<br>
+
+## Examples
+
+<details open>
+<summary><b>Scikit-learn Hyperparameter Tuning</b></summary>
+
+```python
 from sklearn.svm import SVC
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+
+from hyperactive.integrations.sklearn import OptCV
+from hyperactive.opt.gfo import HillClimbing
+
+# Load data
+X, y = load_iris(return_X_y=True)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+# Define search space and optimizer
+search_space = {"kernel": ["linear", "rbf"], "C": [1, 10, 100]}
+optimizer = HillClimbing(search_space=search_space, n_iter=20)
+
+# Create tuned estimator
+tuned_svc = OptCV(SVC(), optimizer)
+tuned_svc.fit(X_train, y_train)
+
+print(f"Best params: {tuned_svc.best_params_}")
+print(f"Test accuracy: {tuned_svc.score(X_test, y_test):.3f}")
+```
+
+</details>
+
+
+
+<details>
+<summary><b>Bayesian Optimization</b></summary>
+
+```python
+import numpy as np
+from hyperactive.opt.gfo import BayesianOptimizer
+
+def ackley(params):
+    x, y = params["x"], params["y"]
+    return -(
+        -20 * np.exp(-0.2 * np.sqrt(0.5 * (x**2 + y**2)))
+        - np.exp(0.5 * (np.cos(2 * np.pi * x) + np.cos(2 * np.pi * y)))
+        + np.e + 20
+    )
+
+search_space = {
+    "x": np.arange(-5, 5, 0.01),
+    "y": np.arange(-5, 5, 0.01),
+}
+
+optimizer = BayesianOptimizer(
+    search_space=search_space,
+    n_iter=50,
+    experiment=ackley,
+)
+best_params = optimizer.solve()
+```
+
+</details>
+
+
+
+<details>
+<summary><b>Particle Swarm Optimization</b></summary>
+
+```python
+import numpy as np
+from hyperactive.opt.gfo import ParticleSwarmOptimizer
+
+def rastrigin(params):
+    A = 10
+    values = [params[f"x{i}"] for i in range(5)]
+    return -sum(v**2 - A * np.cos(2 * np.pi * v) + A for v in values)
+
+search_space = {f"x{i}": np.arange(-5.12, 5.12, 0.1) for i in range(5)}
+
+optimizer = ParticleSwarmOptimizer(
+    search_space=search_space,
+    n_iter=500,
+    experiment=rastrigin,
+    population_size=20,
+)
+best_params = optimizer.solve()
+```
+
+</details>
+
+
+
+<details>
+<summary><b>Experiment Abstraction with SklearnCvExperiment</b></summary>
+
+```python
+import numpy as np
+from sklearn.svm import SVC
+from sklearn.datasets import load_iris
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import KFold
 
+from hyperactive.experiment.integrations import SklearnCvExperiment
+from hyperactive.opt.gfo import HillClimbing
+
 X, y = load_iris(return_X_y=True)
 
-# create experiment
+# Create reusable experiment
 sklearn_exp = SklearnCvExperiment(
     estimator=SVC(),
     scoring=accuracy_score,
@@ -88,327 +321,191 @@ sklearn_exp = SklearnCvExperiment(
     y=y,
 )
 
-# experiments can be evaluated via "score"
-params = {"C": 1.0, "kernel": "linear"}
-score, add_info = sklearn_exp.score(params)
-
-# they can be used in optimizers like above
-from hyperactive.opt.gfo import HillClimbing
-
 search_space = {
     "C": np.logspace(-2, 2, num=10),
     "kernel": ["linear", "rbf"],
 }
 
-hillclimbing = HillClimbing(
+optimizer = HillClimbing(
     search_space=search_space,
     n_iter=100,
     experiment=sklearn_exp,
 )
-
-best_params = hillclimbing.solve()
+best_params = optimizer.solve()
 ```
 
-### full ML toolbox integration - example: scikit-learn
+</details>
 
-Any `hyperactive` optimizer can be combined with the ML toolbox integrations!
 
-`OptCV` for tuning `scikit-learn` estimators with any `hyperactive` optimizer:
+
+<details>
+<summary><b>Optuna Backend (TPE)</b></summary>
 
 ```python
-# 1. defining the tuned estimator:
-from sklearn.svm import SVC
-from hyperactive.integrations.sklearn import OptCV
-from hyperactive.opt.gfo import HillClimbing
+import numpy as np
+from hyperactive.opt.optuna import TPEOptimizer
 
-search_space = {"kernel": ["linear", "rbf"], "C": [1, 10]}
-optimizer = HillClimbing(search_space=search_space, n_iter=20)
-tuned_svc = OptCV(SVC(), optimizer)
+def objective(params):
+    x, y = params["x"], params["y"]
+    return -(x**2 + y**2)
 
-# 2. fitting the tuned estimator:
-from sklearn.datasets import load_iris
-from sklearn.model_selection import train_test_split
-X, y = load_iris(return_X_y=True)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+search_space = {
+    "x": np.arange(-5, 5, 0.1),
+    "y": np.arange(-5, 5, 0.1),
+}
 
-tuned_svc.fit(X_train, y_train)
-
-y_pred = tuned_svc.predict(X_test)
-
-# 3. obtaining best parameters and best estimator
-best_params = tuned_svc.best_params_
-best_estimator = tuned_svc.best_estimator_
+optimizer = TPEOptimizer(
+    search_space=search_space,
+    n_iter=100,
+    experiment=objective,
+)
+best_params = optimizer.solve()
 ```
-
-## :bulb: Key Concepts
-
-### Experiment-Based Architecture
-
-Hyperactive v5 introduces a clean separation between optimization algorithms and optimization problems through the **experiment abstraction**:
-
-- **Experiments** define *what* to optimize (the objective function and evaluation logic)
-- **Optimizers** define *how* to optimize (the search strategy and algorithm)
-
-This design allows you to:
-- Mix and match any optimizer with any experiment type
-- Create reusable experiment definitions for common ML tasks
-- Easily switch between different optimization strategies
-- Build complex optimization workflows with consistent interfaces
-
-**Built-in experiments include:**
-- `SklearnCvExperiment` - Cross-validation for sklearn estimators
-- `SktimeForecastingExperiment` - Time series forecasting optimization
-- Custom function experiments (pass any callable as experiment)
-
-<img src="./docs/images/bayes_convex.gif" align="right" width="500">
-
-## Overview
-
-<h3 align="center">
-Hyperactive features a collection of optimization algorithms that can be used for a variety of optimization problems. The following table shows examples of its capabilities:
-</h3>
-
-
-<br>
-
-<table>
-  <tbody>
-    <tr align="center" valign="center">
-      <td>
-        <strong>Optimization Techniques</strong>
-        <img src="./docs/images/blue.jpg"/>
-      </td>
-      <td>
-        <strong>Framework Integrations</strong>
-        <img src="./docs/images/blue.jpg"/>
-      </td>
-      <td>
-        <strong>Optimization Applications</strong>
-        <img src="./docs/images/blue.jpg"/>
-      </td>
-    </tr>
-    <tr/>
-    <tr valign="top">
-      <td>
-        <a><b>Local Search:</b></a>
-          <ul>
-            <li><a href="./examples/gfo/hill_climbing_example.py">Hill Climbing</a></li>
-            <li><a href="./examples/gfo/repulsing_hill_climbing_example.py">Repulsing Hill Climbing</a></li>
-            <li><a href="./examples/gfo/simulated_annealing_example.py">Simulated Annealing</a></li>
-            <li><a href="./examples/gfo/downhill_simplex_example.py">Downhill Simplex Optimizer</a></li>
-         </ul><br>
-        <a><b>Global Search:</b></a>
-          <ul>
-            <li><a href="./examples/gfo/random_search_example.py">Random Search</a></li>
-            <li><a href="./examples/gfo/grid_search_example.py">Grid Search</a></li>
-            <li><a href="./examples/gfo/random_restart_hill_climbing_example.py">Random Restart Hill Climbing</a></li>
-            <li><a href="./examples/gfo/stochastic_hill_climbing_example.py">Stochastic Hill Climbing</a></li>
-            <li><a href="./examples/gfo/powells_method_example.py">Powell's Method</a></li>
-            <li><a href="./examples/gfo/pattern_search_example.py">Pattern Search</a></li>
-         </ul><br>
-        <a><b>Population Methods:</b></a>
-          <ul>
-            <li><a href="./examples/gfo/parallel_tempering_example.py">Parallel Tempering</a></li>
-            <li><a href="./examples/gfo/particle_swarm_example.py">Particle Swarm Optimizer</a></li>
-            <li><a href="./examples/gfo/spiral_optimization_example.py">Spiral Optimization</a></li>
-            <li><a href="./examples/gfo/genetic_algorithm_example.py">Genetic Algorithm</a></li>
-            <li><a href="./examples/gfo/evolution_strategy_example.py">Evolution Strategy</a></li>
-            <li><a href="./examples/gfo/differential_evolution_example.py">Differential Evolution</a></li>
-          </ul><br>
-        <a><b>Sequential Methods:</b></a>
-          <ul>
-            <li><a href="./examples/gfo/bayesian_optimization_example.py">Bayesian Optimization</a></li>
-            <li><a href="./examples/gfo/lipschitz_optimizer_example.py">Lipschitz Optimization</a></li>
-            <li><a href="./examples/gfo/direct_algorithm_example.py">Direct Algorithm</a></li>
-            <li><a href="./examples/gfo/tree_structured_parzen_estimators_example.py">Tree of Parzen Estimators</a></li>
-            <li><a href="./examples/gfo/forest_optimizer_example.py">Forest Optimizer</a>
-            [<a href="#references">ref</a>] </li>
-          </ul><br>
-        <a><b>Optuna Backend:</b></a>
-          <ul>
-            <li><a href="./examples/optuna/tpe_sampler_example.py">TPE Optimizer</a></li>
-            <li><a href="./examples/optuna/random_sampler_example.py">Random Optimizer</a></li>
-            <li><a href="./examples/optuna/cmaes_sampler_example.py">CMA-ES Optimizer</a></li>
-            <li><a href="./examples/optuna/gp_sampler_example.py">Gaussian Process Optimizer</a></li>
-            <li><a href="./examples/optuna/grid_sampler_example.py">Grid Optimizer</a></li>
-            <li><a href="./examples/optuna/nsga_ii_sampler_example.py">NSGA-II Optimizer</a></li>
-            <li><a href="./examples/optuna/nsga_iii_sampler_example.py">NSGA-III Optimizer</a></li>
-            <li><a href="./examples/optuna/qmc_sampler_example.py">QMC Optimizer</a></li>
-          </ul>
-      </td>
-      <td>
-        <a><b>AI and Machine Learning:</b></a>
-          <ul>
-              <li><a href="./examples/integrations/README.md">scikit-learn</a></li>
-              <li><a href="./examples/integrations/README.md">sktime forecasting</a></li>
-              <li><a href="./examples/integrations/README.md">sktime time series classification</a></li>
-          </ul>
-      </td>
-      <td>
-
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-The examples above are not necessarily done with realistic datasets or training procedures.
-The purpose is fast execution of the solution proposal and giving the user ideas for interesting usecases.
-
-
-<br>
-
-## Sideprojects and Tools
-
-The following packages are designed to support Hyperactive and expand its use cases.
-
-| Package                                                                       | Description                                                                          |
-|-------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
-| [Search-Data-Collector](https://github.com/SimonBlanke/search-data-collector) | Simple tool to save search-data during or after the optimization run into csv-files. |
-| [Search-Data-Explorer](https://github.com/SimonBlanke/search-data-explorer)   | Visualize search-data with plotly inside a streamlit dashboard.
-
-
-
-<br>
-
-## FAQ
-
-#### Known Errors + Solutions
-
-<details>
-<summary><b> Read this before opening a bug-issue </b></summary>
-
-<br>
-
-- <b>Are you sure the bug is located in Hyperactive? </b>
-
-  The error might be located in the optimization-backend.
-  Look at the error message from the command line. <b>If</b> one of the last messages look like this:
-     - File "/.../gradient_free_optimizers/...", line ...
-
-  <b>Then</b> you should post the bug report in:
-     - https://github.com/SimonBlanke/Gradient-Free-Optimizers
-
-  <br>Otherwise</b> you can post the bug report in Hyperactive
-
-- <b>Do you have the correct Hyperactive version? </b>
-
-  Every major version update (e.g. v2.2 -> v3.0) the API of Hyperactive changes.
-  Check which version of Hyperactive you have. If your major version is older you have two options:
-
-  <b>Recommended:</b> You could just update your Hyperactive version with:
-  ```bash
-  pip install hyperactive --upgrade
-  ```
-  This way you can use all the new documentation and examples from the current repository.
-
-  Or you could continue using the old version and use an old repository branch as documentation.
-  You can do that by selecting the corresponding branch. (top right of the repository. The default is "main")
-  So if your major version is older (e.g. v2.1.0) you can select the 2.x.x branch to get the old repository for that version.
-
-- <b>Provide example code for error reproduction </b>
-  To understand and fix the issue I need an example code to reproduce the error.
-  I must be able to just copy the code into a py-file and execute it to reproduce the error.
 
 </details>
 
 
+
 <details>
-<summary> MemoryError: Unable to allocate ... for an array with shape (...) </summary>
+<summary><b>Time Series Forecasting with sktime</b></summary>
 
-<br>
-
-This is expected of the current implementation of smb-optimizers. For all Sequential model based algorithms you have to keep your eyes on the search space size:
 ```python
-search_space_size = 1
-for value_ in search_space.values():
-    search_space_size *= len(value_)
+from sktime.forecasting.naive import NaiveForecaster
+from sktime.datasets import load_airline
 
-print("search_space_size", search_space_size)
+from hyperactive.integrations.sktime import ForecastingOptCV
+from hyperactive.opt.gfo import RandomSearch
+
+y = load_airline()
+
+search_space = {
+    "strategy": ["last", "mean", "drift"],
+    "sp": [1, 12],
+}
+
+optimizer = RandomSearch(search_space=search_space, n_iter=10)
+tuned_forecaster = ForecastingOptCV(NaiveForecaster(), optimizer)
+tuned_forecaster.fit(y)
+
+print(f"Best params: {tuned_forecaster.best_params_}")
 ```
-Reduce the search space size to resolve this error.
 
 </details>
 
 
-<details>
-<summary> TypeError: cannot pickle '_thread.RLock' object </summary>
-
-<br>
-
-This typically means your search space or parameter suggestions include non-serializable
-objects (e.g., classes, bound methods, lambdas, local functions, locks). Ensure that all
-values in `search_space`/`param_space` are plain Python/scientific types such as ints,
-floats, strings, lists/tuples, or numpy arrays. Avoid closures and non-top-level callables
-in parameter values.
-
-Hyperactive v5 does not expose a global “distribution” switch. If you parallelize outside
-Hyperactive (e.g., with joblib/dask/ray), choose an appropriate backend and make sure the
-objective and arguments are picklable for process-based backends.
-
-</details>
-
 
 <details>
-<summary> Command line full of warnings </summary>
+<summary><b>PyTorch Neural Network Tuning</b></summary>
 
-<br>
-
-Very often warnings from sklearn or numpy. Those warnings do not correlate with bad performance from Hyperactive. Your code will most likely run fine. Those warnings are very difficult to silence.
-
-It should help to put this at the very top of your script:
 ```python
-def warn(*args, **kwargs):
-    pass
+import numpy as np
+import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader, TensorDataset
+from hyperactive.opt.gfo import BayesianOptimizer
 
+# Example data
+X_train = torch.randn(1000, 10)
+y_train = torch.randint(0, 2, (1000,))
 
-import warnings
+def train_model(params):
+    learning_rate = params["learning_rate"]
+    batch_size = params["batch_size"]
+    hidden_size = params["hidden_size"]
 
-warnings.warn = warn
+    model = nn.Sequential(
+        nn.Linear(10, hidden_size),
+        nn.ReLU(),
+        nn.Linear(hidden_size, 2),
+    )
+
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    criterion = nn.CrossEntropyLoss()
+    loader = DataLoader(TensorDataset(X_train, y_train), batch_size=batch_size)
+
+    model.train()
+    for epoch in range(10):
+        for X_batch, y_batch in loader:
+            optimizer.zero_grad()
+            loss = criterion(model(X_batch), y_batch)
+            loss.backward()
+            optimizer.step()
+
+    # Return validation accuracy
+    model.eval()
+    with torch.no_grad():
+        predictions = model(X_train).argmax(dim=1)
+        accuracy = (predictions == y_train).float().mean().item()
+
+    return accuracy
+
+search_space = {
+    "learning_rate": np.logspace(-5, -1, 20),
+    "batch_size": [16, 32, 64, 128],
+    "hidden_size": [64, 128, 256, 512],
+}
+
+optimizer = BayesianOptimizer(
+    search_space=search_space,
+    n_iter=30,
+    experiment=train_model,
+)
+best_params = optimizer.solve()
 ```
 
 </details>
 
+<br>
 
-<details>
-<summary> Warning: Not enough initial positions for population size </summary>
+## Ecosystem
+
+This library is part of a suite of optimization and machine learning tools. For updates on these packages, [follow on GitHub](https://github.com/SimonBlanke).
+
+| Package | Description |
+|---------|-------------|
+| [Hyperactive](https://github.com/SimonBlanke/Hyperactive) | Hyperparameter optimization framework with experiment abstraction and ML integrations |
+| [Gradient-Free-Optimizers](https://github.com/SimonBlanke/Gradient-Free-Optimizers) | Core optimization algorithms for black-box function optimization |
+| [Surfaces](https://github.com/SimonBlanke/Surfaces) | Test functions and benchmark surfaces for optimization algorithm evaluation |
+
 
 <br>
 
-This warning occurs because the optimizer needs more initial positions to generate a
-population for the search. In v5, initial positions are controlled via the optimizer’s
-`initialize` parameter.
-```python
-# This is how it looks per default
-initialize = {"grid": 4, "random": 2, "vertices": 4}
+## Documentation
 
-# You could set it to this for a maximum population of 20
-initialize = {"grid": 4, "random": 12, "vertices": 4}
+| Resource | Description |
+|----------|-------------|
+| [User Guide](https://hyperactive.readthedocs.io/en/latest/user_guide.html) | Comprehensive tutorials and explanations |
+| [API Reference](https://hyperactive.readthedocs.io/en/latest/api_reference.html) | Complete API documentation |
+| [Examples](https://hyperactive.readthedocs.io/en/latest/examples.html) | Jupyter notebooks with use cases |
+| [FAQ](https://hyperactive.readthedocs.io/en/latest/faq.html) | Common questions and troubleshooting |
+
+<br>
+
+## Contributing
+
+Contributions welcome! See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+
+- **Bug reports**: [GitHub Issues](https://github.com/SimonBlanke/Hyperactive/issues)
+- **Feature requests**: [GitHub Discussions](https://github.com/SimonBlanke/Hyperactive/discussions)
+- **Questions**: [Discord](https://discord.gg/7uKdHfdcJG)
+
+<br>
+
+## Citation
+
+If you use this software in your research, please cite:
+
+```bibtex
+@software{hyperactive2019,
+  author = {Simon Blanke},
+  title = {Hyperactive: A hyperparameter optimization and meta-learning toolbox},
+  year = {2019},
+  url = {https://github.com/SimonBlanke/Hyperactive},
+}
 ```
-
-</details>
-
-
-
-<br>
-
-## References
-
-#### [dto] [Scikit-Optimize](https://github.com/scikit-optimize/scikit-optimize/blob/master/skopt/learning/forest.py)
-
-<br>
-
-## Citing Hyperactive
-
-    @Misc{hyperactive2021,
-      author =   {{Simon Blanke}},
-      title =    {{Hyperactive}: An optimization and data collection toolbox for convenient and fast prototyping of computationally expensive models.},
-      howpublished = {\url{https://github.com/SimonBlanke}},
-      year = {since 2019}
-    }
-
 
 <br>
 
 ## License
 
-[![LICENSE](https://img.shields.io/github/license/SimonBlanke/Hyperactive?style=for-the-badge)](https://github.com/SimonBlanke/Hyperactive/blob/main/LICENSE)
+[MIT License](./LICENSE) - Free for commercial and academic use.
