@@ -114,8 +114,8 @@ pip install hyperactive[all_extras]           # Everything including Optuna
       <sub>GFO algorithms, Optuna samplers, and sklearn search methods through one unified API.</sub>
     </td>
     <td width="33%">
-      <a href="https://hyperactive.readthedocs.io/en/latest/api_reference.html"><b>Stable & Tested</b></a><br>
-      <sub>5+ years of development, comprehensive test coverage, and active maintenance since 2019.</sub>
+      <a href="https://hyperactive.readthedocs.io/en/latest/examples.html"><b>Problems & Experiments</b></a><br>
+      <sub>Toy optimization problems as well as AI/ML benchmarking experiments for evaluation and testing.</sub>
     </td>
   </tr>
 </table>
