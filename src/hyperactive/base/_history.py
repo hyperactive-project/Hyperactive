@@ -47,14 +47,16 @@ class SearchHistory:
         eval_time : float
             Evaluation time in seconds.
         """
-        self._trials.append({
-            "iteration": len(self._trials),
-            "run_id": self._current_run_id,
-            "params": dict(params),
-            "score": float(score),
-            "metadata": dict(metadata) if metadata else {},
-            "eval_time": float(eval_time),
-        })
+        self._trials.append(
+            {
+                "iteration": len(self._trials),
+                "run_id": self._current_run_id,
+                "params": dict(params),
+                "score": float(score),
+                "metadata": dict(metadata) if metadata else {},
+                "eval_time": float(eval_time),
+            }
+        )
 
     def new_run(self) -> None:
         """Signal the start of a new optimization run.

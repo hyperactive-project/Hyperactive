@@ -2,8 +2,6 @@
 
 # copyright: hyperactive developers, MIT License (see LICENSE file)
 
-import pytest
-
 from hyperactive.base import SearchHistory
 
 

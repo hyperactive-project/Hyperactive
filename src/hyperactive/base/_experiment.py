@@ -173,7 +173,8 @@ class BaseExperiment(BaseObject):
         SearchHistory
             The data object with the following attributes and methods:
 
-            Attributes:
+        Attributes
+        ----------
             - ``history``: list[dict] - all recorded evaluations
             - ``n_trials``: int - total number of trials
             - ``n_runs``: int - number of optimization runs
@@ -181,7 +182,8 @@ class BaseExperiment(BaseObject):
             - ``best_score``: float | None - highest score
             - ``best_params``: dict | None - parameters of best trial
 
-            Methods:
+        Methods
+        -------
             - ``get_run(run_id)``: get trials from specific run
             - ``clear()``: reset all data
             - ``new_run()``: signal start of new run (call before each run)
