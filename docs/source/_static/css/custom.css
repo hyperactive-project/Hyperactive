@@ -202,7 +202,7 @@ html[data-theme="dark"] {
 .hero-tagline {
     font-size: 1.25rem;
     font-weight: 400;
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(210, 215, 225, 0.95);
     margin: 0 0 0.5rem 0;
     letter-spacing: 0.05em;
     font-style: italic;
@@ -278,6 +278,7 @@ html[data-theme="dark"] .back-to-top-sidebar a:hover {
     text-align: center;
     position: relative;
     transition: background 0.2s ease;
+    min-height: 85px;
 }
 
 .stat-item:not(:last-child)::after {
@@ -297,6 +298,53 @@ html[data-theme="dark"] .back-to-top-sidebar a:hover {
 a.stat-item {
     text-decoration: none;
     color: inherit;
+}
+
+/* Front content (number + label) */
+.stat-front {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.stat-item:hover .stat-front {
+    opacity: 0;
+    transform: translateY(-8px);
+}
+
+/* Hover content (description) */
+.stat-hover {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    pointer-events: none;
+}
+
+.stat-item:hover .stat-hover {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.stat-hover-text {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--hyperactive-primary);
+    line-height: 1.4;
+    text-align: center;
+}
+
+html[data-theme="dark"] .stat-hover-text {
+    color: var(--hyperactive-secondary);
 }
 
 .stat-value {
@@ -334,6 +382,7 @@ html[data-theme="dark"] .stat-value {
     .stat-item {
         flex: 1 1 50%;
         padding: 1rem 0.75rem;
+        min-height: 75px;
     }
 
     .stat-item:not(:last-child)::after {
@@ -351,6 +400,10 @@ html[data-theme="dark"] .stat-value {
 
     .stat-value {
         font-size: 1.5rem;
+    }
+
+    .stat-hover-text {
+        font-size: 0.75rem;
     }
 }
 

@@ -258,6 +258,39 @@ class TSCOptCV(_DelegatedClassifier):
 
         return self
 
+    def _predict_proba(self, X):
+        """Predict class probabilities for sequences in X.
+
+        private _predict_proba containing the core logic, called from predict_proba
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+
+        Parameters
+        ----------
+        X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            if self.get_tag("X_inner_mtype") = "numpy3D":
+                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            if self.get_tag("X_inner_mtype") = "nested_univ":
+                pd.DataFrame with each column a dimension, each cell a pd.Series
+            for list of other mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+
+        Returns
+        -------
+        y : 2D array of shape [n_instances, n_classes] - predicted class probabilities
+        """
+        if not self.refit:
+            raise RuntimeError(
+                f"In {self.__class__.__name__}, refit must be True to make predictions,"
+                f" but found refit=False. If refit=False, {self.__class__.__name__} can"
+                " be used only to tune hyper-parameters, as a parameter estimator."
+            )
+        return super()._predict_proba(X=X)
+
     def _predict(self, X):
         """Predict labels for sequences in X.
 
@@ -317,15 +350,16 @@ class TSCOptCV(_DelegatedClassifier):
 
         params_gridsearch = {
             "estimator": DummyClassifier(),
+            "cv": KFold(n_splits=2, shuffle=False),
             "optimizer": GridSearchSk(
-                param_grid={"strategy": ["most_frequent", "stratified"]}
+                param_grid={"strategy": ["most_frequent", "prior"]}
             ),
         }
         params_randomsearch = {
             "estimator": DummyClassifier(),
-            "cv": 2,
+            "cv": KFold(n_splits=2, shuffle=False),
             "optimizer": RandomSearchSk(
-                param_distributions={"strategy": ["most_frequent", "stratified"]},
+                param_distributions={"strategy": ["most_frequent", "prior"]},
             ),
             "scoring": accuracy_score,
         }
