@@ -154,7 +154,7 @@ class _BaseScipyAdapter(BaseOptimizer):
                 low, high = space
                 bounds.append((float(low), float(high)))
                 param_names.append(key)
-            elif isinstance(space, (list, np.ndarray)):
+            elif isinstance(space, list | np.ndarray):
                 raise ValueError(
                     f"Scipy optimizers only support continuous parameter spaces. "
                     f"Parameter '{key}' has discrete values (list/array). "
@@ -215,8 +215,9 @@ class _BaseScipyAdapter(BaseOptimizer):
 
         # Use first warm start point
         point = warm_start[0]
-        x0 = np.array([point.get(name, (b[0] + b[1]) / 2)
-                       for name, b in zip(param_names, bounds)])
+        x0 = np.array(
+            [point.get(name, (b[0] + b[1]) / 2) for name, b in zip(param_names, bounds)]
+        )
         return x0
 
     def _create_callback(self, start_time, max_time):

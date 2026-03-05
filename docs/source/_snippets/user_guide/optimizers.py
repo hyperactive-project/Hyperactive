@@ -216,14 +216,15 @@ optimizer = TPEOptimizer(
 
 # [start:scipy_imports]
 from hyperactive.opt.scipy import (
+    ScipyBasinhopping,  # Global: random perturbations + local search
     ScipyDifferentialEvolution,  # Global: population-based
-    ScipyDualAnnealing,          # Global: simulated annealing variant
-    ScipyBasinhopping,           # Global: random perturbations + local search
-    ScipySHGO,                   # Global: finds multiple local minima
-    ScipyDirect,                 # Global: deterministic DIRECT algorithm
-    ScipyNelderMead,             # Local: simplex-based
-    ScipyPowell,                 # Local: conjugate direction method
+    ScipyDirect,  # Global: deterministic DIRECT algorithm
+    ScipyDualAnnealing,  # Global: simulated annealing variant
+    ScipyNelderMead,  # Local: simplex-based
+    ScipyPowell,  # Local: conjugate direction method
+    ScipySHGO,  # Global: finds multiple local minima
 )
+
 # [end:scipy_imports]
 
 
@@ -235,7 +236,6 @@ scipy_search_space = {
 
 
 # [start:scipy_differential_evolution]
-from hyperactive.opt.scipy import ScipyDifferentialEvolution
 
 optimizer = ScipyDifferentialEvolution(
     param_space=scipy_search_space,
@@ -248,7 +248,6 @@ optimizer = ScipyDifferentialEvolution(
 
 
 # [start:scipy_dual_annealing]
-from hyperactive.opt.scipy import ScipyDualAnnealing
 
 optimizer = ScipyDualAnnealing(
     param_space=scipy_search_space,
@@ -260,7 +259,6 @@ optimizer = ScipyDualAnnealing(
 
 
 # [start:scipy_basinhopping]
-from hyperactive.opt.scipy import ScipyBasinhopping
 
 optimizer = ScipyBasinhopping(
     param_space=scipy_search_space,
@@ -273,7 +271,6 @@ optimizer = ScipyBasinhopping(
 
 
 # [start:scipy_shgo]
-from hyperactive.opt.scipy import ScipySHGO
 
 optimizer = ScipySHGO(
     param_space=scipy_search_space,
@@ -286,7 +283,6 @@ optimizer = ScipySHGO(
 
 
 # [start:scipy_direct]
-from hyperactive.opt.scipy import ScipyDirect
 
 optimizer = ScipyDirect(
     param_space=scipy_search_space,
@@ -298,7 +294,6 @@ optimizer = ScipyDirect(
 
 
 # [start:scipy_nelder_mead]
-from hyperactive.opt.scipy import ScipyNelderMead
 
 optimizer = ScipyNelderMead(
     param_space=scipy_search_space,
@@ -310,7 +305,6 @@ optimizer = ScipyNelderMead(
 
 
 # [start:scipy_powell]
-from hyperactive.opt.scipy import ScipyPowell
 
 optimizer = ScipyPowell(
     param_space=scipy_search_space,

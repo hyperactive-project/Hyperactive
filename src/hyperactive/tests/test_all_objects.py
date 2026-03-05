@@ -478,12 +478,12 @@ class TestAllOptimizers(OptimizerFixtureGenerator, _QuickTester):
             # Scipy should find params close to (0, 0) which is the optimum
             # Allow some tolerance since scipy uses continuous optimization
             assert isinstance(best_params, dict)
-            assert abs(best_params["x0"]) < 0.5, (
-                f"Scipy optimizer should find x0 close to 0, got {best_params['x0']}"
-            )
-            assert abs(best_params["x1"]) < 0.5, (
-                f"Scipy optimizer should find x1 close to 0, got {best_params['x1']}"
-            )
+            assert (
+                abs(best_params["x0"]) < 0.5
+            ), f"Scipy optimizer should find x0 close to 0, got {best_params['x0']}"
+            assert (
+                abs(best_params["x1"]) < 0.5
+            ), f"Scipy optimizer should find x1 close to 0, got {best_params['x1']}"
             return None
 
         # For other backends, no-op here; targeted direction tests live elsewhere
