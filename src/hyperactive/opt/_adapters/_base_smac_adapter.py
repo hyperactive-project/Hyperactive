@@ -172,7 +172,7 @@ class _BaseSMACAdapter(BaseOptimizer):
                     # Float range (includes mixed int/float like (1, 10.0))
                     cs.add(Float(name, bounds=(float(low), float(high))))
 
-            elif isinstance(space, (list, np.ndarray)):
+            elif isinstance(space, list | np.ndarray):
                 values = list(space) if isinstance(space, np.ndarray) else space
 
                 if len(values) == 0:
