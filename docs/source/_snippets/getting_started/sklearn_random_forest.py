@@ -7,6 +7,7 @@ using Hyperactive's SklearnCvExperiment. It is included in get_started.rst.
 # [start:full_example]
 from sklearn.datasets import load_iris
 from sklearn.ensemble import RandomForestClassifier
+
 from hyperactive.experiment.integrations import SklearnCvExperiment
 from hyperactive.opt.gfo import HillClimbing
 
@@ -31,7 +32,7 @@ search_space = {
 # Optimize
 optimizer = HillClimbing(
     search_space=search_space,
-    n_iter=50,
+    n_iter=5,
     experiment=experiment,
 )
 best_params = optimizer.solve()

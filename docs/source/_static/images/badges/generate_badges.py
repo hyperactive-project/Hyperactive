@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Badge Generator for Hyperactive Documentation
+"""Badge Generator for Hyperactive Documentation.
 
 Generates local SVG badges based on project information from pyproject.toml.
 This eliminates dependency on external badge services like shields.io.
@@ -35,7 +34,9 @@ COLORS = {
 }
 
 
-def create_badge_svg(label: str, value: str, color: str, label_width: int = None, value_width: int = None) -> str:
+def create_badge_svg(
+    label: str, value: str, color: str, label_width: int = None, value_width: int = None
+) -> str:
     """
     Create an SVG badge in shields.io flat-square style.
 
@@ -46,7 +47,8 @@ def create_badge_svg(label: str, value: str, color: str, label_width: int = None
         label_width: Override calculated label width
         value_width: Override calculated value width
 
-    Returns:
+    Returns
+    -------
         SVG string
     """
     # Approximate width calculation (7px per character + padding)
@@ -58,7 +60,7 @@ def create_badge_svg(label: str, value: str, color: str, label_width: int = None
     total_width = lw + vw
     height = 20
 
-    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{total_width}" height="{height}">
+    svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="{total_width}" height="{height}">
   <title>{label}: {value}</title>
   <!-- Label background -->
   <rect width="{lw}" height="{height}" fill="{COLORS['label_bg']}"/>
@@ -68,12 +70,14 @@ def create_badge_svg(label: str, value: str, color: str, label_width: int = None
   <text x="{lw/2}" y="14" fill="#fff" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11" text-anchor="middle">{label}</text>
   <!-- Value text -->
   <text x="{lw + vw/2}" y="14" fill="#fff" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11" text-anchor="middle">{value}</text>
-</svg>'''
+</svg>"""  # noqa: E501
 
     return svg
 
 
-def create_simple_badge_svg(text: str, color: str, width: int = None, font_size: int = 11) -> str:
+def create_simple_badge_svg(
+    text: str, color: str, width: int = None, font_size: int = 11
+) -> str:
     """
     Create a simple single-section SVG badge.
 
@@ -83,7 +87,8 @@ def create_simple_badge_svg(text: str, color: str, width: int = None, font_size:
         width: Override calculated width
         font_size: Font size in pixels
 
-    Returns:
+    Returns
+    -------
         SVG string
     """
     char_width = 7
@@ -92,11 +97,11 @@ def create_simple_badge_svg(text: str, color: str, width: int = None, font_size:
     height = 20
     text_y = 14 if font_size >= 11 else 13.5
 
-    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{height}">
+    svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{height}">
   <title>{text}</title>
   <rect width="{w}" height="{height}" fill="{color}"/>
   <text x="{w/2}" y="{text_y}" fill="#fff" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="{font_size}" text-anchor="middle" font-weight="600">{text}</text>
-</svg>'''
+</svg>"""  # noqa: E501
 
     return svg
 
@@ -123,6 +128,7 @@ def extract_python_versions(classifiers: list) -> str:
 
 
 def main():
+    """Generate SVG badges from pyproject.toml metadata."""
     # Find pyproject.toml
     script_dir = Path(__file__).parent
     project_root = script_dir.parents[4]  # Go up from docs/source/_static/images/badges

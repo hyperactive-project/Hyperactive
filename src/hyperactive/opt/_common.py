@@ -1,5 +1,7 @@
 """Common functions used by multiple optimizers."""
 
+import warnings
+
 __all__ = ["_score_params"]
 
 
@@ -14,7 +16,11 @@ def _score_params(params, meta):
     error_score = meta["error_score"]
 
     try:
-        return float(experiment(**params))
-    except Exception:  # noqa: B904
-        # Catch all exceptions and assign error_score
-        return error_score
+        return float(experiment(params))
+    except Exception as e:
+        warnings.warn(
+            f"Experiment raised {type(e).__name__}: {e}. "
+            f"Assigning error_score={error_score}.",
+            stacklevel=2,
+        )
+        return float(error_score)
