@@ -50,6 +50,13 @@ class PackageConfig:
         "info:local_vs_global",  # "local", "mixed", "global"
         "info:explore_vs_exploit",  # "explore", "exploit", "mixed"
         "info:compute",  # "low", "middle", "high"
+        # search space capabilities
+        "capability:discrete",  # supports discrete lists
+        "capability:continuous",  # supports continuous ranges
+        "capability:categorical",  # supports categorical choices
+        "capability:log_scale",  # supports log-scale sampling
+        "capability:conditions",  # supports conditional params
+        "capability:constraints",  # supports constraint functions
     ]
 
 
