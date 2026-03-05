@@ -22,6 +22,7 @@ import hyperactive  # noqa: E402  # must be after sys.path modification
 # -- Extract metadata from pyproject.toml ------------------------------------
 # This allows documentation to stay in sync with pyproject.toml automatically
 
+
 def extract_pyproject_metadata():
     """Extract metadata from pyproject.toml for use in documentation."""
     pyproject_path = Path(__file__).parent.parent.parent / "pyproject.toml"
@@ -53,9 +54,7 @@ def extract_pyproject_metadata():
                 metadata["min_python"] = min_match.group(1)
 
         # Extract core dependencies
-        deps_match = re.search(
-            r"dependencies\s*=\s*\[(.*?)\]", content, re.DOTALL
-        )
+        deps_match = re.search(r"dependencies\s*=\s*\[(.*?)\]", content, re.DOTALL)
         if deps_match:
             deps_text = deps_match.group(1)
             # Extract package names (first word before any version specifier)
@@ -227,7 +226,9 @@ def linkcode_resolve(domain, info):
         filename = "src/hyperactive/%s#L%d-L%d" % find_source()
     except Exception:
         filename = info["module"].replace(".", "/") + ".py"
-    return f"https://github.com/SimonBlanke/Hyperactive/blob/{CURRENT_VERSION}/{filename}"
+    return (
+        f"https://github.com/SimonBlanke/Hyperactive/blob/{CURRENT_VERSION}/{filename}"
+    )
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -341,7 +342,8 @@ texinfo_documents = [
         "Hyperactive Documentation",
         author,
         "hyperactive",
-        "An optimization and data collection toolbox for convenient and fast prototyping.",
+        "An optimization and data collection toolbox for convenient"
+        " and fast prototyping.",
         "Miscellaneous",
     ),
 ]
@@ -411,7 +413,7 @@ def count_from_all_list(module_path: str) -> int:
                     if isinstance(target, ast.Name) and target.id == "__all__":
                         if isinstance(node.value, ast.List):
                             return len(node.value.elts)
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return 0
 

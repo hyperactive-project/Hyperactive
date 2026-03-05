@@ -33,6 +33,31 @@ For time series forecasting and classification with sktime:
        pip install hyperactive[sktime-integration]
 
 
+PyTorch Lightning Integration
+-----------------------------
+
+For deep learning hyperparameter optimization with PyTorch Lightning:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 70
+
+   * - Use Case
+     - Example
+   * - PyTorch Lightning Experiment
+     - `torch_experiment_example.py <https://github.com/SimonBlanke/Hyperactive/blob/master/examples/integrations/torch_experiment_example.py>`_
+
+.. note::
+
+   PyTorch Lightning integration requires additional dependencies:
+
+   .. code-block:: bash
+
+       pip install hyperactive[all_extras]
+
+   or install ``torch`` and ``lightning`` separately.
+
+
 Installing Extras
 -----------------
 
