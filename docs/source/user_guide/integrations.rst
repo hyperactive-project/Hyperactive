@@ -254,50 +254,47 @@ For deep learning hyperparameter optimization with PyTorch Lightning:
 
 ----
 
-Tips
-----
+Choosing the Right Integration
+------------------------------
 
-.. grid:: 1 1 2 2
-   :gutter: 3
+.. list-table::
+    :header-rows: 1
+    :widths: 25 25 50
 
-   * - Framework
-     - Integration Class
-     - Use Case
-   * - scikit-learn
-     - ``OptCV``
-     - Classification, regression, pipelines
-   * - sktime
-     - ``ForecastingOptCV``
-     - Time series forecasting
-   * - sktime
-     - ``TSCOptCV``
-     - Time series classification
+    * - Framework
+       - Integration Class
+       - Use Case
+    * - scikit-learn
+       - ``OptCV``
+       - Classification, regression, pipelines
+    * - sktime
+       - ``ForecastingOptCV``
+       - Time series forecasting
+    * - sktime
+       - ``TSCOptCV``
+       - Time series classification
     * - skforecast
        - ``SkforecastOptCV``
        - Recursive time series forecasting
-   * - skpro
-     - ``SkproProbaRegExperiment``
-     - Probabilistic regression
-   * - PyTorch Lightning
-     - ``TorchExperiment``
-     - Deep learning models
-     
-   .. grid-item-card:: Match the interface
+    * - skpro
+       - ``SkproProbaRegExperiment``
+       - Probabilistic regression
+    * - PyTorch Lightning
+       - ``TorchExperiment``
+       - Deep learning models
 
-      Use ``OptCV`` when you want sklearn-compatible behavior (fit/predict).
-      Use experiment classes when you want more control over the optimization loop.
 
-   .. grid-item-card:: Consider evaluation cost
+Tips for Using Integrations
+---------------------------
 
-      Deep learning experiments are expensive. Use efficient optimizers like
-      ``BayesianOptimizer`` with fewer iterations (10-50 instead of 100+).
+1. **Match the interface**: Use ``OptCV`` when you want sklearn-compatible behavior
+    (fit/predict). Use experiment classes when you want more control.
 
-   .. grid-item-card:: Use appropriate CV strategies
+2. **Consider evaluation cost**: Deep learning experiments are expensive.
+    Use efficient optimizers like ``BayesianOptimizer`` with fewer iterations.
 
-      Match your cross-validation to your problem: ``TimeSeriesSplit`` for
-      time series, stratified splits for imbalanced data.
+3. **Use appropriate CV strategies**: Match your cross-validation to your problem
+    (e.g., ``TimeSeriesSplit`` for time series, stratified splits for imbalanced data).
 
-   .. grid-item-card:: Start simple
-
-      Begin with ``RandomSearch`` to establish baselines before using
-      more sophisticated optimizers.
+4. **Start simple**: Begin with ``GridSearch`` or ``RandomSearch`` to establish
+    baselines before using more sophisticated optimizers.

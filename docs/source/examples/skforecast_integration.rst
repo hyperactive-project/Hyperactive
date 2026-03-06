@@ -21,8 +21,8 @@ Example File
      - `skforecast_example.py <https://github.com/SimonBlanke/Hyperactive/blob/master/examples/skforecast/skforecast_example.py>`_
 
 
-Installation
-------------
+Skforecast Installation
+-----------------------
 
 Install the optional integration dependency:
 

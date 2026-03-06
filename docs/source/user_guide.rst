@@ -117,10 +117,6 @@ Guide Sections
       :link: user_guide/search_spaces
       :link-type: doc
 
-:ref:`user_guide_integrations`
-    Framework integrations for scikit-learn, sktime, skforecast, skpro, and PyTorch.
-    Drop-in replacements for GridSearchCV and similar tools.
-      
       Best practices for parameter ranges,
       scaling, and granularity.
 
