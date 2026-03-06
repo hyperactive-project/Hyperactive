@@ -185,7 +185,19 @@ class SkforecastExperiment(BaseExperiment):
         list of str
             The parameter names of the search parameters.
         """
-        return list(self.forecaster.get_params().keys())
+        # Newer skforecast forecasters expose set_params but may not expose
+        # get_params; in that case infer tunable names from wrapped estimator.
+        if hasattr(self.forecaster, "get_params"):
+            return list(self.forecaster.get_params().keys())
+
+        for attr in ("estimator", "regressor"):
+            estimator = getattr(self.forecaster, attr, None)
+            if estimator is not None and hasattr(estimator, "get_params"):
+                return list(estimator.get_params().keys())
+
+        # Unknown parameter surface: allow BaseExperiment to accept arbitrary
+        # params and delegate compatibility checks to forecaster.set_params.
+        return None
 
     def _evaluate(self, params):
         """Evaluate the parameters.
