@@ -27,8 +27,8 @@ class LightGBMExperiment(SklearnCvExperiment):
         if not _check_soft_dependencies("lightgbm", severity="none"):
             return []
 
-        from sklearn.datasets import load_iris, load_diabetes
         from lightgbm import LGBMClassifier, LGBMRegressor
+        from sklearn.datasets import load_diabetes, load_iris
 
         # Classification test case
         X, y = load_iris(return_X_y=True)
