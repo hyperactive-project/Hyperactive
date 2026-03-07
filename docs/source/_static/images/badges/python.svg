@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="150" height="20">
+  <title>python: 3.10 - 3.14</title>
+  <!-- Label background -->
+  <rect width="59" height="20" fill="#555"/>
+  <!-- Value background -->
+  <rect x="59" width="91" height="20" fill="#5D5D7A"/>
+  <!-- Label text -->
+  <text x="29.5" y="14" fill="#fff" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11" text-anchor="middle">python</text>
+  <!-- Value text -->
+  <text x="104.5" y="14" fill="#fff" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11" text-anchor="middle">3.10 - 3.14</text>
+</svg>

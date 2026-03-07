@@ -1,0 +1,41 @@
+# =============================================================================
+# Auto-Label Configuration
+# =============================================================================
+#
+# Used by: auto-label-prs.yml
+#
+# OUTPUT:
+#   PRs get labels based on:
+#   - Title prefix: [Fix] → "Fix" label
+#   - Changed files: docs/** → "documentation" label
+#   - Branch name: dependabot/* → "dependencies" label
+#
+# =============================================================================
+
+autolabeler:
+  - label: 'documentation'
+    files:
+      - 'docs/**/*'
+      - '*.md'
+    branch:
+      - '/docs?\/.+/'
+  - label: 'Fix'
+    title:
+      - '/^\[Fix\]/i'
+  - label: 'Feature'
+    title:
+      - '/^\[Feature\]/i'
+  - label: 'Refactor'
+    title:
+      - '/^\[Refactor\]/i'
+  - label: 'Release'
+    title:
+      - '/^\[Release\]/i'
+  - label: 'Hotfix'
+    title:
+      - '/^\[Hotfix\]/i'
+  - label: 'dependencies'
+    files:
+      - 'pyproject.toml'
+    branch:
+      - '/dependabot\/.+/'

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="130" height="20">
+  <title>GC.OS: Sponsored</title>
+  <!-- Label background -->
+  <rect width="52" height="20" fill="#555"/>
+  <!-- Value background -->
+  <rect x="52" width="78" height="20" fill="#0eac92"/>
+  <!-- Label text -->
+  <text x="26.0" y="14" fill="#fff" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11" text-anchor="middle">GC.OS</text>
+  <!-- Value text -->
+  <text x="91.0" y="14" fill="#fff" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11" text-anchor="middle">Sponsored</text>
+</svg>

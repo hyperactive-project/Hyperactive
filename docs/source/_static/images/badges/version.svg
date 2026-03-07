@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="124" height="20">
+  <title>version: v5.0.2</title>
+  <!-- Label background -->
+  <rect width="65" height="20" fill="#555"/>
+  <!-- Value background -->
+  <rect x="65" width="59" height="20" fill="#5D5D7A"/>
+  <!-- Label text -->
+  <text x="32.5" y="14" fill="#fff" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11" text-anchor="middle">version</text>
+  <!-- Value text -->
+  <text x="94.5" y="14" fill="#fff" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11" text-anchor="middle">v5.0.2</text>
+</svg>

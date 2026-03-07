@@ -1,0 +1,21 @@
+/* CSS for parameter fields and other structured documentation elements */
+
+/* Styling for parameter lists */
+dl.field-list {
+    display: grid;
+    grid-template-columns: fit-content(30%) auto;
+}
+
+dl.field-list > dt {
+    font-weight: bold;
+    word-break: break-word;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+}
+
+dl.field-list > dd {
+    padding-left: 0.5em;
+    margin-top: 0em;
+    margin-bottom: 0.5em;
+    margin-left: 0em;
+}

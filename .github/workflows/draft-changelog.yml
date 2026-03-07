@@ -1,0 +1,39 @@
+# =============================================================================
+# Draft Changelog
+# =============================================================================
+#
+# TRIGGER:
+#   When code is merged/pushed to main
+#
+# OUTPUT:
+#   A draft release in GitHub Releases section containing:
+#   - Grouped list of merged PRs (Features, Bug Fixes, etc.)
+#   - Suggested next version number
+#
+# DOES NOT:
+#   - Publish the release (you must click "Publish" manually)
+#   - Create git tags
+#   - Upload to PyPI
+#
+# =============================================================================
+
+name: Draft Changelog
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  update_draft:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: release-drafter/release-drafter@v6
+        with:
+          config-name: draft-changelog-config.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
