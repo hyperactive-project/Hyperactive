@@ -2,7 +2,6 @@
 # copyright: hyperactive developers, MIT License (see LICENSE file)
 
 
-
 def test_endtoend_lightgbm():
     """Test end-to-end usage of HillClimbing optimizer with LightGBM experiment."""
     from skbase.utils.dependencies import _check_soft_dependencies
@@ -45,5 +44,7 @@ def test_endtoend_lightgbm():
     best_params = hill_climbing.best_params_
     assert best_params is not None, "Best parameters should not be None"
     assert isinstance(best_params, dict), "Best parameters should be a dictionary"
-    assert "n_estimators" in best_params, "Best parameters should contain 'n_estimators'"
+    assert (
+        "n_estimators" in best_params
+    ), "Best parameters should contain 'n_estimators'"
     assert "max_depth" in best_params, "Best parameters should contain 'max_depth'"
