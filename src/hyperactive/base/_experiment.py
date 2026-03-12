@@ -31,6 +31,18 @@ class BaseExperiment(BaseObject):
     def __name__(self):
         return type(self).__name__
 
+    def __neg__(self):
+        """Negate the experiment.
+
+        Returns
+        -------
+        BaseExperiment
+            A new experiment with negated score.
+        """
+        from hyperactive.experiment.compose import Negative
+        # return a new experiment with negated score
+        return Negative(self)
+
     def paramnames(self):
         """Return the parameter names of the search.
 
