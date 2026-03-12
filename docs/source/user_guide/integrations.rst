@@ -7,7 +7,7 @@ Framework Integrations
 Hyperactive integrates with popular ML frameworks, providing drop-in replacements
 for tools like ``GridSearchCV``. Each ML framework has its own conventions for training and evaluation. The integration
 classes handle cross-validation setup, scoring metrics, and parameter translation, so
-you can use any optimizer with scikit-learn, sktime, skpro, or PyTorch models.
+you can use any optimizer with scikit-learn, sktime, skpro, PyTorch, or LightGBM models.
 
 ----
 
@@ -53,6 +53,15 @@ Supported Frameworks
 
       Deep learning models
 
+   .. grid-item-card:: LightGBM
+      :class-card: sd-border-info
+      :link: #lightgbm-integration
+      :link-type: url
+
+      **LightGBMExperiment**
+
+      Gradient boosting models
+
 ----
 
 Quick Reference
@@ -86,6 +95,10 @@ Quick Reference
      - ``TorchExperiment``
      - Deep learning models
      - ``[all_extras]``
+   * - LightGBM
+     - ``LightGBMExperiment``
+     - Classification, regression
+     - ``[lightgbm]``
 
 ----
 
@@ -234,6 +247,34 @@ For deep learning hyperparameter optimization with PyTorch Lightning:
    :language: python
    :start-after: # [start:pytorch_lightning]
    :end-before: # [end:pytorch_lightning]
+
+----
+
+LightGBM Integration
+--------------------
+
+For gradient boosting hyperparameter optimization with LightGBM:
+
+.. note::
+
+   Requires ``pip install lightgbm``
+
+.. grid:: 1
+   :gutter: 0
+
+   .. grid-item::
+      :class: sd-bg-light sd-pt-3 sd-pb-1 sd-ps-3 sd-pe-3 sd-rounded-3
+
+      **Key Features**
+
+      - Optimize LightGBM classifiers and regressors
+      - LightGBM follows the sklearn API, so cross-validation works out of the box
+      - Supports all LightGBM hyperparameters (``n_estimators``, ``max_depth``, ``learning_rate``, etc.)
+
+.. literalinclude:: ../_snippets/user_guide/integrations.py
+   :language: python
+   :start-after: # [start:lightgbm_experiment]
+   :end-before: # [end:lightgbm_experiment]
 
 ----
 
