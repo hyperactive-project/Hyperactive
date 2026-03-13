@@ -102,7 +102,7 @@ all_extras = [
   "optuna<5",
   "cmaes",  # Required for CmaEsOptimizer (optuna's CMA-ES sampler)
   "lightning",
-  "hyperactive[catboost-integration]",
+  "catboost",               
 ]
 
 
