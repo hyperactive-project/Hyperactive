@@ -15,10 +15,13 @@ from hyperactive.experiment.integrations.torch_lightning_experiment import (
     TorchExperiment,
 )
 
+from .catboost_cv import CatBoostCvExperiment
+
 __all__ = [
     "SklearnCvExperiment",
     "SkproProbaRegExperiment",
     "SktimeClassificationExperiment",
     "SktimeForecastingExperiment",
     "TorchExperiment",
+    "CatBoostCvExperiment",
 ]
