@@ -4,6 +4,7 @@
 
 from hyperactive.opt.gridsearch import GridSearchSk
 from hyperactive.opt.random_search import RandomSearchSk
+from .lipo import LIPOOoptimizer
 
 from .gfo import (
     BayesianOptimizer,
