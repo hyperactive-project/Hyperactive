@@ -35,3 +35,19 @@ class LIPOOptimizer:
             else:
                 snapped[key] = val   # categorical, pass through
         return snapped
+        
+    def solve(self):
+        lower, upper, cats = self._parse_search_space()
+
+        def wrapped(**kwargs):
+            return self.experiment(self._snap_to_grid(kwargs))
+
+        opt = GlobalOptimizer(
+            wrapped,
+            lower_bounds=lower,
+            upper_bounds=upper,
+            categories=cats,
+            maximize=self.maximize,
+        )
+        opt.run(self.n_iter)
+        return self._snap_to_grid(opt.maximum["x"])
