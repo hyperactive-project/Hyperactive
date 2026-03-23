@@ -35,7 +35,7 @@ class LIPOOptimizer:
             else:
                 snapped[key] = val   # categorical, pass through
         return snapped
-        
+
     def solve(self):
         lower, upper, cats = self._parse_search_space()
 
@@ -50,4 +50,5 @@ class LIPOOptimizer:
             maximize=self.maximize,
         )
         opt.run(self.n_iter)
-        return self._snap_to_grid(opt.maximum["x"])
+
+        return self._snap_to_grid(opt.optimum[0])
