@@ -24,3 +24,14 @@ class LIPOOptimizer:
                 self._grids = getattr(self, "_grids", {})
                 self._grids[key] = arr
         return lower, upper, cats
+
+    def _snap_to_grid(self, params):
+        """Snap lipo's continuous output to nearest valid grid point."""
+        snapped = {}
+        for key, val in params.items():
+            if key in getattr(self, "_grids", {}):
+                grid = self._grids[key]
+                snapped[key] = grid[np.argmin(np.abs(grid - val))]
+            else:
+                snapped[key] = val   # categorical, pass through
+        return snapped
