@@ -3,7 +3,7 @@
 
 import copy
 
-from sklearn.base import BaseEstimator
+from skbase.base import BaseEstimator
 
 from hyperactive.experiment.integrations.skforecast_forecasting import (
     SkforecastExperiment,
@@ -108,6 +108,8 @@ class SkforecastOptCV(BaseEstimator):
         self.show_progress = show_progress
         self.higher_is_better = higher_is_better
 
+        super().__init__()
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -134,13 +136,16 @@ class SkforecastOptCV(BaseEstimator):
         from skforecast.recursive import ForecasterRecursive
         from sklearn.ensemble import RandomForestRegressor
 
-        from hyperactive import HillClimbingOptimizer
+        from hyperactive.opt import HillClimbing
 
         forecaster = ForecasterRecursive(
             regressor=RandomForestRegressor(random_state=123),
             lags=2,
         )
-        optimizer = HillClimbingOptimizer()
+        optimizer = HillClimbing(
+            search_space={"n_estimators": [10, 20]},
+            n_iter=2,
+        )
 
         params = {
             "forecaster": forecaster,
