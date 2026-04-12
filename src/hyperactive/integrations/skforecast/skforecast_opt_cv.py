@@ -36,8 +36,19 @@ class SkforecastOptCV(BaseEstimator):
     exog : pandas Series or DataFrame, default=None
         Exogenous variable/s used in the evaluation experiment.
 
-    refit : bool, default=False
-        Whether to re-fit the forecaster in each iteration.
+    refit : bool, default=True
+        Whether to refit the forecaster with the best parameters on the entire
+        data in ``fit``, after hyperparameter tuning has completed.
+        If ``True``, ``best_forecaster_`` is fitted to the full ``y`` (and
+        ``exog``) and can be used to make predictions via ``predict``.
+        If ``False``, ``best_forecaster_`` only has its parameters set but is
+        not refitted, so ``predict`` will raise. Use ``refit=False`` for the
+        parameter-estimator use case.
+
+    backtesting_refit : bool, default=False
+        Whether to refit the forecaster in each iteration of backtesting, while
+        searching for the best hyperparameters. Passed through to skforecast's
+        ``TimeSeriesFold``. Unrelated to the post-tuning ``refit`` flag above.
 
     fixed_train_size : bool, default=False
         If True, the train size doesn't increase but moves by `steps` in each iteration.
@@ -48,9 +59,6 @@ class SkforecastOptCV(BaseEstimator):
 
     allow_incomplete_fold : bool, default=True
         If True, the last fold is allowed to have fewer samples than `steps`.
-
-    return_best : bool, default=False
-        If True, the best model is returned.
 
     n_jobs : int or 'auto', default="auto"
         Number of jobs to run in parallel.
@@ -82,11 +90,11 @@ class SkforecastOptCV(BaseEstimator):
         metric,
         initial_train_size,
         exog=None,
-        refit=False,
+        refit=True,
+        backtesting_refit=False,
         fixed_train_size=False,
         gap=0,
         allow_incomplete_fold=True,
-        return_best=False,
         n_jobs="auto",
         verbose=False,
         show_progress=False,
@@ -99,10 +107,10 @@ class SkforecastOptCV(BaseEstimator):
         self.initial_train_size = initial_train_size
         self.exog = exog
         self.refit = refit
+        self.backtesting_refit = backtesting_refit
         self.fixed_train_size = fixed_train_size
         self.gap = gap
         self.allow_incomplete_fold = allow_incomplete_fold
-        self.return_best = return_best
         self.n_jobs = n_jobs
         self.verbose = verbose
         self.show_progress = show_progress
@@ -179,11 +187,10 @@ class SkforecastOptCV(BaseEstimator):
             metric=self.metric,
             initial_train_size=self.initial_train_size,
             exog=current_exog,
-            refit=self.refit,
+            backtesting_refit=self.backtesting_refit,
             fixed_train_size=self.fixed_train_size,
             gap=self.gap,
             allow_incomplete_fold=self.allow_incomplete_fold,
-            return_best=self.return_best,
             n_jobs=self.n_jobs,
             verbose=self.verbose,
             show_progress=self.show_progress,
@@ -202,8 +209,8 @@ class SkforecastOptCV(BaseEstimator):
         self.best_forecaster_ = copy.deepcopy(self.forecaster)
         self.best_forecaster_.set_params(best_params)
 
-        # Refit model with best parameters on the whole dataset
-        self.best_forecaster_.fit(y=y, exog=current_exog)
+        if self.refit:
+            self.best_forecaster_.fit(y=y, exog=current_exog)
 
         return self
 
@@ -222,4 +229,11 @@ class SkforecastOptCV(BaseEstimator):
         predictions : pandas Series
             Predicted values.
         """
+        if not self.refit:
+            raise RuntimeError(
+                f"In {type(self).__name__}, refit must be True to make "
+                f"predictions, but found refit=False. If refit=False, "
+                f"{type(self).__name__} can be used only to tune "
+                f"hyperparameters, as a parameter estimator."
+            )
         return self.best_forecaster_.predict(steps=steps, exog=exog, **kwargs)

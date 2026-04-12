@@ -36,8 +36,11 @@ class SkforecastExperiment(BaseExperiment):
     initial_train_size : int
         Number of samples in the initial training set.
 
-    refit : bool, default=False
-        Whether to re-fit the forecaster in each iteration.
+    backtesting_refit : bool, default=False
+        Whether to re-fit the forecaster in each backtesting iteration.
+        Passed through to ``TimeSeriesFold``. Independent of any post-tuning
+        refit logic performed by wrapping estimators such as
+        ``SkforecastOptCV``.
 
     fixed_train_size : bool, default=False
         If True, the train size doesn't increase but moves by `steps` in each iteration.
@@ -48,9 +51,6 @@ class SkforecastExperiment(BaseExperiment):
 
     allow_incomplete_fold : bool, default=True
         If True, the last fold is allowed to have fewer samples than `steps`.
-
-    return_best : bool, default=False
-        If True, the best model is returned.
 
     n_jobs : int or 'auto', default="auto"
         Number of jobs to run in parallel.
@@ -82,11 +82,10 @@ class SkforecastExperiment(BaseExperiment):
         metric,
         initial_train_size,
         exog=None,
-        refit=False,
+        backtesting_refit=False,
         fixed_train_size=False,
         gap=0,
         allow_incomplete_fold=True,
-        return_best=False,
         n_jobs="auto",
         verbose=False,
         show_progress=False,
@@ -98,11 +97,10 @@ class SkforecastExperiment(BaseExperiment):
         self.metric = metric
         self.initial_train_size = initial_train_size
         self.exog = exog
-        self.refit = refit
+        self.backtesting_refit = backtesting_refit
         self.fixed_train_size = fixed_train_size
         self.gap = gap
         self.allow_incomplete_fold = allow_incomplete_fold
-        self.return_best = return_best
         self.n_jobs = n_jobs
         self.verbose = verbose
         self.show_progress = show_progress
@@ -222,7 +220,7 @@ class SkforecastExperiment(BaseExperiment):
         cv = TimeSeriesFold(
             steps=self.steps,
             initial_train_size=self.initial_train_size,
-            refit=self.refit,
+            refit=self.backtesting_refit,
             fixed_train_size=self.fixed_train_size,
             gap=self.gap,
             allow_incomplete_fold=self.allow_incomplete_fold,
