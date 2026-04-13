@@ -73,7 +73,7 @@ build = [
   "wheel",
 ]
 test = [
-  "pytest == 9.0.2",
+  "pytest == 9.0.3",
   "flake8",
   "pytest-cov",
   "pathos",
