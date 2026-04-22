@@ -20,43 +20,161 @@ class BestEstimator:
 
     @available_if(_estimator_has("score_samples"))
     def score_samples(self, X):
-        """Score Samples function."""
+        """Call score_samples on the estimator with the best found parameters.
+
+        Only available if ``refit=True`` and the underlying estimator supports
+        ``score_samples``.
+
+        Parameters
+        ----------
+        X : iterable
+            Data to predict on. Must fulfill input requirements
+            of the underlying estimator.
+
+        Returns
+        -------
+        y_score : ndarray of shape (n_samples,)
+            Score per sample for `X` based on the estimator with the best found
+            parameters (e.g. log-likelihood, anomaly score).
+        """
         check_is_fitted(self)
         return self.best_estimator_.score_samples(X)
 
     @available_if(_estimator_has("predict"))
     def predict(self, X):
-        """Predict function."""
+        """Call predict on the estimator with the best found parameters.
+
+        Only available if ``refit=True`` and the underlying estimator supports
+        ``predict``.
+
+        Parameters
+        ----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples,)
+            The predicted labels or values for `X` based on the estimator with
+            the best found parameters.
+        """
         check_is_fitted(self)
         return self.best_estimator_.predict(X)
 
     @available_if(_estimator_has("predict_proba"))
     def predict_proba(self, X):
-        """Predict Proba function."""
+        """Call predict_proba on the estimator with the best found parameters.
+
+        Only available if ``refit=True`` and the underlying estimator supports
+        ``predict_proba``.
+
+        Parameters
+        ----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples,) or (n_samples, n_classes)
+            Predicted class probabilities for `X` based on the estimator with
+            the best found parameters. The order of the classes corresponds
+            to that in the fitted attribute :term:`classes_`.
+        """
         check_is_fitted(self)
         return self.best_estimator_.predict_proba(X)
 
     @available_if(_estimator_has("predict_log_proba"))
     def predict_log_proba(self, X):
-        """Predict Log Proba function."""
+        """Call predict_log_proba on the estimator with the best found parameters.
+
+        Only available if ``refit=True`` and the underlying estimator supports
+        ``predict_log_proba``.
+
+        Parameters
+        ----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples,) or (n_samples, n_classes)
+            Predicted class log-probabilities for `X` based on the estimator
+            with the best found parameters. The order of the classes
+            corresponds to that in the fitted attribute :term:`classes_`.
+        """
         check_is_fitted(self)
         return self.best_estimator_.predict_log_proba(X)
 
     @available_if(_estimator_has("decision_function"))
     def decision_function(self, X):
-        """Decision Function function."""
+        """Call decision_function on the estimator with the best found parameters.
+
+        Only available if ``refit=True`` and the underlying estimator supports
+        ``decision_function``.
+
+        Parameters
+        ----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        Returns
+        -------
+        y_score : ndarray of shape (n_samples,) or (n_samples, n_classes) \
+                or (n_samples, n_classes * (n_classes-1) / 2)
+            Result of the decision function for `X` based on the estimator with
+            the best found parameters.
+        """
         check_is_fitted(self)
         return self.best_estimator_.decision_function(X)
 
     @available_if(_estimator_has("transform"))
     def transform(self, X):
-        """Transform function."""
+        """Call transform on the estimator with the best found parameters.
+
+        Only available if the underlying estimator supports ``transform`` and
+        ``refit=True``.
+
+        Parameters
+        ----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        Returns
+        -------
+        Xt : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            `X` transformed in the new space based on the estimator with
+            the best found parameters.
+        """
         check_is_fitted(self)
         return self.best_estimator_.transform(X)
 
     @available_if(_estimator_has("inverse_transform"))
     def inverse_transform(self, X=None, Xt=None):
-        """Inverse Transform function."""
+        """Call inverse_transform on the estimator with the best found params.
+
+        Only available if the underlying estimator implements
+        ``inverse_transform`` and ``refit=True``.
+
+        Parameters
+        ----------
+        X : indexable, length n_samples
+            Data in the transformed space. Must fulfill the input assumptions
+            of the underlying estimator.
+        Xt : array-like of shape (n_samples, n_features), optional
+            Deprecated in scikit-learn 1.2 and removed in 1.7. Use ``X``
+            instead. The former parameter name for the transformed data.
+
+        Returns
+        -------
+        X_original : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            Result of the `inverse_transform` function for `X` based on the
+            estimator with the best found parameters.
+        """
         X = _deprecate_Xt_in_inverse_transform(X, Xt)
         check_is_fitted(self)
         return self.best_estimator_.inverse_transform(X)
