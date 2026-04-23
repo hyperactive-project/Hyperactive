@@ -361,6 +361,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Install libomp (macOS)
+        if: runner.os == 'macOS'
+        run: brew install libomp
+
       - name: Install dependencies
         run: |
           python -m pip install --no-cache-dir --upgrade pip
