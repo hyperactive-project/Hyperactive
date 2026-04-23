@@ -1,10 +1,8 @@
 """Integrations with packages for tuning."""
+
 # copyright: hyperactive developers, MIT License (see LICENSE file)
 
 from hyperactive.experiment.integrations.lightgbm_experiment import LightGBMExperiment
-from hyperactive.experiment.integrations.skforecast_forecasting import (
-    SkforecastExperiment,
-)
 from hyperactive.experiment.integrations.sklearn_cv import SklearnCvExperiment
 from hyperactive.experiment.integrations.skpro_probareg import (
     SkproProbaRegExperiment,
@@ -21,7 +19,6 @@ from hyperactive.experiment.integrations.torch_lightning_experiment import (
 
 __all__ = [
     "LightGBMExperiment",
-    "SkforecastExperiment",
     "SklearnCvExperiment",
     "SkproProbaRegExperiment",
     "SktimeClassificationExperiment",
