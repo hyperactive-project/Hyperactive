@@ -95,10 +95,6 @@ Quick Reference
      - ``TorchExperiment``
      - Deep learning models
      - ``[all_extras]``
-   * - LightGBM
-     - ``LightGBMExperiment``
-     - Classification, regression
-     - ``[lightgbm]``
 
 ----
 
