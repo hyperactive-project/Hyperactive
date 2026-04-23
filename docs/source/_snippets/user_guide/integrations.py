@@ -238,7 +238,7 @@ X, y = load_iris(return_X_y=True)
 
 # Create the experiment
 experiment = LightGBMExperiment(
-    estimator=LGBMClassifier(),
+    estimator=LGBMClassifier(verbosity=-1),
     X=X,
     y=y,
     cv=3,
