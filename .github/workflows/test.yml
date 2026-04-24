@@ -367,6 +367,10 @@ jobs:
           python -m pip install --no-cache-dir build
           make install-all-extras-for-test
 
+      - name: Remove lightgbm on macOS (native lib requires libomp, tests hang)
+        if: runner.os == 'macOS'
+        run: python -m pip uninstall -y lightgbm
+
       - name: Show dependencies
         run: python -m pip list
 
