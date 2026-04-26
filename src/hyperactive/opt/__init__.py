@@ -2,6 +2,7 @@
 
 # copyright: hyperactive developers, MIT License (see LICENSE file)
 
+from hyperactive.opt._hyperband import Hyperband
 from hyperactive.opt.gridsearch import GridSearchSk
 from hyperactive.opt.random_search import RandomSearchSk
 
@@ -41,6 +42,7 @@ from .optuna import (
 
 __all__ = [
     "GridSearchSk",
+    "Hyperband",
     "RandomSearchSk",
     "HillClimbing",
     "RepulsingHillClimbing",
