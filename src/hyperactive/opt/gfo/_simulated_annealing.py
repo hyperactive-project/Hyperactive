@@ -86,6 +86,7 @@ class SimulatedAnnealing(_BaseGFOadapter):
 
     def __init__(
         self,
+        unified_space=None,
         search_space=None,
         initialize=None,
         constraints=None,
@@ -100,6 +101,7 @@ class SimulatedAnnealing(_BaseGFOadapter):
         verbose=False,
         experiment=None,
     ):
+        self.unified_space = unified_space
         self.random_state = random_state
         self.rand_rest_p = rand_rest_p
         self.epsilon = epsilon
