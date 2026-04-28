@@ -226,6 +226,41 @@ optimizer = BayesianOptimizer(
 best_params = optimizer.solve()
 # [end:pytorch_lightning]
 
+# [start:lightgbm_experiment]
+from lightgbm import LGBMClassifier
+from sklearn.datasets import load_iris
+
+from hyperactive.experiment.integrations import LightGBMExperiment
+from hyperactive.opt.gfo import BayesianOptimizer
+
+# Load data
+X, y = load_iris(return_X_y=True)
+
+# Create the experiment
+experiment = LightGBMExperiment(
+    estimator=LGBMClassifier(verbosity=-1),
+    X=X,
+    y=y,
+    cv=3,
+)
+
+# Define search space
+search_space = {
+    "n_estimators": [50, 100, 200],
+    "max_depth": [3, 5, 7, -1],
+    "learning_rate": [0.01, 0.05, 0.1, 0.2],
+}
+
+# Optimize
+optimizer = BayesianOptimizer(
+    search_space=search_space,
+    n_iter=10,
+    experiment=experiment,
+)
+best_params = optimizer.solve()
+print(f"Best parameters: {best_params}")
+# [end:lightgbm_experiment]
+
 
 # --- Runnable test code below ---
 if __name__ == "__main__":

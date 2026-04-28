@@ -73,7 +73,7 @@ build = [
   "wheel",
 ]
 test = [
-  "pytest == 9.0.2",
+  "pytest == 9.0.3",
   "flake8",
   "pytest-cov",
   "pathos",
@@ -100,6 +100,7 @@ all_extras = [
   "cmaes",  # Required for CmaEsOptimizer (optuna's CMA-ES sampler)
   "lightning",
   "lipo",
+  "lightgbm",
 ]
 
 
