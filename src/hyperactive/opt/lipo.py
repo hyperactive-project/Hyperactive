@@ -1,7 +1,6 @@
 """LIPO optimizer integration for Hyperactive."""
 
 import numpy as np
-from lipo import GlobalOptimizer
 
 
 class LIPOOptimizer:
@@ -41,6 +40,8 @@ class LIPOOptimizer:
 
     def solve(self):
         """Run optimizer and return best parameters as a dict."""
+        from lipo import GlobalOptimizer
+
         lower, upper, cats = self._parse_search_space()
 
         def wrapped(**kwargs):
