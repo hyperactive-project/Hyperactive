@@ -80,6 +80,7 @@ pip install hyperactive
 ```bash
 pip install hyperactive[sklearn-integration]  # scikit-learn integration
 pip install hyperactive[sktime-integration]   # sktime/skpro integration
+pip install hyperactive[lipo-integration]     # lipo global optimizer
 pip install hyperactive[all_extras]           # Everything including Optuna
 ```
 
@@ -111,7 +112,7 @@ pip install hyperactive[all_extras]           # Everything including Optuna
     </td>
     <td width="33%">
       <a href="https://hyperactive.readthedocs.io/en/latest/user_guide/optimizers/optuna.html"><b>Multiple Backends</b></a><br>
-      <sub>GFO algorithms, Optuna samplers, and sklearn search methods through one unified API.</sub>
+      <sub>GFO algorithms, Optuna samplers, sklearn search methods, and lipo's parameter-free global optimizer through one unified API.</sub>
     </td>
     <td width="33%">
       <a href="https://hyperactive.readthedocs.io/en/latest/api_reference.html"><b>Stable & Tested</b></a><br>
@@ -177,13 +178,13 @@ flowchart TB
             GFO["GFO<br/>21 algorithms"]
             OPTUNA["Optuna<br/>8 algorithms"]
             SKL["sklearn<br/>2 algorithms"]
-            MORE["...<br/>more to come"]
+            LIPO["LIPO<br/>1 algorithm"]
         end
 
         OPT --> GFO
         OPT --> OPTUNA
         OPT --> SKL
-        OPT --> MORE
+        OPT --> LIPO
     end
 
     subgraph OUT["Output"]
@@ -355,6 +356,34 @@ search_space = {
 }
 
 optimizer = TPEOptimizer(
+    search_space=search_space,
+    n_iter=100,
+    experiment=objective,
+)
+best_params = optimizer.solve()
+```
+
+</details>
+
+
+
+<details>
+<summary><b>LIPO Global Optimizer</b></summary>
+
+```python
+import numpy as np
+from hyperactive.opt.lipo import LIPOOptimizer
+
+def objective(params):
+    x, y = params["x"], params["y"]
+    return -(x**2 + y**2)
+
+search_space = {
+    "x": np.arange(-5, 5, 0.1),
+    "y": np.arange(-5, 5, 0.1),
+}
+
+optimizer = LIPOOptimizer(
     search_space=search_space,
     n_iter=100,
     experiment=objective,
