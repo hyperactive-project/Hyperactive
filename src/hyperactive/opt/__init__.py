@@ -4,7 +4,6 @@
 
 from hyperactive.opt.gridsearch import GridSearchSk
 from hyperactive.opt.random_search import RandomSearchSk
-from .lipo import LIPOOptimizer
 
 from .gfo import (
     BayesianOptimizer,
@@ -29,6 +28,7 @@ from .gfo import (
     StochasticHillClimbing,
     TreeStructuredParzenEstimators,
 )
+from .lipo import LIPOOptimizer
 from .optuna import (
     CmaEsOptimizer,
     GPOptimizer,
@@ -43,6 +43,7 @@ from .optuna import (
 __all__ = [
     "GridSearchSk",
     "RandomSearchSk",
+    "LIPOOptimizer",
     "HillClimbing",
     "RepulsingHillClimbing",
     "StochasticHillClimbing",

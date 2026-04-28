@@ -1,9 +1,12 @@
+"""LIPO optimizer integration for Hyperactive."""
+
 import numpy as np
 from lipo import GlobalOptimizer
 
+
 class LIPOOptimizer:
     """Parameter-free global optimizer via the lipo package."""
-    
+
     def __init__(self, search_space, n_iter, experiment, maximize=True):
         self.search_space = search_space
         self.n_iter = n_iter
@@ -33,10 +36,11 @@ class LIPOOptimizer:
                 grid = self._grids[key]
                 snapped[key] = grid[np.argmin(np.abs(grid - val))]
             else:
-                snapped[key] = val   # categorical, pass through
+                snapped[key] = val  # categorical, pass through
         return snapped
 
     def solve(self):
+        """Run optimizer and return best parameters as a dict."""
         lower, upper, cats = self._parse_search_space()
 
         def wrapped(**kwargs):
