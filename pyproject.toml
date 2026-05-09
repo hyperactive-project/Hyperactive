@@ -7,11 +7,12 @@ where = ["src"]
 
 [project]
 name = "hyperactive"
-version = "5.0.3"
+version = "5.0.4"
 description = "An optimization and data collection toolbox for convenient and fast prototyping of computationally expensive models."
 readme = "README.md"
 requires-python = ">=3.10"
-license = {file = "LICENSE"}
+license = "MIT"
+license-files = ["LICENSE"]
 keywords = ["optimization",
   "hyperparameter-tuning",
   "bayesian-optimization",
@@ -38,7 +39,6 @@ classifiers=[
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering :: Information Analysis",
     "Topic :: Scientific/Engineering :: Mathematics",
