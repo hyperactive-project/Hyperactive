@@ -78,10 +78,12 @@ class _BaseOptunaAdapter(BaseOptimizer):
         dict
             The suggested parameters
         """
+        from optuna.distributions import BaseDistribution
+
         params = {}
         for key, space in param_space.items():
-            if hasattr(space, "suggest"):  # optuna distribution object
-                params[key] = trial._suggest(space, key)
+            if isinstance(space, BaseDistribution):
+                params[key] = trial._suggest(key, space)
             elif isinstance(space, tuple) and len(space) == 2:
                 # Tuples are treated as ranges (low, high)
                 low, high = space
@@ -110,7 +112,7 @@ class _BaseOptunaAdapter(BaseOptimizer):
             The objective value
         """
         params = self._suggest_params(trial, self.param_space)
-        score = self.experiment(params)
+        score = self._experiment_wrapped(params)
 
         # Handle early stopping based on max_score
         if self.max_score is not None and score >= self.max_score:
@@ -130,10 +132,7 @@ class _BaseOptunaAdapter(BaseOptimizer):
             if isinstance(self.initialize, dict) and "warm_start" in self.initialize:
                 warm_start_points = self.initialize["warm_start"]
                 if isinstance(warm_start_points, list):
-                    # For warm start, we manually add trials to the study history
-                    # instead of using suggest methods to avoid distribution conflicts
                     for point in warm_start_points:
-                        self.experiment(point)
                         study.enqueue_trial(point)
 
     def _solve(self, experiment, param_space, n_trials, **kwargs):
@@ -141,8 +140,9 @@ class _BaseOptunaAdapter(BaseOptimizer):
 
         Parameters
         ----------
-        experiment : callable
-            The experiment to optimize
+        experiment : BaseExperiment
+            The experiment to optimize, already wrapped by
+            ``BaseOptimizer.get_experiment()``.
         param_space : dict
             The parameter space
         n_trials : int
@@ -157,29 +157,29 @@ class _BaseOptunaAdapter(BaseOptimizer):
         """
         import optuna
 
-        # Create optimizer with random state if provided
+        self._experiment_wrapped = experiment
+
         optimizer = self._get_optimizer()
 
-        # Create study
         study = optuna.create_study(
-            direction="maximize",  # Assuming we want to maximize scores
+            direction="maximize",
             sampler=optimizer,
         )
 
-        # Setup initial positions
         self._setup_initial_positions(study)
 
-        # Setup early stopping callback
         callbacks = []
         if self.early_stopping is not None:
+            patience = self.early_stopping
 
             def early_stopping_callback(study, trial):
-                if len(study.trials) >= self.early_stopping:
+                if trial.number < patience:
+                    return
+                if trial.number - study.best_trial.number >= patience:
                     study.stop()
 
             callbacks.append(early_stopping_callback)
 
-        # Run optimization
         study.optimize(
             self._objective,
             n_trials=n_trials,

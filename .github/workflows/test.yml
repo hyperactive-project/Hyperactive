@@ -147,11 +147,37 @@ jobs:
           fi
 
   # ===========================================================================
+  # STAGE 1.5: API smoke tests (gate — blocks all further tests on failure)
+  # ===========================================================================
+  api-smoke-tests:
+    name: api-smoke-tests
+    needs: [code-quality]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --no-cache-dir --upgrade pip
+          python -m pip install --no-cache-dir -e .[test]
+
+      - name: Run API smoke tests
+        run: |
+          python -m pytest tests/test_smoke_api.py -v -p no:warnings
+
+  # ===========================================================================
   # STAGE 2: Targeted tests (only for changed areas, fast feedback)
   # ===========================================================================
   targeted-core:
     name: targeted-core
-    needs: [code-quality, detect-changes]
+    needs: [api-smoke-tests, detect-changes]
     if: needs.detect-changes.outputs.core == 'true' || needs.detect-changes.outputs.any_src == 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -175,7 +201,7 @@ jobs:
 
   targeted-sklearn:
     name: targeted-sklearn
-    needs: [code-quality, detect-changes]
+    needs: [api-smoke-tests, detect-changes]
     if: needs.detect-changes.outputs.sklearn == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -199,7 +225,7 @@ jobs:
 
   targeted-sktime:
     name: targeted-sktime
-    needs: [code-quality, detect-changes]
+    needs: [api-smoke-tests, detect-changes]
     if: needs.detect-changes.outputs.sktime == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -223,7 +249,7 @@ jobs:
 
   targeted-skpro:
     name: targeted-skpro
-    needs: [code-quality, detect-changes]
+    needs: [api-smoke-tests, detect-changes]
     if: needs.detect-changes.outputs.skpro == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -247,7 +273,7 @@ jobs:
 
   targeted-utils:
     name: targeted-utils
-    needs: [code-quality, detect-changes]
+    needs: [api-smoke-tests, detect-changes]
     if: needs.detect-changes.outputs.utils == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -272,17 +298,24 @@ jobs:
   # Gate job: passes if all targeted tests pass OR are skipped (not failed)
   targeted-tests-gate:
     name: targeted-tests-gate
-    needs: [targeted-core, targeted-sklearn, targeted-sktime, targeted-skpro, targeted-utils]
+    needs: [api-smoke-tests, targeted-core, targeted-sklearn, targeted-sktime, targeted-skpro, targeted-utils]
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: Check targeted test results
+      - name: Check results
         run: |
+          echo "API smoke tests: ${{ needs.api-smoke-tests.result }}"
           echo "Core: ${{ needs.targeted-core.result }}"
           echo "Sklearn: ${{ needs.targeted-sklearn.result }}"
           echo "Sktime: ${{ needs.targeted-sktime.result }}"
           echo "Skpro: ${{ needs.targeted-skpro.result }}"
           echo "Utils: ${{ needs.targeted-utils.result }}"
+
+          # Fail if API smoke tests did not succeed
+          if [[ "${{ needs.api-smoke-tests.result }}" != "success" ]]; then
+            echo "API smoke tests failed — blocking pipeline"
+            exit 1
+          fi
 
           # Fail if any targeted test failed (not skipped)
           if [[ "${{ needs.targeted-core.result }}" == "failure" ]] || \
@@ -293,7 +326,7 @@ jobs:
             echo "One or more targeted tests failed"
             exit 1
           fi
-          echo "All targeted tests passed or were skipped"
+          echo "All gates passed"
 
   # ===========================================================================
   # STAGE 3: Full test matrix (only after targeted tests pass)
@@ -433,6 +466,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
           fail_ci_if_error: false
           verbose: true
