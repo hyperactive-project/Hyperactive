@@ -161,26 +161,25 @@ class _BaseOptunaAdapter(BaseOptimizer):
 
         optimizer = self._get_optimizer()
 
-        # Create study
         study = optuna.create_study(
-            direction="maximize",  # Assuming we want to maximize scores
+            direction="maximize",
             sampler=optimizer,
         )
 
-        # Setup initial positions
         self._setup_initial_positions(study)
 
-        # Setup early stopping callback
         callbacks = []
         if self.early_stopping is not None:
+            patience = self.early_stopping
 
             def early_stopping_callback(study, trial):
-                if len(study.trials) >= self.early_stopping:
+                if trial.number < patience:
+                    return
+                if trial.number - study.best_trial.number >= patience:
                     study.stop()
 
             callbacks.append(early_stopping_callback)
 
-        # Run optimization
         study.optimize(
             self._objective,
             n_trials=n_trials,
