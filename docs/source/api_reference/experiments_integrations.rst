@@ -7,7 +7,7 @@ The :mod:`hyperactive.experiment.integrations` module contains experiment classe
 for integration with machine learning frameworks.
 
 These experiments provide seamless hyperparameter optimization for scikit-learn,
-sktime, skpro, and PyTorch Lightning models.
+sktime, skpro, PyTorch Lightning, and LightGBM models.
 
 Scikit-Learn
 ------------
@@ -55,3 +55,14 @@ Experiments for PyTorch Lightning models.
     :template: class.rst
 
     TorchExperiment
+
+LightGBM
+--------
+
+Cross-validation experiments for LightGBM estimators.
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    LightGBMExperiment
