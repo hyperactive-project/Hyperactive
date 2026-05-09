@@ -112,7 +112,7 @@ class _BaseOptunaAdapter(BaseOptimizer):
             The objective value
         """
         params = self._suggest_params(trial, self.param_space)
-        score = self.experiment(params)
+        score = self._experiment_wrapped(params)
 
         # Handle early stopping based on max_score
         if self.max_score is not None and score >= self.max_score:
@@ -132,10 +132,7 @@ class _BaseOptunaAdapter(BaseOptimizer):
             if isinstance(self.initialize, dict) and "warm_start" in self.initialize:
                 warm_start_points = self.initialize["warm_start"]
                 if isinstance(warm_start_points, list):
-                    # For warm start, we manually add trials to the study history
-                    # instead of using suggest methods to avoid distribution conflicts
                     for point in warm_start_points:
-                        self.experiment(point)
                         study.enqueue_trial(point)
 
     def _solve(self, experiment, param_space, n_trials, **kwargs):
@@ -143,8 +140,9 @@ class _BaseOptunaAdapter(BaseOptimizer):
 
         Parameters
         ----------
-        experiment : callable
-            The experiment to optimize
+        experiment : BaseExperiment
+            The experiment to optimize, already wrapped by
+            ``BaseOptimizer.get_experiment()``.
         param_space : dict
             The parameter space
         n_trials : int
@@ -159,7 +157,8 @@ class _BaseOptunaAdapter(BaseOptimizer):
         """
         import optuna
 
-        # Create optimizer with random state if provided
+        self._experiment_wrapped = experiment
+
         optimizer = self._get_optimizer()
 
         # Create study
