@@ -211,6 +211,111 @@ optimizer = TPEOptimizer(
 
 
 # ============================================================================
+# Scipy Backend
+# ============================================================================
+
+# [start:scipy_imports]
+from hyperactive.opt.scipy import (
+    ScipyBasinhopping,  # Global: random perturbations + local search
+    ScipyDifferentialEvolution,  # Global: population-based
+    ScipyDirect,  # Global: deterministic DIRECT algorithm
+    ScipyDualAnnealing,  # Global: simulated annealing variant
+    ScipyNelderMead,  # Local: simplex-based
+    ScipyPowell,  # Local: conjugate direction method
+    ScipySHGO,  # Global: finds multiple local minima
+)
+
+# [end:scipy_imports]
+
+
+# Scipy uses continuous search spaces (tuples instead of arrays)
+scipy_search_space = {
+    "x": (-5.0, 5.0),
+    "y": (-5.0, 5.0),
+}
+
+
+# [start:scipy_differential_evolution]
+
+optimizer = ScipyDifferentialEvolution(
+    param_space=scipy_search_space,
+    n_iter=100,
+    experiment=objective,
+    strategy="best1bin",
+    random_state=42,
+)
+# [end:scipy_differential_evolution]
+
+
+# [start:scipy_dual_annealing]
+
+optimizer = ScipyDualAnnealing(
+    param_space=scipy_search_space,
+    n_iter=100,
+    experiment=objective,
+    random_state=42,
+)
+# [end:scipy_dual_annealing]
+
+
+# [start:scipy_basinhopping]
+
+optimizer = ScipyBasinhopping(
+    param_space=scipy_search_space,
+    n_iter=50,
+    experiment=objective,
+    minimizer_method="Nelder-Mead",
+    random_state=42,
+)
+# [end:scipy_basinhopping]
+
+
+# [start:scipy_shgo]
+
+optimizer = ScipySHGO(
+    param_space=scipy_search_space,
+    n_iter=3,
+    experiment=objective,
+    n=50,
+    sampling_method="simplicial",
+)
+# [end:scipy_shgo]
+
+
+# [start:scipy_direct]
+
+optimizer = ScipyDirect(
+    param_space=scipy_search_space,
+    n_iter=200,
+    experiment=objective,
+    locally_biased=True,
+)
+# [end:scipy_direct]
+
+
+# [start:scipy_nelder_mead]
+
+optimizer = ScipyNelderMead(
+    param_space=scipy_search_space,
+    n_iter=200,
+    experiment=objective,
+    random_state=42,
+)
+# [end:scipy_nelder_mead]
+
+
+# [start:scipy_powell]
+
+optimizer = ScipyPowell(
+    param_space=scipy_search_space,
+    n_iter=200,
+    experiment=objective,
+    random_state=42,
+)
+# [end:scipy_powell]
+
+
+# ============================================================================
 # Configuration Examples
 # ============================================================================
 
