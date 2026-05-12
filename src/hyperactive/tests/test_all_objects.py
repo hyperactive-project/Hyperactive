@@ -460,5 +460,36 @@ class TestAllOptimizers(OptimizerFixtureGenerator, _QuickTester):
             _assert_good(best_params)
             return None
 
+        # Hyperband optimizer: test with resource parameter
+        from hyperactive.opt._hyperband import Hyperband
+
+        if isinstance(object_instance, Hyperband):
+            hb_space = {
+                "x0": [0.0, 4.0],
+                "x1": [0.0, 4.0],
+                "resource": [1, 3, 9],
+            }
+            inst = object_instance.clone().set_params(
+                **{
+                    "experiment": exp,
+                    "search_space": hb_space,
+                    "resource_name": "resource",
+                    "max_resource": 9,
+                    "eta": 3,
+                    "random_state": 0,
+                }
+            )
+            best_params = inst.solve()
+            # Hyperband returns params without resource key
+            sc_best, _ = exp.score(best_params)
+            sc_good, _ = exp.score(good)
+            sc_poor, _ = exp.score(poor)
+            assert sc_best >= max(sc_good, sc_poor), (
+                f"Hyperband should select argmax. "
+                f"Got score {sc_best}, "
+                f"expected >= {max(sc_good, sc_poor)}"
+            )
+            return None
+
         # For other backends, no-op here; targeted direction tests live elsewhere
         return None
