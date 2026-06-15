@@ -2,7 +2,7 @@
 
 All notable changes to Hyperactive are documented in this file.
 
-## [Unreleased]
+## [v5.0.4] - 2026-03-06
 
 ### Documentation
 - Add missing torch entries in README and documentation (#239)
