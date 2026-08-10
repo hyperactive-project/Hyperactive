@@ -4,7 +4,7 @@
 Optimizers
 ==========
 
-Hyperactive provides 31 algorithms across 5 categories and 3 backends.
+Hyperactive provides 34 algorithms across 5 categories and 4 backends.
 Optimizers navigate the search space to find optimal parameters. Each implements a
 different strategy for balancing exploration (trying diverse regions) and exploitation
 (refining promising solutions). Local search methods like Hill Climbing work well for
@@ -133,6 +133,17 @@ Algorithm Categories
 
       *TPEOptimizer, CmaEsOptimizer, GPOptimizer, NSGAIIOptimizer, and more*
 
+   .. grid-item-card:: SMAC Backend
+      :link: smac
+      :link-type: doc
+      :class-card: sd-border-secondary
+
+      **3 algorithms**
+      ^^^
+      State-of-the-art Bayesian optimization from the AutoML community.
+
+      *SmacRandomForest, SmacGaussianProcess, SmacRandomSearch*
+
 ----
 
 Scenario Reference
@@ -151,7 +162,7 @@ Detailed recommendations based on problem characteristics:
      - ``HillClimbing``, ``RandomSearch``
      - Fast, simple, good for initial exploration
    * - Expensive evaluations
-     - ``BayesianOptimizer``, ``TPEOptimizer``
+     - ``BayesianOptimizer``, ``TPEOptimizer``, ``SmacRandomForest``
      - Learn from past evaluations, minimize function calls
    * - Large search space
      - ``RandomSearch``, ``ParticleSwarmOptimizer``
@@ -166,7 +177,7 @@ Detailed recommendations based on problem characteristics:
      - ``BayesianOptimizer``, ``CmaEsOptimizer``
      - Designed for smooth, continuous spaces
    * - Mixed parameter types
-     - ``TPEOptimizer``, ``RandomSearch``
+     - ``TPEOptimizer``, ``SmacRandomForest``, ``RandomSearch``
      - Handle categorical + continuous well
 
 ----
@@ -191,4 +202,5 @@ All optimizers share common parameters and configuration options.
    population_based
    sequential_model_based
    optuna
+   smac
    configuration

@@ -8,7 +8,7 @@ The :mod:`hyperactive.opt` module contains optimization algorithms for hyperpara
 All optimizers inherit from :class:`~hyperactive.base.BaseOptimizer` and share the same interface:
 the ``solve()`` method to run optimization, and configuration via the ``experiment`` and ``search_space`` parameters.
 
-Hyperactive provides optimizers from three backends:
+Hyperactive provides optimizers from four backends:
 
 .. list-table::
    :widths: 25 75
@@ -20,6 +20,8 @@ Hyperactive provides optimizers from three backends:
      - Native gradient-free optimization algorithms (21 optimizers)
    * - :doc:`optuna`
      - Interface to Optuna's samplers (8 optimizers)
+   * - :doc:`smac`
+     - Interface to SMAC3's Bayesian optimization (3 optimizers)
    * - :doc:`sklearn`
      - sklearn-compatible search interfaces (2 optimizers)
 
@@ -28,4 +30,5 @@ Hyperactive provides optimizers from three backends:
 
     gfo
     optuna
+    smac
     sklearn
