@@ -38,6 +38,15 @@ from .optuna import (
     RandomOptimizer,
     TPEOptimizer,
 )
+from .scipy import (
+    ScipyBasinhopping,
+    ScipyDifferentialEvolution,
+    ScipyDirect,
+    ScipyDualAnnealing,
+    ScipyNelderMead,
+    ScipyPowell,
+    ScipySHGO,
+)
 
 __all__ = [
     "GridSearchSk",
@@ -71,4 +80,11 @@ __all__ = [
     "NSGAIIOptimizer",
     "NSGAIIIOptimizer",
     "QMCOptimizer",
+    "ScipyBasinhopping",
+    "ScipyDifferentialEvolution",
+    "ScipyDirect",
+    "ScipyDualAnnealing",
+    "ScipyNelderMead",
+    "ScipyPowell",
+    "ScipySHGO",
 ]
