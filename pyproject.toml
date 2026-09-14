@@ -96,7 +96,7 @@ docs = [
 ]
 all_extras = [
   "hyperactive[integrations]",
-  "optuna<5",
+  "optuna<6",
   "cmaes",  # Required for CmaEsOptimizer (optuna's CMA-ES sampler)
   "lightning",
   "lightgbm",
