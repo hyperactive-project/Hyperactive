@@ -201,4 +201,4 @@ class OptCV(BaseEstimator, _BestEstimator_, Checks):
     @property
     def fit_successful(self):
         """Fit Successful function."""
-        self._fit_successful
+        return self._fit_successful
